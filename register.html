@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>注册 — YIO</title>
+<link rel="icon" href="/logo.png" type="image/png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #faf6ed 0%, #f0e8d4 100%);
+    min-height: 100vh; color: #2c2418; line-height: 1.5;
+    padding: 20px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 460px; margin: 0 auto; padding: 32px 0; }
+  .brand { text-align: center; margin-bottom: 28px; }
+  .brand-logo {
+    height: 64px; width: auto; display: inline-block;
+    margin-bottom: 8px;
+  }
+  .brand-sub { color: #8a7858; font-size: 14px; letter-spacing: 2px; }
+
+  .card {
+    background: #fff; border-radius: 16px; padding: 28px 24px;
+    box-shadow: 0 4px 24px rgba(180, 150, 100, 0.12);
+  }
+  .card-title {
+    font-size: 20px; font-weight: 600; margin-bottom: 6px; color: #2c2418;
+  }
+  .card-sub { color: #8a7858; font-size: 14px; margin-bottom: 24px; }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block; font-size: 13px; color: #5a4f3a;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .field input {
+    width: 100%; padding: 12px 14px; font-size: 15px;
+    border: 1.5px solid #e8dec5; border-radius: 10px;
+    background: #fafaf6; transition: all 0.15s;
+    font-family: inherit; color: #2c2418;
+  }
+  .field input:focus {
+    outline: none; border-color: #c9a961;
+    background: #fff; box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.15);
+  }
+  .field-hint {
+    font-size: 12px; color: #a89878; margin-top: 4px;
+  }
+  .field-hint.err { color: #d05050; }
+  .field-hint.ok  { color: #4a9e58; }
+
+  .btn {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 600;
+    background: linear-gradient(135deg, #c9a961 0%, #b3924c 100%);
+    color: #fff; border: none; border-radius: 10px;
+    cursor: pointer; transition: all 0.15s;
+    font-family: inherit; margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+  .btn:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(201, 169, 97, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .form-err {
+    background: #fde8e8; color: #b03030; padding: 10px 12px;
+    border-radius: 8px; font-size: 13px; margin-bottom: 14px;
+    display: none;
+  }
+
+  .foot {
+    text-align: center; margin-top: 20px; font-size: 13px; color: #8a7858;
+  }
+  .foot a { color: #c9a961; text-decoration: none; font-weight: 500; }
+  .foot a:hover { text-decoration: underline; }
+
+  .success { text-align: center; padding: 32px 16px; }
+  .success-icon { font-size: 56px; margin-bottom: 12px; }
+  .success h2 { color: #4a9e58; margin-bottom: 10px; }
+  .success p { color: #5a4f3a; margin-bottom: 8px; font-size: 14px; }
+  .success .id-tag {
+    display: inline-block; background: #f0e8d4; color: #8a6f3a;
+    padding: 4px 12px; border-radius: 6px; font-family: monospace;
+    font-size: 14px; margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="brand">
+    <img class="brand-logo" src="/logo-c.png" alt="YIO">
+    <div class="brand-sub">CUCINAFLOW</div>
+  </div>
+
+  <div class="card" id="form-card">
+    <div class="card-title">注册新餐厅</div>
+    <div class="card-sub">填写以下信息，我们会尽快审核您的申请</div>
+
+    <div class="form-err" id="form-err"></div>
+
+    <div class="field">
+      <label for="f-id">餐厅代号 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="f-id" placeholder="例如：carpi、my_pizza" maxlength="30" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="field-hint" id="hint-id">小写字母、数字、下划线，2-30 位（登录 URL 会用到）</div>
+    </div>
+
+    <div class="field">
+      <label for="f-name">餐厅名称 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="f-name" placeholder="例如：Pizzeria Da Mario" maxlength="60">
+      <div class="field-hint">展示给员工看的名字</div>
+    </div>
+
+    <div class="field">
+      <label for="f-contact">联系方式 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="f-contact" placeholder="邮箱或 WhatsApp 号码" maxlength="100">
+      <div class="field-hint">审核通过后通知您用</div>
+    </div>
+
+    <div class="field">
+      <label for="f-pass">管理员密码 <span style="color:#c9a961">*</span></label>
+      <input type="password" id="f-pass" placeholder="至少 4 位" maxlength="50">
+      <div class="field-hint" id="hint-pass">用于登录管理员后台</div>
+    </div>
+
+    <div class="field">
+      <label for="f-pass2">确认密码 <span style="color:#c9a961">*</span></label>
+      <input type="password" id="f-pass2" placeholder="再输入一次" maxlength="50">
+      <div class="field-hint" id="hint-pass2">&nbsp;</div>
+    </div>
+
+    <button class="btn" id="btn-submit" onclick="doRegister()">提交注册</button>
+
+    <div class="foot">
+      已有账号？<a href="https://yki.it/">返回首页登录</a>
+    </div>
+  </div>
+
+  <div class="card success" id="success-card" style="display:none">
+    <div class="success-icon">✉️</div>
+    <h2>注册申请已提交</h2>
+    <p>您的餐厅代号：</p>
+    <div class="id-tag" id="success-id"></div>
+    <p style="margin-top:16px;">管理员会在 24 小时内审核您的申请<br>审核通过后会通过<span id="success-contact" style="color:#8a6f3a"></span>通知您</p>
+    <p style="color:#a89878;font-size:13px;margin-top:18px;">⏰ 试用期 60 天，从审核通过当天开始计算</p>
+    <div class="foot" style="margin-top:24px;">
+      <a href="https://yki.it/">返回首页</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = 'https://yki-api.ykicucina.workers.dev';
+
+document.getElementById('f-id').addEventListener('input', e => {
+  const v = e.target.value.toLowerCase();
+  e.target.value = v.replace(/[^a-z0-9_]/g, '');
+  const hint = document.getElementById('hint-id');
+  const val = e.target.value;
+  if (val.length === 0) {
+    hint.textContent = '小写字母、数字、下划线，2-30 位（登录 URL 会用到）';
+    hint.className = 'field-hint';
+  } else if (val.length < 2) {
+    hint.textContent = '至少 2 位';
+    hint.className = 'field-hint err';
+  } else {
+    hint.textContent = 'URL: yki.it/cucina.html?r=' + val;
+    hint.className = 'field-hint ok';
+  }
+});
+
+function checkPasswords() {
+  const p = document.getElementById('f-pass').value;
+  const p2 = document.getElementById('f-pass2').value;
+  const hint = document.getElementById('hint-pass2');
+  if (!p2) { hint.innerHTML = '&nbsp;'; hint.className = 'field-hint'; return; }
+  if (p === p2) {
+    hint.textContent = '✓ 两次密码一致';
+    hint.className = 'field-hint ok';
+  } else {
+    hint.textContent = '两次密码不一致';
+    hint.className = 'field-hint err';
+  }
+}
+document.getElementById('f-pass').addEventListener('input', checkPasswords);
+document.getElementById('f-pass2').addEventListener('input', checkPasswords);
+
+function showError(msg) {
+  const el = document.getElementById('form-err');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+async function doRegister() {
+  document.getElementById('form-err').style.display = 'none';
+  const id = document.getElementById('f-id').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const contact = document.getElementById('f-contact').value.trim();
+  const pass = document.getElementById('f-pass').value;
+  const pass2 = document.getElementById('f-pass2').value;
+
+  if (!id || id.length < 2) { showError('请填写餐厅代号（至少 2 位）'); return; }
+  if (!name) { showError('请填写餐厅名称'); return; }
+  if (!contact) { showError('请填写联系方式'); return; }
+  if (!pass || pass.length < 4) { showError('管理员密码至少 4 位'); return; }
+  if (pass !== pass2) { showError('两次密码不一致'); return; }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  try {
+    const res = await fetch(WORKER_URL + '/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name, contact, adminPassword: pass })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || '注册失败，请稍后重试');
+      btn.disabled = false;
+      btn.textContent = '提交注册';
+      return;
+    }
+
+    document.getElementById('form-card').style.display = 'none';
+    document.getElementById('success-card').style.display = 'block';
+    document.getElementById('success-id').textContent = id;
+    document.getElementById('success-contact').textContent = ' ' + contact + ' ';
+    window.scrollTo(0, 0);
+  } catch (e) {
+    showError('网络错误，请检查网络连接');
+    btn.disabled = false;
+    btn.textContent = '提交注册';
+  }
+}
+
+document.querySelectorAll('input').forEach(inp => {
+  inp.addEventListener('keypress', e => {
+    if (e.key === 'Enter') doRegister();
+  });
+});
+</script>
+</body>
+</html>

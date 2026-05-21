@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YKI CucinaFlow 平台管理后台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #15171c;
+    --surface: #1d2027;
+    --surface-2: #232730;
+    --border: #2c313c;
+    --text: #e9eaed;
+    --text-dim: #8a8f9c;
+    --text-mute: #5a5f6b;
+    --gold: #c9a961;
+    --gold-soft: rgba(201,169,97,0.12);
+    --green: #4ade80;
+    --green-soft: rgba(74,222,128,0.13);
+    --red: #f0606e;
+    --red-soft: rgba(240,96,110,0.13);
+    --amber: #f0b54a;
+    --amber-soft: rgba(240,181,74,0.13);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ---------- 登录页 ---------- */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(ellipse 600px 400px at 50% 0%, rgba(201,169,97,0.06), transparent);
+  }
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 32px;
+    text-align: center;
+  }
+  .brand {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+  .brand-sub {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-mute);
+    margin-top: 6px;
+    margin-bottom: 32px;
+  }
+  .field-label {
+    display: block;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+  input[type=text], input[type=password], input[type=date], input[type=number], textarea, select {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 12px 13px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    border: none;
+    border-radius: 9px;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .12s, opacity .15s, background .15s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-gold { background: var(--gold); color: #1a1a1a; }
+  .btn-ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--red-soft); color: var(--red); border: 1px solid rgba(240,96,110,0.3); }
+  .btn-green { background: var(--green-soft); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 8px 13px; font-size: 12.5px; }
+
+  /* ---------- 主界面 ---------- */
+  #main-screen { display: none; }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+  .header-title { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
+  .header-title .dot { color: var(--gold); }
+  .header-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px; }
+
+  .stats-bar {
+    display: flex;
+    gap: 22px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat .num { font-size: 22px; font-weight: 700; }
+  .stat .lbl { font-size: 11px; color: var(--text-dim); letter-spacing: .5px; }
+  .stat .num.gold { color: var(--gold); }
+  .stat .num.green { color: var(--green); }
+  .stat .num.red { color: var(--red); }
+
+  /* ---------- 餐厅卡片 ---------- */
+  .rest-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 13px;
+    transition: border-color .15s;
+  }
+  .rest-card:hover { border-color: #3a4150; }
+  .rest-card.suspended { opacity: .62; }
+  .rest-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .rest-name { font-size: 16px; font-weight: 600; }
+  .rest-id { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge.active { background: var(--green-soft); color: var(--green); }
+  .badge.suspended { background: var(--red-soft); color: var(--red); }
+  .badge.pending { background: var(--gold-soft); color: var(--gold); }
+  .rest-card.pending {
+    border: 1.5px solid var(--gold);
+    background: linear-gradient(180deg, var(--gold-soft), var(--surface) 60%);
+  }
+  .rest-card .contact-row {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rest-card .contact-row strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .rest-meta {
+    display: flex;
+    gap: 20px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .meta-item .v { font-size: 14px; font-weight: 600; }
+  .meta-item .k { font-size: 11px; color: var(--text-dim); }
+  .meta-item .v.warn { color: var(--amber); }
+  .meta-item .v.danger { color: var(--red); }
+  .rest-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ---------- 弹窗 ---------- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px; }
+  .modal .field-label { margin-top: 14px; }
+  .modal .field-label:first-of-type { margin-top: 0; }
+  .modal-btns { display: flex; gap: 9px; margin-top: 22px; }
+  .modal-btns .btn { flex: 1; }
+
+  /* ---------- toast ---------- */
+  #toast {
+    position: fixed;
+    bottom: 26px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    z-index: 200;
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    max-width: 90vw;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.err { border-color: rgba(240,96,110,0.5); color: var(--red); }
+  #toast.ok { border-color: rgba(74,222,128,0.5); color: var(--green); }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-mute);
+  }
+  .loading { text-align: center; padding: 50px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<!-- ============ 登录页 ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand">YKI</div>
+    <div class="brand-sub">PLATFORM CONSOLE · 平台管理后台</div>
+    <label class="field-label">平台超级密码</label>
+    <input type="password" id="pw" placeholder="输入平台密码" autocomplete="off"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-gold btn-block" id="login-btn" style="margin-top:20px;" onclick="doLogin()">
+      登录
+    </button>
+  </div>
+</div>
+
+<!-- ============ 主界面 ============ -->
+<div id="main-screen">
+  <header>
+    <div class="header-title">YKI <span class="dot">·</span> 平台管理后台</div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openNotify()">📢 发通知</button>
+      <button class="btn btn-gold btn-sm" onclick="openCreate()">+ 新增餐厅</button>
+      <button class="btn btn-ghost btn-sm" onclick="location.reload()">退出</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="stats-bar" id="stats-bar"></div>
+    <div id="restaurant-list">
+      <div class="loading">加载中…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：改到期日 ============ -->
+<div class="modal-overlay" id="modal-expire">
+  <div class="modal">
+    <div class="modal-title">修改到期日</div>
+    <div class="modal-sub" id="expire-rest-name"></div>
+    <label class="field-label">新的到期日期</label>
+    <input type="date" id="expire-date">
+    <label class="field-label" style="margin-top:14px;">
+      <input type="checkbox" id="expire-never" style="width:auto;margin-right:6px;vertical-align:middle;"
+             onchange="document.getElementById('expire-date').disabled=this.checked">
+      永不过期（不设到期日）
+    </label>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-expire')">取消</button>
+      <button class="btn btn-gold" onclick="saveExpire()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：重置密码 ============ -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-title">重置密码</div>
+    <div class="modal-sub" id="reset-rest-name"></div>
+    <label class="field-label">重置哪个密码</label>
+    <select id="reset-target" onchange="toggleChefField()">
+      <option value="admin">管理员密码</option>
+      <option value="chef">某个员工的密码</option>
+    </select>
+    <div id="reset-chef-wrap" style="display:none;">
+      <label class="field-label">员工名字（区分大小写）</label>
+      <input type="text" id="reset-chef-name" placeholder="例如 ANGELO">
+    </div>
+    <label class="field-label">新密码（至少 4 位）</label>
+    <input type="text" id="reset-new-pw" placeholder="输入新密码">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset')">取消</button>
+      <button class="btn btn-gold" onclick="saveReset()">确认重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：发通知 ============ -->
+<div class="modal-overlay" id="modal-notify">
+  <div class="modal">
+    <div class="modal-title">系统通知</div>
+    <div class="modal-sub">通知会显示给所有餐厅。留空并保存 = 清除通知。</div>
+    <label class="field-label">通知内容</label>
+    <textarea id="notify-msg" placeholder="输入要发布的通知内容…"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-notify')">取消</button>
+      <button class="btn btn-gold" onclick="saveNotify()">发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：新增餐厅 ============ -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <div class="modal-title">新增餐厅</div>
+    <div class="modal-sub">创建一个新餐厅账户并设置初始管理员密码。</div>
+    <label class="field-label">餐厅代号（URL 用，只能小写字母/数字/下划线）</label>
+    <input type="text" id="create-id" placeholder="例如 milano">
+    <label class="field-label">餐厅名称</label>
+    <input type="text" id="create-name" placeholder="例如 YIO Fish Milano">
+    <label class="field-label">初始管理员密码（至少 4 位）</label>
+    <input type="text" id="create-pw" placeholder="给这家店设个管理员密码">
+    <label class="field-label">试用天数</label>
+    <input type="number" id="create-trial" value="60" min="1">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create')">取消</button>
+      <button class="btn btn-gold" onclick="saveCreate()">创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// 配置
+// ============================================================
+const WORKER_URL = 'https://yki-api.ykicucina.workers.dev';
+let TOKEN = '';
+let RESTAURANTS = [];
+
+// ============================================================
+// 通用：API 请求
+// ============================================================
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const res = await fetch(WORKER_URL + path, { ...opts, headers });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (res.status === 401 && TOKEN) {
+    toast('登录已过期，请重新登录', 'err');
+    setTimeout(() => location.reload(), 1600);
+    throw new Error('登录已过期');
+  }
+  if (!res.ok) throw new Error(data.error || ('请求失败 ' + res.status));
+  return data;
+}
+
+// ============================================================
+// toast 提示
+// ============================================================
+let _toastTimer = null;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = type; }, 2800);
+}
+
+// ============================================================
+// 登录
+// ============================================================
+async function doLogin() {
+  const pw = document.getElementById('pw').value;
+  if (!pw) { toast('请输入密码', 'err'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = '登录中…';
+  try {
+    const res = await fetch(WORKER_URL + '/platform/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.token) {
+      throw new Error(data.error || '登录失败');
+    }
+    TOKEN = data.token;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message || '登录失败', 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = '登录';
+}
+
+// ============================================================
+// 加载餐厅列表
+// ============================================================
+async function loadRestaurants() {
+  const list = document.getElementById('restaurant-list');
+  list.innerHTML = '<div class="loading">加载中…</div>';
+  try {
+    RESTAURANTS = await api('/platform/restaurants');
+    renderRestaurants();
+  } catch (e) {
+    list.innerHTML = '<div class="empty">加载失败：' + e.message + '</div>';
+  }
+}
+
+// 计算到期剩余天数
+function daysLeft(expires_at) {
+  if (!expires_at) return null;
+  const diff = new Date(expires_at) - new Date();
+  return Math.ceil(diff / (24 * 3600 * 1000));
+}
+
+function renderRestaurants() {
+  // 统计条
+  const total = RESTAURANTS.length;
+  const activeN = RESTAURANTS.filter(r => r.status === 'active').length;
+  const suspN = RESTAURANTS.filter(r => r.status === 'suspended').length;
+  const pendN = RESTAURANTS.filter(r => r.status === 'pending').length;
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat"><div class="num gold">${total}</div><div class="lbl">餐厅总数</div></div>
+    <div class="stat"><div class="num green">${activeN}</div><div class="lbl">正常运营</div></div>
+    <div class="stat"><div class="num red">${suspN}</div><div class="lbl">已暂停</div></div>
+    ${pendN > 0 ? `<div class="stat"><div class="num" style="color:var(--gold)">${pendN}</div><div class="lbl">待审核</div></div>` : ''}`;
+
+  const list = document.getElementById('restaurant-list');
+  if (!RESTAURANTS.length) {
+    list.innerHTML = '<div class="empty">还没有餐厅。点右上角"新增餐厅"创建第一家。</div>';
+    return;
+  }
+
+  // 排序：pending 在最上（最显眼），其次 active，最后 suspended
+  const statusOrder = { pending: 0, active: 1, suspended: 2 };
+  const sorted = [...RESTAURANTS].sort((a, b) =>
+    (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3)
+  );
+
+  list.innerHTML = sorted.map(r => {
+    // pending 卡片：完全不同的布局（突出联系方式 + 一键通过）
+    if (r.status === 'pending') {
+      return `
+      <div class="rest-card pending">
+        <div class="rest-top">
+          <div>
+            <div class="rest-name">${escapeHtml(r.name || '(未命名)')}</div>
+            <div class="rest-id mono">${escapeHtml(r.id)}</div>
+          </div>
+          <span class="badge pending">⏳ 待审核</span>
+        </div>
+        <div class="contact-row">📞 联系方式：<strong>${escapeHtml(r.contact || '(未填写)')}</strong></div>
+        <div class="rest-actions">
+          <button class="btn btn-green btn-sm" onclick="approveRestaurant('${r.id}','${escapeHtml(r.name||'')}')">✅ 通过审核（启用 60 天试用）</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRestaurant('${r.id}','${escapeHtml(r.name||'')}')">🗑️ 删除</button>
+        </div>
+      </div>`;
+    }
+
+    // 正常卡片（active / suspended）
+    const dl = daysLeft(r.expires_at);
+    let expireHtml;
+    if (!r.expires_at) {
+      expireHtml = '<span class="v">永不过期</span>';
+    } else if (dl < 0) {
+      expireHtml = `<span class="v danger">已过期</span>`;
+    } else if (dl <= 7) {
+      expireHtml = `<span class="v warn">${r.expires_at}（剩 ${dl} 天）</span>`;
+    } else {
+      expireHtml = `<span class="v">${r.expires_at}（剩 ${dl} 天）</span>`;
+    }
+    const suspended = r.status === 'suspended';
+    return `
+    <div class="rest-card ${suspended ? 'suspended' : ''}">
+      <div class="rest-top">
+        <div>
+          <div class="rest-name">${escapeHtml(r.name || '(未命名)')}</div>
+          <div class="rest-id mono">${escapeHtml(r.id)}</div>
+        </div>
+        <span class="badge ${r.status}">${suspended ? '已暂停' : '正常'}</span>
+      </div>
+      <div class="rest-meta">
+        <div class="meta-item"><div class="k">到期</div>${expireHtml}</div>
+        <div class="meta-item"><div class="k">员工</div><div class="v">${r.chef_count ?? 0}</div></div>
+        <div class="meta-item"><div class="k">订单</div><div class="v">${r.order_count ?? 0}</div></div>
+      </div>
+      <div class="rest-actions">
+        ${suspended
+          ? `<button class="btn btn-green btn-sm" onclick="toggleStatus('${r.id}','active')">恢复</button>`
+          : `<button class="btn btn-danger btn-sm" onclick="toggleStatus('${r.id}','suspended')">暂停</button>`}
+        <button class="btn btn-ghost btn-sm" onclick="openExpire('${r.id}')">改到期日</button>
+        <button class="btn btn-ghost btn-sm" onclick="openReset('${r.id}')">重置密码</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRestaurant('${r.id}','${escapeHtml(r.name||'')}')" style="margin-left:auto;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function findRest(id) { return RESTAURANTS.find(r => r.id === id); }
+
+// ============================================================
+// 注册审批：通过 / 拒绝
+// ============================================================
+async function approveRestaurant(id, name) {
+  // 计算到期日：今天 + 60 天，格式 yyyy-mm-dd
+  const d = new Date();
+  d.setDate(d.getDate() + 60);
+  const expires_at = d.toISOString().slice(0, 10);
+
+  if (!confirm(`确定通过「${name}」的注册？\n\n• 试用期截止：${expires_at}（60 天）\n• 自动从 carpi 模板复制食材、供应商、功能开关\n• 库存清零，旧图片可继续显示`)) return;
+  try {
+    const data = await api('/platform/approve', {
+      method: 'POST',
+      body: JSON.stringify({
+        restaurantId: id,
+        expires_at,
+        templateId: 'carpi'
+      })
+    });
+    toast(`✅ 已通过「${name}」 · 食材 ${data.copiedItems || 0} · 供应商 ${data.copiedSuppliers || 0}${data.copiedFlags ? ' · 开关已复制' : ''}`, 'ok');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function rejectRestaurant(id, name) {
+  if (!confirm(`确定拒绝「${name}」的注册？\n\n这会暂停该账户（数据保留，可后续恢复或删除）`)) return;
+  try {
+    await api('/platform/update', {
+      method: 'POST',
+      body: JSON.stringify({ restaurantId: id, status: 'suspended' })
+    });
+    toast(`已拒绝「${name}」`, 'ok');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 删除餐厅（不可逆！清除所有相关数据）
+// ============================================================
+async function deleteRestaurant(id, name) {
+  // 第一次确认
+  if (!confirm(`⚠️ 删除「${name}」(${id})\n\n这会永久删除：\n• 该餐厅所有员工账号\n• 所有订单 / 收货记录\n• 所有食材 / 供应商\n• 所有设置 / 推送订阅\n\n此操作不可撤销！`)) return;
+
+  // 第二次确认：必须输入餐厅代号
+  const typed = prompt(`继续？请输入餐厅代号「${id}」确认（区分大小写）：`);
+  if (typed === null) return;
+  if (typed !== id) {
+    toast('代号不匹配，已取消', 'err');
+    return;
+  }
+
+  try {
+    const data = await api('/platform/delete', {
+      method: 'POST',
+      body: JSON.stringify({ restaurantId: id })
+    });
+    toast(`🗑️ 已删除「${name}」`, 'ok');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 暂停 / 恢复
+// ============================================================
+async function toggleStatus(id, newStatus) {
+  const r = findRest(id);
+  const action = newStatus === 'suspended' ? '暂停' : '恢复';
+  if (!confirm(`确定要${action}餐厅「${r.name}」吗？`)) return;
+  try {
+    await api('/platform/update', {
+      method: 'POST',
+      body: JSON.stringify({ restaurantId: id, status: newStatus })
+    });
+    toast(`已${action}「${r.name}」`, 'ok');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 改到期日
+// ============================================================
+let _expireId = '';
+function openExpire(id) {
+  _expireId = id;
+  const r = findRest(id);
+  document.getElementById('expire-rest-name').textContent = r.name + '（' + id + '）';
+  document.getElementById('expire-date').value = r.expires_at || '';
+  document.getElementById('expire-date').disabled = false;
+  document.getElementById('expire-never').checked = false;
+  openModal('modal-expire');
+}
+async function saveExpire() {
+  const never = document.getElementById('expire-never').checked;
+  const date = document.getElementById('expire-date').value;
+  if (!never && !date) { toast('请选择日期', 'err'); return; }
+  try {
+    await api('/platform/update', {
+      method: 'POST',
+      body: JSON.stringify({
+        restaurantId: _expireId,
+        expires_at: never ? null : date
+      })
+    });
+    toast('到期日已更新', 'ok');
+    closeModal('modal-expire');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 重置密码
+// ============================================================
+let _resetId = '';
+function openReset(id) {
+  _resetId = id;
+  const r = findRest(id);
+  document.getElementById('reset-rest-name').textContent = r.name + '（' + id + '）';
+  document.getElementById('reset-target').value = 'admin';
+  document.getElementById('reset-chef-name').value = '';
+  document.getElementById('reset-new-pw').value = '';
+  toggleChefField();
+  openModal('modal-reset');
+}
+function toggleChefField() {
+  const isChef = document.getElementById('reset-target').value === 'chef';
+  document.getElementById('reset-chef-wrap').style.display = isChef ? 'block' : 'none';
+}
+async function saveReset() {
+  const target = document.getElementById('reset-target').value;
+  const newPw = document.getElementById('reset-new-pw').value;
+  const chefName = document.getElementById('reset-chef-name').value.trim();
+  if (newPw.length < 4) { toast('密码至少 4 位', 'err'); return; }
+  if (target === 'chef' && !chefName) { toast('请填员工名字', 'err'); return; }
+  if (!confirm('确定要重置这个密码吗？')) return;
+  try {
+    await api('/platform/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        restaurantId: _resetId,
+        target,
+        chefName: target === 'chef' ? chefName : undefined,
+        newPassword: newPw
+      })
+    });
+    toast('密码已重置', 'ok');
+    closeModal('modal-reset');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 发通知
+// ============================================================
+function openNotify() {
+  document.getElementById('notify-msg').value = '';
+  openModal('modal-notify');
+}
+async function saveNotify() {
+  const msg = document.getElementById('notify-msg').value;
+  try {
+    await api('/platform/notification', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg })
+    });
+    toast(msg ? '通知已发布' : '通知已清除', 'ok');
+    closeModal('modal-notify');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 新增餐厅
+// ============================================================
+function openCreate() {
+  document.getElementById('create-id').value = '';
+  document.getElementById('create-name').value = '';
+  document.getElementById('create-pw').value = '';
+  document.getElementById('create-trial').value = '60';
+  openModal('modal-create');
+}
+async function saveCreate() {
+  const id = document.getElementById('create-id').value.trim().toLowerCase();
+  const name = document.getElementById('create-name').value.trim();
+  const pw = document.getElementById('create-pw').value;
+  const trial = document.getElementById('create-trial').value;
+  if (!id || !name) { toast('请填餐厅代号和名称', 'err'); return; }
+  if (!/^[a-z0-9_]+$/.test(id)) { toast('代号只能用小写字母/数字/下划线', 'err'); return; }
+  if (pw.length < 4) { toast('初始密码至少 4 位', 'err'); return; }
+  try {
+    const d = await api('/platform/create', {
+      method: 'POST',
+      body: JSON.stringify({ id, name, adminPassword: pw, trialDays: parseInt(trial) || 60 })
+    });
+    toast('餐厅「' + name + '」已创建', 'ok');
+    closeModal('modal-create');
+    await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 弹窗开关
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+// 点遮罩关闭
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => {
+    if (e.target === ov) ov.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>

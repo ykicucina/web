@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="YIO CucinaFlow — 专为意式餐厅设计的智能订货系统 · Sistema intelligente di gestione ordini per ristoranti">
+<title>YIO CucinaFlow — 餐厅订货数字化 · Gestione Ordini Digitale</title>
+<link rel="icon" href="/logo.png" type="image/png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+    color: #2c2418; line-height: 1.6;
+    background: #fff; -webkit-font-smoothing: antialiased;
+  }
+
+  /* 双语切换 */
+  body.lang-it .lang-zh { display: none !important; }
+  body.lang-zh .lang-it { display: none !important; }
+
+  /* === 顶部导航 === */
+  nav.topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #f0e8d4;
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .nav-logo {
+    height: 32px; width: auto; display: block;
+  }
+  .nav-spacer { flex: 1; }
+  .lang-toggle {
+    display: flex; background: #faf6ed; border-radius: 6px;
+    padding: 2px; gap: 2px; font-size: 13px;
+  }
+  .lang-btn {
+    padding: 6px 10px; cursor: pointer; border-radius: 4px;
+    color: #8a7858; transition: all 0.15s; border: 0; background: transparent;
+    font-family: inherit; font-weight: 500;
+  }
+  .lang-btn.active { background: #fff; color: #c9a961; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-cta {
+    padding: 8px 18px; background: #c9a961; color: #fff;
+    border-radius: 8px; font-size: 14px; font-weight: 600;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-cta:hover { background: #b3924c; box-shadow: 0 2px 8px rgba(201,169,97,0.35); }
+
+  /* === HERO === */
+  section.hero {
+    background: linear-gradient(180deg, #faf6ed 0%, #f5ecd0 100%);
+    padding: 60px 20px 80px;
+    overflow: hidden;
+  }
+  .hero-wrap {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+  }
+  .hero-text h1 {
+    font-size: 44px; font-weight: 800; line-height: 1.15;
+    color: #2c2418; letter-spacing: -0.5px;
+    margin-bottom: 16px;
+  }
+  .hero-text h1 .gold { color: #c9a961; }
+  .hero-text p.sub {
+    font-size: 18px; color: #5a4f3a;
+    margin-bottom: 32px; max-width: 460px;
+  }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 32px; font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, #c9a961, #b3924c);
+    color: #fff; border-radius: 12px; text-decoration: none;
+    box-shadow: 0 6px 20px rgba(201,169,97,0.35);
+    transition: all 0.2s;
+  }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,169,97,0.45); }
+  .hero-meta {
+    margin-top: 16px; font-size: 13px; color: #8a7858;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Hero 右侧手机 mockup */
+  .phone-mockup {
+    width: 280px; height: 560px;
+    background: #2c2418; border-radius: 36px;
+    padding: 12px; margin: 0 auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.15);
+    position: relative;
+  }
+  .phone-mockup::before {
+    content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    width: 90px; height: 22px; background: #2c2418; border-radius: 12px; z-index: 2;
+  }
+  .phone-screen {
+    width: 100%; height: 100%; background: #faf6ed;
+    border-radius: 26px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background-image: url('/screenshots/hero-mobile.png');
+    background-size: cover; background-position: top center;
+  }
+  .phone-screen-placeholder {
+    text-align: center; color: #c9a961; padding: 20px;
+  }
+  .phone-screen-placeholder .icon { font-size: 64px; margin-bottom: 8px; }
+  .phone-screen-placeholder .label { font-size: 13px; color: #8a7858; }
+
+  /* === PAIN（痛点） === */
+  section.pain {
+    padding: 80px 20px;
+    background: #fff;
+  }
+  .pain-wrap { max-width: 1000px; margin: 0 auto; text-align: center; }
+  .section-title {
+    font-size: 32px; font-weight: 700; color: #2c2418;
+    margin-bottom: 12px; letter-spacing: -0.3px;
+  }
+  .section-sub {
+    font-size: 16px; color: #8a7858; margin-bottom: 40px;
+  }
+  .pain-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-top: 32px;
+  }
+  .pain-card {
+    background: #faf6ed; border-radius: 14px; padding: 24px 18px;
+    text-align: center;
+  }
+  .pain-card .icon { font-size: 36px; margin-bottom: 10px; display: block; }
+  .pain-card .title { font-weight: 600; color: #2c2418; font-size: 15px; }
+
+  /* === FEATURES === */
+  section.features {
+    padding: 80px 20px;
+    background: linear-gradient(180deg, #faf6ed 0%, #fff 100%);
+  }
+  .features-wrap { max-width: 1100px; margin: 0 auto; }
+  .features-head { text-align: center; margin-bottom: 48px; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  .feature-card {
+    background: #fff; border-radius: 14px; padding: 28px 24px;
+    border: 1px solid #f0e8d4;
+    transition: all 0.2s;
+  }
+  .feature-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,150,100,0.12); }
+  .feature-card .icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: linear-gradient(135deg, #fdf5e0, #f5ecd0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 14px;
+  }
+  .feature-card .title { font-weight: 700; color: #2c2418; margin-bottom: 6px; font-size: 17px; }
+  .feature-card .desc { font-size: 14px; color: #5a4f3a; line-height: 1.6; }
+
+  /* === WORKFLOW === */
+  section.workflow {
+    padding: 80px 20px;
+    background: #fff;
+  }
+  .workflow-wrap { max-width: 1000px; margin: 0 auto; }
+  .workflow-head { text-align: center; margin-bottom: 48px; }
+  .workflow-steps {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+    align-items: start;
+  }
+  .step {
+    text-align: center; padding: 24px;
+    position: relative;
+  }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #c9a961, #b3924c);
+    color: #fff; font-size: 24px; font-weight: 700;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 16px rgba(201,169,97,0.35);
+  }
+  .step .title { font-weight: 700; font-size: 17px; color: #2c2418; margin-bottom: 6px; }
+  .step .desc { font-size: 14px; color: #5a4f3a; }
+
+  /* === GALLERY === */
+  section.gallery {
+    padding: 80px 20px;
+    background: linear-gradient(180deg, #fff 0%, #faf6ed 100%);
+  }
+  .gallery-wrap { max-width: 1100px; margin: 0 auto; }
+  .gallery-head { text-align: center; margin-bottom: 48px; }
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+  }
+  .gallery-item {
+    background: #fff; border-radius: 16px; padding: 20px;
+    box-shadow: 0 4px 16px rgba(180,150,100,0.1);
+    border: 1px solid #f0e8d4;
+  }
+  .gallery-item .label {
+    font-size: 13px; font-weight: 600; color: #c9a961;
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .gallery-item .title { font-size: 17px; font-weight: 700; color: #2c2418; margin-bottom: 14px; }
+  .screenshot-placeholder {
+    aspect-ratio: 9 / 18; background: #2c2418; border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: #c9a961; font-size: 32px;
+    background-size: cover; background-position: top center;
+    overflow: hidden;
+    max-width: 260px; margin: 0 auto;
+    padding: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  .screenshot-placeholder > .screen-inner {
+    width: 100%; height: 100%; border-radius: 14px; overflow: hidden;
+    background-size: cover; background-position: top center;
+    background-color: #faf6ed;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #scr-1 .screen-inner { background-image: url('/screenshots/order.png'); }
+  #scr-2 .screen-inner { background-image: url('/screenshots/inventory.png'); }
+  #scr-3 .screen-inner { background-image: url('/screenshots/orders.png'); }
+  #scr-4 .screen-inner { background-image: url('/screenshots/report.png'); }
+
+  /* === SOCIAL PROOF（客户数字） === */
+  section.proof {
+    padding: 60px 20px;
+    background: #faf6ed;
+    text-align: center;
+  }
+  .proof-wrap { max-width: 800px; margin: 0 auto; }
+  .proof-num { font-size: 48px; font-weight: 800; color: #c9a961; margin-bottom: 6px; }
+  .proof-label { font-size: 16px; color: #5a4f3a; }
+
+  /* === TRUST BAR === */
+  section.trust {
+    padding: 32px 20px;
+    background: #fff;
+    border-top: 1px solid #f0e8d4;
+    border-bottom: 1px solid #f0e8d4;
+  }
+  .trust-wrap {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    text-align: center;
+  }
+  .trust-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: #5a4f3a; font-size: 13px;
+  }
+  .trust-icon { font-size: 28px; }
+  .trust-text { font-weight: 600; color: #2c2418; }
+  @media (max-width: 640px) {
+    .trust-wrap { grid-template-columns: repeat(2, 1fr); gap: 24px 12px; }
+  }
+
+  /* === TESTIMONIALS === */
+  section.testimonials {
+    padding: 80px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #faf6ed 100%);
+  }
+  .testimonials-wrap { max-width: 1200px; margin: 0 auto; }
+  .testimonial-grid {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 22px;
+  }
+  .testimonial {
+    background: #fff; border-radius: 14px; padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #f0e8d4;
+    display: flex; flex-direction: column; gap: 14px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .testimonial:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(201,169,97,0.18);
+    border-color: #e8d8a8;
+  }
+  .testimonial-stars { color: #f5b800; font-size: 16px; letter-spacing: 2px; }
+  .testimonial-text {
+    color: #2c2418; font-size: 14.5px; line-height: 1.65; font-style: italic;
+    flex: 1;
+  }
+  .testimonial-author {
+    display: flex; align-items: center; gap: 12px;
+    padding-top: 14px; border-top: 1px solid #f0e8d4;
+  }
+  .testimonial-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+    flex-shrink: 0;
+  }
+  .testimonial-avatar.c1 { background: linear-gradient(135deg, #c9a961, #d4b878); }
+  .testimonial-avatar.c2 { background: linear-gradient(135deg, #5e9a8e, #7ab3a6); }
+  .testimonial-avatar.c3 { background: linear-gradient(135deg, #c9785e, #d99478); }
+  .testimonial-avatar.c4 { background: linear-gradient(135deg, #6e7fa8, #8a9bc0); }
+  .testimonial-avatar.c5 { background: linear-gradient(135deg, #a87cc9, #c298d9); }
+  .testimonial-name { font-weight: 700; color: #2c2418; font-size: 14px; }
+  .testimonial-role { color: #8a7858; font-size: 12px; margin-top: 2px; }
+  /* auto-fill 自动响应，无需额外 media query */
+
+  /* === PRICING === */
+  section.pricing {
+    padding: 80px 20px;
+    background: #faf6ed;
+  }
+  .pricing-wrap { max-width: 900px; margin: 0 auto; }
+  .pricing-grid {
+    margin-top: 40px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  .plan {
+    background: #fff; border-radius: 14px; padding: 32px 28px;
+    border: 2px solid #f0e8d4;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .plan.featured {
+    border-color: #c9a961;
+    box-shadow: 0 8px 32px rgba(201,169,97,0.18);
+    transform: translateY(-4px);
+  }
+  .plan-badge {
+    position: absolute; top: -12px; left: 28px;
+    background: #c9a961; color: #fff;
+    padding: 4px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .plan-badge.dim { background: #b8a78a; }
+  .plan h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .plan-price {
+    font-size: 42px; font-weight: 800; color: #c9a961;
+    margin: 8px 0 20px;
+  }
+  .plan-price span { font-size: 16px; color: #8a7858; font-weight: 500; }
+  .plan-features {
+    list-style: none; padding: 0; margin: 0 0 24px;
+  }
+  .plan-features li {
+    padding: 8px 0; color: #5a4f3a; font-size: 14.5px;
+    border-bottom: 1px dashed #f0e8d4;
+  }
+  .plan-features li:last-child { border-bottom: 0; }
+  .plan-cta {
+    margin-top: auto;
+    padding: 14px 24px; border-radius: 10px;
+    background: #c9a961; color: #fff;
+    text-align: center; text-decoration: none;
+    font-weight: 700; font-size: 15px;
+    transition: all 0.15s;
+  }
+  .plan-cta:hover { background: #b3924c; box-shadow: 0 4px 12px rgba(201,169,97,0.35); }
+  .plan-note { color: #8a7858; font-size: 13px; font-style: italic; margin-bottom: 12px; }
+  @media (max-width: 720px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+    .plan.featured { transform: none; }
+  }
+
+  /* === FINAL CTA === */
+  section.final-cta {
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #2c2418 0%, #4a3c28 100%);
+    color: #fff; text-align: center;
+  }
+  .final-cta h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+  .final-cta p { font-size: 17px; color: #d4c9b0; margin-bottom: 32px; }
+  .final-cta .hero-cta { background: #c9a961; color: #2c2418; }
+  .final-cta .meta { margin-top: 16px; color: #b3a587; font-size: 13px; }
+
+  /* === FAQ === */
+  section.faq {
+    padding: 80px 20px;
+    background: #fff;
+  }
+  .faq-wrap { max-width: 760px; margin: 0 auto; }
+  .faq-head { text-align: center; margin-bottom: 40px; }
+  .faq-item {
+    border-bottom: 1px solid #f0e8d4;
+    padding: 18px 0;
+  }
+  .faq-q {
+    font-weight: 600; color: #2c2418; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 16px;
+    list-style: none;
+  }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::after {
+    content: '+'; font-size: 24px; color: #c9a961; font-weight: 400;
+    transition: transform 0.2s;
+  }
+  details[open] .faq-q::after { transform: rotate(45deg); }
+  .faq-a {
+    margin-top: 12px; color: #5a4f3a; font-size: 15px; line-height: 1.7;
+  }
+
+  /* === FOOTER === */
+  footer {
+    background: #2c2418; color: #d4c9b0;
+    padding: 40px 20px 24px;
+    text-align: center;
+  }
+  footer .foot-logo {
+    height: 40px; width: auto; display: inline-block;
+    margin-bottom: 18px;
+  }
+  footer .whatsapp-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; background: #25d366; color: #fff;
+    border-radius: 24px; text-decoration: none; font-weight: 600;
+    transition: all 0.15s;
+  }
+  footer .whatsapp-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37,211,102,0.4); }
+  footer .copyright {
+    margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(212,201,176,0.15);
+    font-size: 12px; color: #8a7858;
+  }
+
+  /* === 响应式 === */
+  @media (max-width: 880px) {
+    .hero-wrap { grid-template-columns: 1fr; gap: 40px; }
+    .hero-text { text-align: center; }
+    .hero-text p.sub { margin-left: auto; margin-right: auto; }
+    .hero-text h1 { font-size: 36px; }
+    .phone-mockup { width: 240px; height: 480px; }
+    .pain-grid { grid-template-columns: 1fr 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .workflow-steps { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .section-title { font-size: 26px; }
+    .final-cta h2 { font-size: 28px; }
+  }
+</style>
+</head>
+<body class="lang-zh">
+
+<!-- ===== 顶部导航 ===== -->
+<nav class="topbar">
+  <img class="nav-logo" src="/logo-c.png" alt="YIO">
+  <span class="nav-spacer"></span>
+  <div class="lang-toggle">
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+    <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+  </div>
+  <a class="nav-cta" href="/register.html">
+    <span class="lang-zh">注册</span>
+    <span class="lang-it">Registrati</span>
+  </a>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-wrap">
+    <div class="hero-text">
+      <h1>
+        <span class="lang-zh">餐厅订货<br><span class="gold">从此井井有条</span></span>
+        <span class="lang-it">Gli ordini in cucina<br><span class="gold">finalmente ordinati</span></span>
+      </h1>
+      <p class="sub">
+        <span class="lang-zh">专为意式餐厅设计的智能订货系统。告别纸笔和混乱的 WhatsApp 群，让厨房、采购、管理一气呵成。</span>
+        <span class="lang-it">Il sistema intelligente di gestione ordini progettato per ristoranti italiani. Basta carta e gruppi WhatsApp caotici — cucina, acquisti e gestione finalmente integrati.</span>
+      </p>
+      <a class="hero-cta" href="/register.html">
+        <span class="lang-zh">🚀 立即免费使用</span>
+        <span class="lang-it">🚀 Inizia gratis ora</span>
+      </a>
+      <div class="hero-meta">
+        ✓ <span class="lang-zh">无需信用卡 · 1 分钟开通</span>
+        <span class="lang-it">Senza carta di credito · Attivazione in 1 minuto</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-mockup">
+        <div class="phone-screen"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRUST BAR ===== -->
+<section class="trust">
+  <div class="trust-wrap">
+    <div class="trust-item">
+      <div class="trust-icon">🔒</div>
+      <div class="trust-text">
+        <span class="lang-zh">银行级加密</span>
+        <span class="lang-it">Cifratura bancaria</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">🇪🇺</div>
+      <div class="trust-text">
+        <span class="lang-zh">EU 数据中心</span>
+        <span class="lang-it">Server in UE</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">⚡</div>
+      <div class="trust-text">
+        <span class="lang-zh">99.9% 在线</span>
+        <span class="lang-it">99,9% uptime</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">💬</div>
+      <div class="trust-text">
+        <span class="lang-zh">1 小时客服响应</span>
+        <span class="lang-it">Risposta entro 1h</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PAIN 痛点 ===== -->
+<section class="pain">
+  <div class="pain-wrap">
+    <h2 class="section-title">
+      <span class="lang-zh">你的厨房，是不是这样？</span>
+      <span class="lang-it">La tua cucina ha questi problemi?</span>
+    </h2>
+    <p class="section-sub">
+      <span class="lang-zh">90% 的意式餐厅都在用这些方式订货，效率低又容易出错</span>
+      <span class="lang-it">Il 90% dei ristoranti italiani gestisce gli ordini così — lento e pieno di errori</span>
+    </p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <span class="icon">📝</span>
+        <div class="title">
+          <span class="lang-zh">纸笔订货乱</span>
+          <span class="lang-it">Carta e penna caotici</span>
+        </div>
+      </div>
+      <div class="pain-card">
+        <span class="icon">💬</span>
+        <div class="title">
+          <span class="lang-zh">WhatsApp 沟通混乱</span>
+          <span class="lang-it">WhatsApp pieno di messaggi</span>
+        </div>
+      </div>
+      <div class="pain-card">
+        <span class="icon">📊</span>
+        <div class="title">
+          <span class="lang-zh">库存盘点丢失</span>
+          <span class="lang-it">Inventario perso</span>
+        </div>
+      </div>
+      <div class="pain-card">
+        <span class="icon">🔁</span>
+        <div class="title">
+          <span class="lang-zh">厨师重复订货</span>
+          <span class="lang-it">Ordini duplicati</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES 功能 ===== -->
+<section class="features">
+  <div class="features-wrap">
+    <div class="features-head">
+      <h2 class="section-title">
+        <span class="lang-zh">6 大核心功能</span>
+        <span class="lang-it">6 Funzionalità chiave</span>
+      </h2>
+      <p class="section-sub">
+        <span class="lang-zh">为意式餐厅量身定制 · 不是泛用工具</span>
+        <span class="lang-it">Su misura per ristoranti italiani · Non uno strumento generico</span>
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">📱</div>
+        <div class="title">
+          <span class="lang-zh">手机优先 · PWA 离线可用</span>
+          <span class="lang-it">Mobile First · PWA offline</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">添加到手机主屏幕像 App 一样用，地铁里 WiFi 不好也能继续操作。</span>
+          <span class="lang-it">Si installa come un'app sul telefono. Funziona anche senza connessione stabile.</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌐</div>
+        <div class="title">
+          <span class="lang-zh">三语言切换</span>
+          <span class="lang-it">Trilingue</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">中文 · 意大利文 · 孟加拉语，每个员工用自己的母语。</span>
+          <span class="lang-it">Cinese · Italiano · Bengalese. Ogni dipendente nella propria lingua madre.</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔔</div>
+        <div class="title">
+          <span class="lang-zh">实时推送通知</span>
+          <span class="lang-it">Notifiche in tempo reale</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">厨师提交订货 → 采购员手机立刻收到推送。收货完成 → 管理员马上知道。</span>
+          <span class="lang-it">Il cuoco invia un ordine → il buyer riceve subito una notifica. Consegna confermata → il manager lo sa istantaneamente.</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🛒</div>
+        <div class="title">
+          <span class="lang-zh">智能订货</span>
+          <span class="lang-it">Ordini intelligenti</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">库存低于安全线自动提醒 · 今日周期食材高亮 · 重复订货自动合并。</span>
+          <span class="lang-it">Avviso automatico quando le scorte sono basse. Ingredienti del giorno evidenziati. Ordini duplicati uniti automaticamente.</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <div class="title">
+          <span class="lang-zh">报表分析</span>
+          <span class="lang-it">Report e analisi</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">月度采购金额、供应商分布、库存周转，老板一眼看清。</span>
+          <span class="lang-it">Spesa mensile, fornitori principali, rotazione inventario — il titolare ha tutto in vista.</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">👥</div>
+        <div class="title">
+          <span class="lang-zh">角色权限</span>
+          <span class="lang-it">Ruoli e permessi</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">厨师只看自己负责的食材 · 采购员看全部订单 · 管理员管全局。</span>
+          <span class="lang-it">Il cuoco vede solo i suoi ingredienti. Il buyer vede tutti gli ordini. Il manager controlla tutto.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WORKFLOW 流程 ===== -->
+<section class="workflow">
+  <div class="workflow-wrap">
+    <div class="workflow-head">
+      <h2 class="section-title">
+        <span class="lang-zh">简单 3 步，订货完成</span>
+        <span class="lang-it">3 passi semplici per un ordine</span>
+      </h2>
+    </div>
+    <div class="workflow-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="title">
+          <span class="lang-zh">厨师提交订货</span>
+          <span class="lang-it">Il cuoco invia l'ordine</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">手机上勾选食材、填数量，一键提交。系统自动按供应商分组。</span>
+          <span class="lang-it">Seleziona ingredienti dal telefono, indica le quantità, invia. Il sistema raggruppa per fornitore.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="title">
+          <span class="lang-zh">采购员审核</span>
+          <span class="lang-it">Il buyer conferma</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">收到推送，确认订单，WhatsApp 一键发给供应商。</span>
+          <span class="lang-it">Riceve la notifica, conferma e invia su WhatsApp al fornitore con un click.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="title">
+          <span class="lang-zh">收货核对</span>
+          <span class="lang-it">Verifica della consegna</span>
+        </div>
+        <div class="desc">
+          <span class="lang-zh">货到了，逐项核对实收数量，库存自动更新。</span>
+          <span class="lang-it">Quando arriva la merce, verifica le quantità — l'inventario si aggiorna in automatico.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GALLERY 截图 ===== -->
+<section class="gallery">
+  <div class="gallery-wrap">
+    <div class="gallery-head">
+      <h2 class="section-title">
+        <span class="lang-zh">真实的产品界面</span>
+        <span class="lang-it">Schermate reali</span>
+      </h2>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item">
+        <div class="label">
+          <span class="lang-zh">订货系统</span>
+          <span class="lang-it">Ordini</span>
+        </div>
+        <div class="title">
+          <span class="lang-zh">勾选 → 数量 → 提交</span>
+          <span class="lang-it">Seleziona → Quantità → Invia</span>
+        </div>
+        <div class="screenshot-placeholder" id="scr-1"><div class="screen-inner"></div></div>
+      </div>
+      <div class="gallery-item">
+        <div class="label">
+          <span class="lang-zh">库存管理</span>
+          <span class="lang-it">Inventario</span>
+        </div>
+        <div class="title">
+          <span class="lang-zh">一眼看清库存状态</span>
+          <span class="lang-it">Tutto l'inventario a colpo d'occhio</span>
+        </div>
+        <div class="screenshot-placeholder" id="scr-2"><div class="screen-inner"></div></div>
+      </div>
+      <div class="gallery-item">
+        <div class="label">
+          <span class="lang-zh">订单系统</span>
+          <span class="lang-it">Storico ordini</span>
+        </div>
+        <div class="title">
+          <span class="lang-zh">追踪每一笔订单</span>
+          <span class="lang-it">Tracciamento di ogni ordine</span>
+        </div>
+        <div class="screenshot-placeholder" id="scr-3"><div class="screen-inner"></div></div>
+      </div>
+      <div class="gallery-item">
+        <div class="label">
+          <span class="lang-zh">报表分析</span>
+          <span class="lang-it">Report</span>
+        </div>
+        <div class="title">
+          <span class="lang-zh">月度数据一目了然</span>
+          <span class="lang-it">Statistiche mensili chiare</span>
+        </div>
+        <div class="screenshot-placeholder" id="scr-4"><div class="screen-inner"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOCIAL PROOF 数字 ===== -->
+<section class="proof">
+  <div class="proof-wrap">
+    <div class="proof-num">300+</div>
+    <div class="proof-label">
+      <span class="lang-zh">已服务于意大利餐厅</span>
+      <span class="lang-it">Ristoranti italiani lo usano già</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS 客户证言 ===== -->
+<section class="testimonials">
+  <div class="testimonials-wrap">
+    <h2 class="section-title">
+      <span class="lang-zh">客户怎么说</span>
+      <span class="lang-it">Cosa dicono i clienti</span>
+    </h2>
+    <div class="testimonial-grid">
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"以前用纸笔记订单天天乱套，现在厨师手机点几下，仓库立刻知道。每天早上省 30 分钟。"</span>
+          <span class="lang-it">"Prima usavamo carta e penna, era un caos quotidiano. Ora lo chef tocca lo schermo e il magazzino lo sa subito. Risparmiamo 30 minuti ogni mattina."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c1">M</div>
+          <div>
+            <div class="testimonial-name">Marco R.</div>
+            <div class="testimonial-role">Chef · Carpi (MO)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"第一次能直接看到每月的采购金额和供应商分布。月底对账省了 3 个小时。"</span>
+          <span class="lang-it">"Per la prima volta vedo a colpo d'occhio la spesa mensile e i fornitori principali. A fine mese risparmio 3 ore di chiusura."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c2">S</div>
+          <div>
+            <div class="testimonial-name">Stefano P.</div>
+            <div class="testimonial-role">Titolare · Verona</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"我们厨房有意大利人、中国人和孟加拉人。每个人用自己的母语看食材表，下错单的情况少了 80%。"</span>
+          <span class="lang-it">"In cucina abbiamo italiani, cinesi e bengalesi. Ognuno vede gli ingredienti nella sua lingua: gli errori sono calati dell'80%."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c3">H</div>
+          <div>
+            <div class="testimonial-name">Hassan A.</div>
+            <div class="testimonial-role">Sous Chef · Bologna</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"以前订货靠记忆和电话，老是漏单。现在厨师勾一勾就提交，系统按供应商自动分组，一目了然。"</span>
+          <span class="lang-it">"Prima si ordinava a memoria con telefonate, mancava sempre qualcosa. Ora i cuochi spuntano gli ingredienti e il sistema raggruppa per fornitore. Tutto chiaro a colpo d'occhio."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c4">A</div>
+          <div>
+            <div class="testimonial-name">Anna B.</div>
+            <div class="testimonial-role">Acquisti · Legnago (VR)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"两家店之前各自混乱，现在统一系统。我手机上一目了然，再也不会半夜被电话叫醒说『没东西了』。"</span>
+          <span class="lang-it">"Le mie due sedi erano un caos separato. Ora entrambe usano lo stesso sistema. Lo controllo dal telefono e non vengo più svegliato alle 2 di notte da chiamate disperate."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c5">R</div>
+          <div>
+            <div class="testimonial-name">Roberto C.</div>
+            <div class="testimonial-role">Owner · Padova</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"以前要在 Excel 上手动整理每个供应商的清单。现在系统自动分好，复制粘贴 WhatsApp 就发出去了。"</span>
+          <span class="lang-it">"Prima passavo ore in Excel a separare gli ordini per fornitore. Ora il sistema raggruppa tutto da solo: copio-incollo su WhatsApp e via."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c1">G</div>
+          <div>
+            <div class="testimonial-name">Giulia F.</div>
+            <div class="testimonial-role">Buyer · Milano</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"地下室信号差，但 PWA 离线模式照样能下订单，回到 WiFi 自动同步。这才叫真正接地气。"</span>
+          <span class="lang-it">"In cantina il segnale è scarso, ma la modalità offline PWA continua a funzionare. Si sincronizza appena torno su. Davvero pensato bene."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c2">D</div>
+          <div>
+            <div class="testimonial-name">Davide T.</div>
+            <div class="testimonial-role">Cuoco · Ferrara</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"上手很快，员工 5 分钟就会用。出问题 WhatsApp 联系，1 小时内总有人回复。安心。"</span>
+          <span class="lang-it">"Facilissimo da imparare, lo staff lo usa dopo 5 minuti. Se hai un problema scrivi su WhatsApp e rispondono entro un'ora. Tranquillità totale."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c3">L</div>
+          <div>
+            <div class="testimonial-name">Luca M.</div>
+            <div class="testimonial-role">Owner · Modena</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"供应商送货来，我手机点一下『已收』，缺货的也能记录。月底盘点不再是噩梦。"</span>
+          <span class="lang-it">"Quando arriva la merce, basta un tocco sul telefono per confermare. Anche le mancanze vengono tracciate. La chiusura del mese non è più un incubo."</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c4">W</div>
+          <div>
+            <div class="testimonial-name">Wei L.</div>
+            <div class="testimonial-role">Magazzino · Carpi (MO)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          <span class="lang-zh">"5 个厨师每人负责不同食材区域，订单都汇总到一个屏幕。再也不用喊『谁订了西红柿』。"</span>
+          <span class="lang-it">"5 cuochi, ognuno con la sua sezione di ingredienti. Tutti gli ordini convergono su un'unica schermata. Mai più 'chi ha ordinato i pomodori?'"</span>
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar c5">F</div>
+          <div>
+            <div class="testimonial-name">Francesco M.</div>
+            <div class="testimonial-role">Chef Capo · Brescia</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING 价格透明 ===== -->
+<section class="pricing">
+  <div class="pricing-wrap">
+    <h2 class="section-title">
+      <span class="lang-zh">价格透明</span>
+      <span class="lang-it">Prezzi trasparenti</span>
+    </h2>
+    <p class="section-sub" style="text-align:center;color:#5a4f3a;margin-top:8px;">
+      <span class="lang-zh">现阶段所有功能完全免费，没有时间限制。</span>
+      <span class="lang-it">Tutte le funzionalità sono gratis, senza scadenze.</span>
+    </p>
+    <div class="pricing-grid">
+      <div class="plan featured">
+        <div class="plan-badge">
+          <span class="lang-zh">现在</span>
+          <span class="lang-it">ORA</span>
+        </div>
+        <h3>
+          <span class="lang-zh">早期用户专享</span>
+          <span class="lang-it">Primi utenti</span>
+        </h3>
+        <div class="plan-price">€0<span>/<span class="lang-zh">月</span><span class="lang-it">mese</span></span></div>
+        <ul class="plan-features">
+          <li>✓ <span class="lang-zh">所有核心功能</span><span class="lang-it">Tutte le funzionalità</span></li>
+          <li>✓ <span class="lang-zh">无限食材 / 订单 / 员工</span><span class="lang-it">Ingredienti / ordini / dipendenti illimitati</span></li>
+          <li>✓ <span class="lang-zh">数据加密 + 多店分管</span><span class="lang-it">Dati criptati + gestione multi-sede</span></li>
+          <li>✓ <span class="lang-zh">WhatsApp 客服 1 小时响应</span><span class="lang-it">Supporto WhatsApp entro 1h</span></li>
+          <li>✓ <span class="lang-zh">永久免费的早期用户优惠</span><span class="lang-it">Sconto fedeltà permanente</span></li>
+        </ul>
+        <a class="plan-cta" href="/register.html">
+          <span class="lang-zh">立即免费开始</span>
+          <span class="lang-it">Inizia gratis ora</span>
+        </a>
+      </div>
+      <div class="plan">
+        <div class="plan-badge dim">
+          <span class="lang-zh">未来</span>
+          <span class="lang-it">FUTURO</span>
+        </div>
+        <h3>
+          <span class="lang-zh">付费计划</span>
+          <span class="lang-it">Piano a pagamento</span>
+        </h3>
+        <div class="plan-price">€—<span>/<span class="lang-zh">月</span><span class="lang-it">mese</span></span></div>
+        <p class="plan-note">
+          <span class="lang-zh">推出后早期用户享受永久优惠</span>
+          <span class="lang-it">I primi utenti avranno lo sconto permanente</span>
+        </p>
+        <ul class="plan-features">
+          <li>✓ <span class="lang-zh">高级数据分析 + 报表</span><span class="lang-it">Analitiche avanzate + report</span></li>
+          <li>✓ <span class="lang-zh">优先客服支持</span><span class="lang-it">Supporto prioritario</span></li>
+          <li>✓ <span class="lang-zh">自动云备份</span><span class="lang-it">Backup automatico in cloud</span></li>
+          <li>✓ <span class="lang-zh">多店连锁管理</span><span class="lang-it">Gestione catena multi-sede</span></li>
+          <li>✓ <span class="lang-zh">自定义品牌外观</span><span class="lang-it">Branding personalizzato</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="final-cta">
+  <h2>
+    <span class="lang-zh">现在加入早期用户，永久优惠</span>
+    <span class="lang-it">Diventa utente fondatore, sconto a vita</span>
+  </h2>
+  <p>
+    <span class="lang-zh">名额有限 · 早期用户享受永久折扣 · 1 分钟开通</span>
+    <span class="lang-it">Posti limitati · Sconto fedeltà permanente · Attivazione in 1 minuto</span>
+  </p>
+  <a class="hero-cta" href="/register.html">
+    <span class="lang-zh">🎁 立即免费加入</span>
+    <span class="lang-it">🎁 Unisciti gratis ora</span>
+  </a>
+  <div class="meta">
+    <span class="lang-zh">✓ 无需信用卡  ✓ 现阶段完全免费  ✓ 数据安全加密</span>
+    <span class="lang-it">✓ Senza carta  ✓ Gratis al 100%  ✓ Dati protetti</span>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="faq">
+  <div class="faq-wrap">
+    <div class="faq-head">
+      <h2 class="section-title">
+        <span class="lang-zh">常见问题</span>
+        <span class="lang-it">Domande frequenti</span>
+      </h2>
+    </div>
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="lang-zh">价格是多少？</span>
+        <span class="lang-it">Quanto costa il servizio?</span>
+      </summary>
+      <div class="faq-a">
+        <span class="lang-zh">现阶段完全免费使用，没有时间限制。未来推出付费计划时会提前通知，早期用户享受永久优惠折扣。</span>
+        <span class="lang-it">Al momento è completamente gratis, senza limiti di tempo. Quando lanceremo piani a pagamento, te lo comunicheremo in anticipo: gli utenti dei primi giorni avranno uno sconto fedeltà permanente.</span>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="lang-zh">支持哪些设备？</span>
+        <span class="lang-it">Quali dispositivi sono supportati?</span>
+      </summary>
+      <div class="faq-a">
+        <span class="lang-zh">手机（iOS / Android）、平板、电脑都能用。浏览器打开即用，也可以"加到主屏幕"像 App 一样使用。</span>
+        <span class="lang-it">Smartphone (iOS e Android), tablet e computer. Funziona direttamente nel browser e si può aggiungere alla schermata home come un'app.</span>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="lang-zh">能导入现有的食材库存吗？</span>
+        <span class="lang-it">Posso importare l'inventario esistente?</span>
+      </summary>
+      <div class="faq-a">
+        <span class="lang-zh">可以！注册后系统自动从公共食材库（360+ 条意式餐厅常用食材）复制基础数据。也支持 Excel 批量导入。</span>
+        <span class="lang-it">Sì! Al momento della registrazione il sistema copia automaticamente i dati base da una libreria pubblica di oltre 360 ingredienti tipici dei ristoranti italiani. Supporta anche l'import da Excel.</span>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="lang-zh">数据安全吗？</span>
+        <span class="lang-it">I miei dati sono al sicuro?</span>
+      </summary>
+      <div class="faq-a">
+        <span class="lang-zh">数据存储在 EU 区域的加密数据库，每家餐厅数据完全隔离。所有请求经过身份验证 + HTTPS 加密。</span>
+        <span class="lang-it">I dati sono archiviati in un database criptato nell'UE. Ogni ristorante ha i propri dati isolati. Tutte le comunicazioni avvengono via HTTPS con autenticazione.</span>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="lang-zh">遇到问题怎么联系？</span>
+        <span class="lang-it">Come posso contattarvi per assistenza?</span>
+      </summary>
+      <div class="faq-a">
+        <span class="lang-zh">直接通过下面的 WhatsApp 联系我们，工作时间内通常 1 小时内回复。</span>
+        <span class="lang-it">Scrivici su WhatsApp qui sotto — di solito rispondiamo entro 1 ora negli orari lavorativi.</span>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <img class="foot-logo" src="/logo-c.png" alt="YIO">
+  <a class="whatsapp-btn" href="https://wa.me/393778826875?text=Ciao!%20Vorrei%20saperne%20di%20più%20su%20YIO%20CucinaFlow" target="_blank">
+    <span style="font-size:20px;">💬</span>
+    <span class="lang-zh">WhatsApp 联系我们</span>
+    <span class="lang-it">Scrivici su WhatsApp</span>
+  </a>
+  <div class="copyright">
+    © 2025-2026 YIO CucinaFlow · 
+    <span class="lang-zh">专为意式餐厅</span>
+    <span class="lang-it">per ristoranti italiani</span>
+  </div>
+</footer>
+
+<script>
+  // ── 双语切换 ──
+  function setLang(lang) {
+    document.body.classList.remove('lang-zh', 'lang-it');
+    document.body.classList.add('lang-' + lang);
+    document.documentElement.lang = (lang === 'it') ? 'it' : 'zh-CN';
+    document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+    document.getElementById('btn-it').classList.toggle('active', lang === 'it');
+    try { localStorage.setItem('joinLang', lang); } catch(e) {}
+  }
+
+  // 初始化：本地存储 > 浏览器语言 > 默认中文
+  (function() {
+    let saved = null;
+    try { saved = localStorage.getItem('joinLang'); } catch(e) {}
+    if (!saved) {
+      saved = navigator.language && navigator.language.toLowerCase().startsWith('it') ? 'it' : 'zh';
+    }
+    setLang(saved);
+  })();
+</script>
+
+</body>
+</html>
