@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.2';
+const APP_VERSION = 'v2.7.3';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3421,19 +3421,48 @@ async function enterSortMode() {
   _isInSortMode = true;
   _sortDisplayMode = null;  // 让 render 时根据已保存的数据自动判断（flat 还是 grouped）
   // 确保在订货 tab（点编辑按钮时如果在其他 tab，自动切过来）
-  if (typeof switchTab === 'function') {
+  // 注意：switchTab 内部会调用 renderOrderList()，会渲染普通订货 UI；
+  // 必须等同步代码全跑完，再用 setTimeout 让排序 UI 在下一个微任务覆盖订货 UI
+  // 否则可能出现：渲染顺序错乱，DOM 里看不到任何 sort-category
+  if (typeof switchTab === 'function' && currentTab !== 'order') {
     switchTab('order');
   }
   document.getElementById('sort-mode-label').textContent = '✓ 完成排序';
   document.getElementById('btn-sort-mode').style.background = 'var(--primary,#c9a961)';
   document.getElementById('btn-sort-mode').style.color = '#fff';
   document.getElementById('btn-sort-mode').style.borderStyle = 'solid';
-  renderOrderListSortMode();
+  // 用 setTimeout 0 让任何潜在的异步任务（switchTab、Sortable 加载回调）先完成
+  // 避免普通订货 UI 在排序 UI 渲染后被覆盖
+  setTimeout(() => renderOrderListSortMode(), 0);
 }
 
 async function exitSortMode() {
   // 收集当前 DOM 的顺序
   const collected = collectSortFromDOM();
+  
+  // 保护：如果 DOM 完全没渲染（首次进入时序问题），不要保存空数据覆盖已有排序
+  // 判断标准：flat 模式 flatOrder 为空 / grouped 模式 categoryOrder 为空
+  const isEmpty = collected && (
+    (collected.mode === 'flat' && (!collected.flatOrder || collected.flatOrder.length === 0)) ||
+    (collected.mode === 'grouped' && (!collected.categoryOrder || collected.categoryOrder.length === 0))
+  );
+  if (isEmpty && _userSortOrder && (
+    (_userSortOrder.flatOrder && _userSortOrder.flatOrder.length > 0) ||
+    (_userSortOrder.categoryOrder && _userSortOrder.categoryOrder.length > 0)
+  )) {
+    // 之前已有排序，DOM 却是空的 → 不覆盖，直接退出
+    _isInSortMode = false;
+    _sortableInstances.forEach(s => { try { s.destroy(); } catch(e){} });
+    _sortableInstances = [];
+    document.getElementById('sort-mode-label').textContent = '✏️ 编辑我的排序';
+    document.getElementById('btn-sort-mode').style.background = 'transparent';
+    document.getElementById('btn-sort-mode').style.color = 'var(--primary,#c9a961)';
+    document.getElementById('btn-sort-mode').style.borderStyle = 'dashed';
+    toast('未检测到排序变化，保持原有排序');
+    renderOrderList();
+    return;
+  }
+  
   _userSortOrder = collected;
   _isInSortMode = false;
   // 清理 SortableJS 实例
@@ -7687,7 +7716,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.2）
+// Realtime — 长轮询版（v2.7.3）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
