@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.5';
+const APP_VERSION = 'v2.7.6';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2091,6 +2091,27 @@ const i18n = {
     newItem:'নতুন খাবার', addItem:'যোগ করুন',
     importTitle:'ডেটা আমদানি', importSave:'ডেটাবেসে সংরক্ষণ',
     importPreview:'পূর্বদর্শন', importCancel:'বাতিল',
+    // ── P1: 补 bn 缺的 13 个 key（机器翻译，TODO: 待孟加拉员工校对）──
+    allDate:'সব তারিখ', allStaff:'সব কর্মী', export:'রপ্তানি',
+    accountSettings:'অ্যাকাউন্ট সেটিংস', systemSettings:'সিস্টেম',
+    logout:'প্রস্থান', adminFunc:'প্রশাসকের কার্যাবলী',
+    itemMgmt:'পণ্য ব্যবস্থাপনা', supplierWA:'সরবরাহকারী WhatsApp',
+    approveOrder:'অর্ডার অনুমোদন',
+    alertNoOrder:'নিম্নলিখিত কর্মীরা আজও অর্ডার জমা দেয়নি',
+    alertNotSent:'নিম্নলিখিত সরবরাহকারীদের অর্ডার এখনও পাঠানো হয়নি',
+    orderNo:'অর্ডার নম্বর',
+    // ── 补 bn 缺的其他 key（机器翻译，TODO: 待孟加拉员工校对）──
+    today:'আজ', yesterday:'গতকাল', custom:'কাস্টম',
+    selected:'নির্বাচিত', selectAll:'সব নির্বাচন',
+    viewDetail:'বিস্তারিত', ingredients:'উপাদান', totalQty:'মোট',
+    langSettings:'ভাষা সেটিংস',
+    changePass:'পাসওয়ার্ড পরিবর্তন', changePassSub:'লগইন পাসওয়ার্ড পরিবর্তন',
+    logoutSub:'লগইন পৃষ্ঠায় ফিরে যান',
+    staffMgmt:'কর্মী ব্যবস্থাপনা', staffMgmtSub:'কর্মী যোগ, পরিবর্তন, মুছুন',
+    itemMgmtSub:'পণ্য যোগ ও সম্পাদনা',
+    supplierWASub:'সরবরাহকারী যোগাযোগ সেট করুন',
+    filterConsume:'ব্যবহার',
+    orderDate:'তারিখ', orderBy:'অপারেটর',
     days:['','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি','রবি'],
   }
 };
@@ -7716,7 +7737,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.5）
+// Realtime — 长轮询版（v2.7.6）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
