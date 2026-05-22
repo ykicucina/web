@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-// YIO CucinaFlow Service Worker
+// YKI CucinaFlow Service Worker
 // 版本号从注册 URL 的 ?v= 参数读取，单一数据源在 cucina.html
 // ════════════════════════════════════════════════════════════
 
@@ -11,9 +11,9 @@ const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // 启动时立即缓存的核心资源
 const CORE_ASSETS = [
   '/cucina.html',
-  '/manifest-cucina.json',
-  '/logo-c.png',
-  '/icon-c.png',
+  '/manifest.json',
+  '/logo.png',
+  '/icon.png',
 ];
 
 // ── INSTALL：缓存核心资源 + 自动激活（静默升级，不打扰用户） ──
@@ -162,10 +162,10 @@ self.addEventListener('push', e => {
 
     // 没登录或没令牌 → 显示通用通知
     if (!auth || !auth.token) {
-      await self.registration.showNotification('🍽 YIO CucinaFlow', {
+      await self.registration.showNotification('🍽 YKI CucinaFlow', {
         body: '有新动态，打开 App 查看',
-        icon: '/icon-c.png',
-        badge: '/icon-c.png',
+        icon: '/icon.png',
+        badge: '/icon.png',
         tag: 'yki-cucina',
         renotify: true,
       });
@@ -177,7 +177,7 @@ self.addEventListener('push', e => {
     let title, body, badgeCount;
 
     if (!info) {
-      title = '🍽 YIO CucinaFlow';
+      title = '🍽 YKI CucinaFlow';
       body = '有新动态，打开查看';
       badgeCount = 1;
     } else if (info.pending > 0) {
@@ -198,8 +198,8 @@ self.addEventListener('push', e => {
 
     await self.registration.showNotification(title, {
       body,
-      icon: '/icon-c.png',
-      badge: '/icon-c.png',
+      icon: '/icon.png',
+      badge: '/icon.png',
       tag: 'yki-cucina-order',  // 同 tag 替换之前的，不会堆叠
       renotify: true,
       data: { restaurantId: auth.restaurantId || '' },

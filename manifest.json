@@ -1,0 +1,26 @@
+{
+  "name": "YKI CucinaFlow",
+  "short_name": "YKI",
+  "description": "餐厅订货从此井井有条 · Sistema intelligente di gestione ordini per ristoranti",
+  "start_url": "/cucina.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf6ed",
+  "theme_color": "#c9a961",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "food"],
+  "lang": "zh-CN"
+}

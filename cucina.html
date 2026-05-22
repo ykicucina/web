@@ -6,16 +6,16 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>YIO CucinaFlow</title>
+<title>YKI CucinaFlow</title>
 
 <!-- PWA -->
-<link rel="manifest" href="/manifest-cucina.json">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#a67c2d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="后厨系统">
-<link rel="apple-touch-icon" href="/icon-c.png">
+<link rel="apple-touch-icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -607,8 +607,8 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 ══════════════════════════════════ -->
 <div id="screen-login" class="screen active">
   <div class="login-screen">
-    <div class="login-logo"><img src="/logo-c.png" alt="YIO CucinaFlow" style="max-height:80px;max-width:200px;object-fit:contain;"></div>
-    <div class="login-title">YIO CucinaFlow</div>
+    <div class="login-logo"><img src="/logo.png" alt="YKI CucinaFlow" style="max-height:80px;max-width:200px;object-fit:contain;"></div>
+    <div class="login-title">YKI CucinaFlow</div>
     <div class="login-sub" id="login-sub">Cucina Management · Carpi</div>
     <div class="login-card">
       <div class="form-group">
@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.4';
+const APP_VERSION = 'v2.7.5';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1906,7 +1906,7 @@ const i18n = {
     submit:'提交', pending:'待处理', done:'已完成', all:'全部',
     lowStock:'库存不足', ok:'正常', warn:'预警',
     // 登录
-    loginTitle:'YIO CucinaFlow', loginSub:'Cucina Management · Carpi',
+    loginTitle:'YKI CucinaFlow', loginSub:'Cucina Management · Carpi',
     loginSelect:'选择员工 / Seleziona', loginPass:'密码 / Password',
     loginBtn:'进入系统', loginErr:'密码错误，请重试',
     // 库存
@@ -1980,7 +1980,7 @@ const i18n = {
     tabs:['Magazzino','Ordini','Storico','Report','Profilo'],
     submit:'Invia', pending:'In attesa', done:'Completato', all:'Tutto',
     lowStock:'Scorta bassa', ok:'OK', warn:'Attenzione',
-    loginTitle:'YIO CucinaFlow', loginSub:'Cucina Management · Carpi',
+    loginTitle:'YKI CucinaFlow', loginSub:'Cucina Management · Carpi',
     loginSelect:'Seleziona dipendente', loginPass:'Password',
     loginBtn:'Accedi', loginErr:'Password errata, riprova',
     invTitle:'Magazzino', allFood:'Tutti gli alimenti', lowSafeStock:'Sotto scorta minima',
@@ -2045,7 +2045,7 @@ const i18n = {
     tabs:['ইনভেন্টরি','অর্ডার','অর্ডার তালিকা','রিপোর্ট','আমার'],
     submit:'জমা দিন', pending:'অপেক্ষমান', done:'সম্পন্ন', all:'সব',
     lowStock:'কম স্টক', ok:'স্বাভাবিক', warn:'সতর্কতা',
-    loginTitle:'YIO CucinaFlow', loginSub:'Cucina Management · Carpi',
+    loginTitle:'YKI CucinaFlow', loginSub:'Cucina Management · Carpi',
     loginSelect:'কর্মী নির্বাচন করুন', loginPass:'পাসওয়ার্ড',
     loginBtn:'প্রবেশ করুন', loginErr:'পাসওয়ার্ড ভুল, আবার চেষ্টা করুন',
     invTitle:'ইনভেন্টরি', allFood:'সব খাবার', lowSafeStock:'নিরাপদ মজুদের নিচে',
@@ -7716,7 +7716,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.4）
+// Realtime — 长轮询版（v2.7.5）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
