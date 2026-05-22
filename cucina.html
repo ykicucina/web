@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.3';
+const APP_VERSION = 'v2.7.4';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1604,7 +1604,7 @@ const IMG_QUALITY  = 0.50;  // 质量 0~1
 // API 代理（Cloudflare Worker）
 // ════════════════════════════════════════
 // SB_URL 指向 Worker 代理，不再直连 Supabase
-const SB_URL  = 'https://yki-api.ykicucina.workers.dev';
+const SB_URL  = 'https://api.yki.it';
 // SB_KEY 不再是写死的数据库密钥，而是【登录后存放的令牌】
 // 登录前为空字符串；doLogin() 成功后写入 JWT 令牌
 let SB_KEY  = '';
@@ -7716,7 +7716,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.3）
+// Realtime — 长轮询版（v2.7.4）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）

@@ -106,7 +106,7 @@ self.addEventListener('message', e => {
 // Web Push 推送处理（无 payload，SW 收到后自己查状态）
 // ════════════════════════════════════════════════════════════
 
-const WORKER_URL = 'https://yki-api.ykicucina.workers.dev';
+const WORKER_URL = 'https://api.yki.it';
 
 // ── IndexedDB：读主页面登录后写入的 auth ──
 function openAuthDB() {
