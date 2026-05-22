@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.0';
+const APP_VERSION = 'v2.7.1';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2374,6 +2374,10 @@ async function doLogin() {
   // 加载用户的订货排序偏好（跨设备同步）
   await loadUserSortOrder();
 
+  // 加载用户的语言偏好和排序模式偏好（跨设备同步）
+  await loadUserLang();
+  await loadUserSortMode();
+
   btn.disabled = false;
   showApp();
   initRealtime();
@@ -2622,12 +2626,18 @@ function switchTab(tab) {
 function isChinese(str) {
   return /[一-鿿]/.test(str||'');
 }
+// 品名显示优先级（按当前语言）
+// zh：中文优先，回退意语
+// it/bn：意语优先，回退中文（bn 无专门字段）
+const NAME_PRIORITY = {
+  zh: ['name', 'italian'],
+  it: ['italian', 'name'],
+  bn: ['italian', 'name'],
+};
 function displayName(item) {
-  if (isChinese(currentUser)) {
-    return item.name || item.italian || '';
-  } else {
-    return item.italian || item.name || '';
-  }
+  const order = NAME_PRIORITY[currentLang] || ['italian', 'name'];
+  for (const f of order) { if (item[f]) return item[f]; }
+  return '';
 }
 
 function getTodayKey() {
@@ -3209,6 +3219,8 @@ function applyOrderSort(v) {
     toast('还没自定义排序，请点"编辑我的排序"开始', 'err');
   }
   renderOrderList();
+  // 持久化排序模式偏好（per-user）
+  saveUserSortMode(v);
 }
 let _orderSortMode = 'default';
 let suppliers = []; // {name, wa_number}
@@ -3272,19 +3284,91 @@ async function saveUserSortOrder() {
   } catch(e) { return false; }
 }
 
+// ── 用户语言偏好（per-user，跨设备同步）──
+async function loadUserLang() {
+  if (!SB_KEY) return;
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/lang', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data && data.value && ['zh','it','bn'].includes(data.value)) {
+      changeLang(data.value);
+    }
+  } catch(e) { /* 静默失败，保持默认语言 */ }
+}
+async function saveUserLang(lang) {
+  if (!SB_KEY || !lang) return;
+  try {
+    await fetch(SB_URL + '/user-prefs/lang', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value: lang })
+    });
+  } catch(e) { /* 静默失败 */ }
+}
+
+// ── 用户订货排序模式偏好（per-user，跨设备同步）──
+async function loadUserSortMode() {
+  if (!SB_KEY) return;
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/sort_mode', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const valid = ['default','custom','today','low','chef','supplier'];
+    if (data && data.value && valid.includes(data.value)) {
+      _orderSortMode = data.value;
+      // 同步 UI（如果排序下拉框已渲染）
+      const sortSel = document.getElementById('side-sort-select');
+      if (sortSel) sortSel.value = _orderSortMode;
+    }
+  } catch(e) { /* 静默失败 */ }
+}
+async function saveUserSortMode(mode) {
+  if (!SB_KEY || !mode) return;
+  try {
+    await fetch(SB_URL + '/user-prefs/sort_mode', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value: mode })
+    });
+  } catch(e) { /* 静默失败 */ }
+}
+
 // 按用户排序数据应用到 items 数组（支持 grouped 和 flat 两种模式）
+// 改进：在保持用户手动顺序的前提下，今日订货品名优先（动态计算，每天不同）
 function applyCustomSortOrder(items, sortData) {
   if (!sortData) return items;
+
+  // 工具：将一个数组按"今日优先"重排（今日的在前，非今日的在后，组内保持原顺序）
+  const splitByToday = (arr) => {
+    const today = [], other = [];
+    for (const it of arr) {
+      if (isTodayCycle(it)) today.push(it);
+      else other.push(it);
+    }
+    return [...today, ...other];
+  };
 
   // flat 模式：所有食材在一个全局列表里排序
   if (sortData.mode === 'flat' && Array.isArray(sortData.flatOrder)) {
     const map = new Map(items.map(it => [it.id, it]));
-    const result = [];
+    const ordered = [];
     sortData.flatOrder.forEach(id => {
-      if (map.has(id)) { result.push(map.get(id)); map.delete(id); }
+      if (map.has(id)) { ordered.push(map.get(id)); map.delete(id); }
     });
-    map.forEach(it => result.push(it));  // 没排过的放后面
-    return result;
+    map.forEach(it => ordered.push(it));  // 没排过的放后面
+    // 今日优先：拆出今日 + 非今日，保持各自手动顺序
+    return splitByToday(ordered);
   }
 
   // grouped 模式（默认）：按分类分组，分类内排序
@@ -3315,6 +3399,8 @@ function applyCustomSortOrder(items, sortData) {
       map.forEach(it => ordered.push(it));
       catItems = ordered;
     }
+    // 今日优先：每个分类内拆出今日 + 非今日，保持手动顺序
+    catItems = splitByToday(catItems);
     result.push(...catItems);
   });
   return result;
@@ -3365,6 +3451,8 @@ async function exitSortMode() {
     const sortSel = document.getElementById('side-sort-select');
     if (sortSel) sortSel.value = 'custom';
     toast('✅ 排序已保存');
+    // 持久化排序模式（自动切到 custom）
+    saveUserSortMode('custom');
   } else {
     toast('保存失败，请重试', 'err');
   }
@@ -5564,6 +5652,8 @@ function changeLangModal() {
   se('warn-th-status', t('colStatus'));
   toast('语言已切换 / Language changed');
   switchTab(currentTab);
+  // 持久化语言偏好
+  saveUserLang(currentLang);
 }
 
 function changeLang(v) {
@@ -5631,6 +5721,8 @@ function changeLang(v) {
   se('nav-lbl-order', t('tabs')[1]);
   // 重新渲染
   switchTab(currentTab);
+  // 持久化语言偏好到 user_prefs（per-user，登录后才会真实发请求）
+  saveUserLang(v);
 }
 
 // ════════════════════════════════════════
@@ -7540,7 +7632,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.0）
+// Realtime — 长轮询版（v2.7.1）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
