@@ -268,8 +268,16 @@
     <div class="brand">YKI</div>
     <div class="brand-sub">PLATFORM CONSOLE · 平台管理后台</div>
     <label class="field-label">平台超级密码</label>
-    <input type="password" id="pw" placeholder="输入平台密码" autocomplete="off"
-           onkeydown="if(event.key==='Enter')doLogin()">
+    <div style="position:relative;">
+      <input type="password" id="pw" placeholder="输入平台密码" autocomplete="off"
+             style="padding-right:42px;"
+             onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" id="pw-eye-btn" onclick="togglePwVisibility()"
+              title="显示/隐藏密码"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;font-size:18px;padding:6px;color:#888;line-height:1;">
+        👁
+      </button>
+    </div>
     <button class="btn btn-gold btn-block" id="login-btn" style="margin-top:20px;" onclick="doLogin()">
       登录
     </button>
@@ -414,6 +422,22 @@ function toast(msg, type = '') {
 // ============================================================
 // 登录
 // ============================================================
+// 密码显示/隐藏切换
+function togglePwVisibility() {
+  const input = document.getElementById('pw');
+  const btn = document.getElementById('pw-eye-btn');
+  if (!input || !btn) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+    btn.title = '隐藏密码';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+    btn.title = '显示密码';
+  }
+}
+
 async function doLogin() {
   const pw = document.getElementById('pw').value;
   if (!pw) { toast('请输入密码', 'err'); return; }
