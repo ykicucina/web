@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.1';
+const APP_VERSION = 'v2.7.2';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3503,6 +3503,7 @@ function renderOrderListSortMode() {
     // ── 扁平模式：所有食材在一个列表里 ──
     let orderedItems = listItems;
     if (_userSortOrder && Array.isArray(_userSortOrder.flatOrder)) {
+      // 已有 flat 顺序：直接用
       const map = new Map(orderedItems.map(it => [it.id, it]));
       const sorted = [];
       _userSortOrder.flatOrder.forEach(id => {
@@ -3510,6 +3511,37 @@ function renderOrderListSortMode() {
       });
       map.forEach(it => sorted.push(it));
       orderedItems = sorted;
+    } else if (_userSortOrder && (Array.isArray(_userSortOrder.categoryOrder) || _userSortOrder.itemOrders)) {
+      // 没有 flat 顺序，但有 grouped 顺序：继承 grouped 的分类顺序作为初始 flat 顺序
+      // —— 用户先在分类模式排过"蔬菜>干货"，切到 flat 时保留这个分类顺序
+      const byCategory = {};
+      orderedItems.forEach(item => {
+        const cat = item.category || '其他';
+        if (!byCategory[cat]) byCategory[cat] = [];
+        byCategory[cat].push(item);
+      });
+      const orderedCats = [];
+      const used = new Set();
+      if (Array.isArray(_userSortOrder.categoryOrder)) {
+        _userSortOrder.categoryOrder.forEach(c => {
+          if (byCategory[c]) { orderedCats.push(c); used.add(c); }
+        });
+      }
+      Object.keys(byCategory).forEach(c => { if (!used.has(c)) orderedCats.push(c); });
+      const flat = [];
+      orderedCats.forEach(cat => {
+        let catItems = byCategory[cat];
+        const order = _userSortOrder.itemOrders && _userSortOrder.itemOrders[cat];
+        if (Array.isArray(order)) {
+          const map = new Map(catItems.map(it => [it.id, it]));
+          const sorted = [];
+          order.forEach(id => { if (map.has(id)) { sorted.push(map.get(id)); map.delete(id); } });
+          map.forEach(it => sorted.push(it));
+          catItems = sorted;
+        }
+        flat.push(...catItems);
+      });
+      orderedItems = flat;
     }
     html += `<div id="sort-flat-list" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px;">`;
     orderedItems.forEach(item => {
@@ -3551,7 +3583,30 @@ function renderOrderListSortMode() {
   });
 
   // 应用已有排序
-  const sortData = (_userSortOrder && _userSortOrder.mode !== 'flat') ? _userSortOrder : {};
+  let sortData = (_userSortOrder && _userSortOrder.mode !== 'flat') ? _userSortOrder : {};
+  
+  // 如果用户之前在 flat 模式排过（没有 categoryOrder），从 flatOrder 推断分类顺序
+  // —— 用户先在 flat 模式排了商品，切到 grouped 时保留同样的分类先后顺序
+  if (_userSortOrder && _userSortOrder.mode === 'flat' && Array.isArray(_userSortOrder.flatOrder)
+      && !Array.isArray(sortData.categoryOrder)) {
+    const idToItem = new Map(listItems.map(it => [it.id, it]));
+    const inferredCatOrder = [];
+    const inferredItemOrders = {};
+    const seenCats = new Set();
+    _userSortOrder.flatOrder.forEach(id => {
+      const item = idToItem.get(id);
+      if (!item) return;
+      const cat = item.category || '其他';
+      if (!seenCats.has(cat)) {
+        seenCats.add(cat);
+        inferredCatOrder.push(cat);
+        inferredItemOrders[cat] = [];
+      }
+      inferredItemOrders[cat].push(id);
+    });
+    sortData = { categoryOrder: inferredCatOrder, itemOrders: inferredItemOrders };
+  }
+  
   const orderedCats = [];
   const used = new Set();
   if (Array.isArray(sortData.categoryOrder)) {
@@ -7632,7 +7687,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.1）
+// Realtime — 长轮询版（v2.7.2）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
