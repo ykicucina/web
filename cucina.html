@@ -2279,11 +2279,6 @@ async function init() {
             };
             window._impersonated = true;
             window._impUsername = payload.username;
-            // 隐藏登录页 + 显示主界面
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-screen').style.display = 'block';
-            // 显示警告横幅
-            showImpersonateBanner(payload.username);
             // 加载全部数据
             const ok = await loadAllData();
             if (!ok) return;
@@ -2301,9 +2296,11 @@ async function init() {
             try { await loadUserSortOrder(); } catch(e) {}
             try { await loadUserLang(); } catch(e) {}
             try { await loadUserSortMode(); } catch(e) {}
-            // 进入主界面（switchTab/初始化导航）
+            // 进入主界面（switchTab/初始化导航 + 切换屏幕）
             if (typeof showApp === 'function') showApp();
             if (typeof initRealtime === 'function') initRealtime();
+            // 显示警告横幅
+            showImpersonateBanner(payload.username);
             return;
           }
         } catch(e) {
