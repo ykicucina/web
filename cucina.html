@@ -1601,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.22';
+const APP_VERSION = 'v2.7.23';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3437,45 +3437,125 @@ async function saveUserSortOrder() {
   } catch(e) { return false; }
 }
 
+// ── 勾选会话（picking_sessions）：记录用户每次提交订单时的完整勾选顺序 ──
+// 数据结构：{ value: [{time: ISO, items: [{item_code, name}, ...]}, ...] }
+// 最多保留 7 条，FIFO（旧的自动挤出）
+async function savePickingSession(selectedItems) {
+  if (!SB_KEY || !selectedItems || !selectedItems.length) return;
+  try {
+    // 先拉旧记录
+    const r = await fetch(SB_URL + '/user-prefs/picking_sessions', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    let sessions = [];
+    if (r.ok) {
+      const data = await r.json();
+      if (data && Array.isArray(data.value)) sessions = data.value;
+    }
+    // 新增一条（保留 item_code 和 name，方便预览）
+    const newSession = {
+      time: new Date().toISOString(),
+      items: selectedItems.map(i => ({
+        item_code: i.item_code,
+        name: i.name || i.italian || ''
+      }))
+    };
+    sessions.unshift(newSession);
+    // 保留最近 7 条
+    if (sessions.length > 7) sessions = sessions.slice(0, 7);
+    // 写回
+    await fetch(SB_URL + '/user-prefs/picking_sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value: sessions })
+    });
+    console.log('[PICK-SESSION] saved, total:', sessions.length);
+  } catch(e) { console.warn('[PICK-SESSION] err:', e); }
+}
+
+// 读取最近 7 次勾选会话
+async function loadPickingSessions() {
+  if (!SB_KEY) return [];
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/picking_sessions', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return (data && Array.isArray(data.value)) ? data.value : [];
+  } catch(e) { return []; }
+}
+
 // 按"该员工最近订单"重排自己的排序列表
-// 流程：弹出最近 7 单 → 用户选一张 → 按那张订单的 item 顺序重排
+// 流程：弹出最近 7 次勾选会话 → 用户选一次 → 按完整勾选顺序重排
+// 数据源：优先用 user_prefs.picking_sessions（完整勾选顺序），降级到 cucina_orders（已按供应商拆分）
 async function applyLastOrderToSort() {
   if (!currentUser) { toast('未登录','err'); return; }
   toast('查询最近订单中...');
   try {
-    // 查该员工提交过的最近 7 单（type=order，非 consume）
-    const r = await fetch(
-      SB_URL + '/rest/v1/cucina_orders'
-        + '?restaurant_id=eq.' + REST_ID
-        + '&chef=eq.' + encodeURIComponent(currentUser)
-        + '&type=eq.order'
-        + '&select=id,date,items,created_at'
-        + '&order=created_at.desc'
-        + '&limit=7',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-    );
-    if (!r.ok) { toast('查询失败','err'); return; }
-    const orders = await r.json();
-    if (!orders.length) { toast('你还没有提交过订单','err'); return; }
+    // 优先取勾选会话
+    const sessions = await loadPickingSessions();
 
-    // 渲染订单列表
+    let entries = [];  // 待显示的列表，结构: {label, time, items, fromSession}
+
+    if (sessions.length > 0) {
+      // 用勾选会话数据
+      entries = sessions.map(s => ({
+        label: s.time,
+        time: s.time,
+        items: s.items || [],
+        fromSession: true,
+      }));
+    } else {
+      // 降级：从 cucina_orders 拉最近 7 张（功能上线前的历史数据）
+      const r = await fetch(
+        SB_URL + '/rest/v1/cucina_orders'
+          + '?restaurant_id=eq.' + REST_ID
+          + '&chef=eq.' + encodeURIComponent(currentUser)
+          + '&type=eq.order'
+          + '&select=id,date,items,created_at'
+          + '&order=created_at.desc'
+          + '&limit=7',
+        { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+      );
+      if (!r.ok) { toast('查询失败','err'); return; }
+      const orders = await r.json();
+      if (!orders.length) { toast('你还没有提交过订单','err'); return; }
+      entries = orders.map(o => ({
+        label: o.created_at || o.date,
+        time: o.created_at || o.date,
+        items: o.items || [],
+        fromSession: false,
+        orderId: o.id,
+      }));
+    }
+
+    if (!entries.length) { toast('暂无可用记录','err'); return; }
+
+    // 渲染列表
     const listEl = document.getElementById('pick-order-list');
-    listEl.innerHTML = orders.map((o, idx) => {
-      const itemList = o.items || [];
-      const created = o.created_at ? new Date(o.created_at) : null;
-      const timeStr = created
-        ? `${created.getFullYear()}-${String(created.getMonth()+1).padStart(2,'0')}-${String(created.getDate()).padStart(2,'0')} ${String(created.getHours()).padStart(2,'0')}:${String(created.getMinutes()).padStart(2,'0')}`
-        : (o.date || '');
-      // 预览前几个商品
-      const preview = itemList.slice(0, 4).map(it => escapeHtml(it.name || '')).join('、')
-        + (itemList.length > 4 ? `...等 ${itemList.length} 种` : '');
+    listEl.innerHTML = entries.map((e, idx) => {
+      const itemList = e.items;
+      const t = e.time ? new Date(e.time) : null;
+      const timeStr = t && !isNaN(t)
+        ? `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`
+        : (e.time || '');
+      const tag = e.fromSession
+        ? `<span style="font-size:10px;color:#2e7d32;background:#e8f5e9;padding:2px 6px;border-radius:4px;margin-left:6px;">完整</span>`
+        : `<span style="font-size:10px;color:#e65100;background:#fff3e0;padding:2px 6px;border-radius:4px;margin-left:6px;" title="此订单已按供应商拆分，可能只是片段">片段</span>`;
+      const preview = itemList.slice(0, 5).map(it => escapeHtml(it.name || '')).join('→')
+        + (itemList.length > 5 ? `...等 ${itemList.length} 种` : '');
+      const dataKey = e.fromSession ? `s${idx}` : `o${e.orderId}`;
       return `
-        <div onclick="confirmPickOrder('${o.id}')"
+        <div onclick="confirmPickEntry('${dataKey}')"
           style="padding:12px;margin-bottom:8px;background:#fff;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;"
           onmouseover="this.style.borderColor='#c9a961';this.style.background='#fff8e1';"
           onmouseout="this.style.borderColor='var(--border)';this.style.background='#fff';">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <strong style="font-size:14px;">📅 ${timeStr}</strong>
+            <strong style="font-size:14px;">📅 ${timeStr}${tag}</strong>
             <span style="font-size:11px;color:var(--text3);background:#f5ecd0;padding:2px 8px;border-radius:6px;">${itemList.length} 种</span>
           </div>
           <div style="font-size:12px;color:var(--text2);line-height:1.4;">${preview}</div>
@@ -3483,6 +3563,8 @@ async function applyLastOrderToSort() {
       `;
     }).join('');
 
+    // 存到全局供 confirmPickEntry 用
+    window._pickEntries = entries;
     openModal('modal-pick-order');
   } catch(e) {
     console.error('applyLastOrderToSort error:', e);
@@ -3490,27 +3572,29 @@ async function applyLastOrderToSort() {
   }
 }
 
-// 用户选了一张订单后，按该订单的 item 顺序重排
-async function confirmPickOrder(orderId) {
+// 用户选了一条记录后，按它的 item 顺序重排
+async function confirmPickEntry(dataKey) {
   try {
-    // 查这张订单的完整信息
-    const r = await fetch(
-      SB_URL + '/rest/v1/cucina_orders?id=eq.' + orderId + '&select=items',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-    );
-    if (!r.ok) { toast('订单查询失败','err'); return; }
-    const data = await r.json();
-    if (!data.length) { toast('订单不存在','err'); return; }
-    const orderItemCodes = (data[0].items || []).map(it => it.item_code).filter(Boolean);
-    if (!orderItemCodes.length) { toast('订单中没有商品','err'); return; }
+    const entries = window._pickEntries || [];
+    let entry = null;
+    if (dataKey.startsWith('s')) {
+      entry = entries[parseInt(dataKey.slice(1))];
+    } else if (dataKey.startsWith('o')) {
+      const oid = dataKey.slice(1);
+      entry = entries.find(e => String(e.orderId) === oid);
+    }
+    if (!entry) { toast('记录不存在','err'); return; }
 
-    // 对应到当前 items 数组（拿 id），保留订单顺序
+    const orderItemCodes = (entry.items || []).map(it => it.item_code).filter(Boolean);
+    if (!orderItemCodes.length) { toast('记录中没有商品','err'); return; }
+
+    // 对应到当前 items 数组（拿 id），保留记录顺序
     const orderedIds = [];
     orderItemCodes.forEach(code => {
       const item = items.find(i => i.item_code === code && !i.discontinued);
       if (item) orderedIds.push(item.id);
     });
-    if (!orderedIds.length) { toast('订单中的商品已停售或不在列表','err'); return; }
+    if (!orderedIds.length) { toast('记录中的商品已停售或不在列表','err'); return; }
 
     // 当前用户负责的食材
     const _cu = (currentUser||'').toLowerCase().trim();
@@ -3519,7 +3603,7 @@ async function confirmPickOrder(orderId) {
       (i.chef||'').toLowerCase().trim() === _cu
     );
 
-    // 强制 flat 模式：订单顺序排前，其余按原 flatOrder 或 myItems 顺序
+    // 强制 flat 模式：记录顺序排前，其余按原 flatOrder 或 myItems 顺序
     const seen = new Set(orderedIds);
     const rest = [];
     const existingFlat = (_userSortOrder && _userSortOrder.flatOrder) || myItems.map(i => i.id);
@@ -3536,14 +3620,14 @@ async function confirmPickOrder(orderId) {
     const ok = await saveUserSortOrder();
     closeModal('modal-pick-order');
     if (ok) {
-      toast('✅ 已按所选订单重排并保存');
+      toast('✅ 已按所选记录重排并保存');
       renderOrderListSortMode();
     } else {
       toast('重排成功但保存失败，请手动点完成','err');
       renderOrderListSortMode();
     }
   } catch(e) {
-    console.error('confirmPickOrder error:', e);
+    console.error('confirmPickEntry error:', e);
     toast('操作失败：' + e.message, 'err');
   }
 }
@@ -4319,6 +4403,11 @@ async function submitOrder() {
                  sel.length>0 ? '✅ 订单已提交' : '✅ 库存调整已记录';
     toast(msg2);
     if (sel.length > 0) {
+      // 保存完整勾选记录到 user_prefs（最近 7 次，FIFO）
+      // 用于"按最近订单重排"功能：记录用户真实的勾选顺序（跨多个供应商）
+      try {
+        await savePickingSession(sel);
+      } catch(e) { console.warn('[PICK-SESSION] save err:', e); }
       // 触发推送：通知采购员/管理员/主管有新订单
       triggerPush('new_order');
       switchTab('orders');
@@ -8263,7 +8352,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.22）
+// Realtime — 长轮询版（v2.7.23）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
