@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.15';
+const APP_VERSION = 'v2.7.16';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2323,7 +2323,6 @@ async function init() {
             try { await loadUserSortOrder(); } catch(e) {}
             try { await loadUserLang(); } catch(e) {}
             try { await loadUserSortMode(); } catch(e) {}
-            try { await loadWaLangPref(); } catch(e) {}
             // 进入主界面（switchTab/初始化导航 + 切换屏幕）
             if (typeof showApp === 'function') showApp();
             if (typeof initRealtime === 'function') initRealtime();
@@ -2497,7 +2496,6 @@ async function doLogin() {
   // 加载用户的语言偏好和排序模式偏好（跨设备同步）
   await loadUserLang();
   await loadUserSortMode();
-  await loadWaLangPref();
 
   btn.disabled = false;
   showApp();
@@ -3486,48 +3484,37 @@ async function saveUserSortMode(mode) {
   } catch(e) { /* 静默失败 */ }
 }
 
-// ── WhatsApp 发送语言偏好（per-supplier，记每个供应商对应的语言）──
-// 数据结构：{"METRO":"it", "海鲜批发":"zh", ...}
-let _waLangBySupplier = {};
-async function loadWaLangPref() {
-  if (!SB_KEY) return;
-  try {
-    const r = await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
-      headers: { 'Authorization': 'Bearer ' + SB_KEY }
-    });
-    if (!r.ok) { console.log('[WA-LANG] load failed:', r.status); return; }
-    const data = await r.json();
-    console.log('[WA-LANG] loaded from DB:', data);
-    if (data && data.value && typeof data.value === 'object') {
-      _waLangBySupplier = data.value;
-    }
-  } catch(e) { console.warn('[WA-LANG] load err:', e); }
-}
-async function saveWaLangPref() {
-  if (!SB_KEY) return;
-  try {
-    const r = await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ value: _waLangBySupplier })
-    });
-    console.log('[WA-LANG] save status:', r.status, '/ payload:', _waLangBySupplier);
-  } catch(e) { console.warn('[WA-LANG] save err:', e); }
-}
+// ── WhatsApp 发送语言偏好（per-restaurant，存在 suppliers.wa_lang 字段）──
+// 全餐厅共享：管理员设置后，所有员工都用同一语言发给该供应商
 // 取某供应商默认语言（无记录则用意语）
 function getWaLangFor(supName) {
-  const v = _waLangBySupplier[supName] || 'it';
+  if (!supName) return 'it';
+  const sup = suppliers.find(s => (s.name||'').toLowerCase() === supName.toLowerCase());
+  const v = (sup && sup.wa_lang) ? sup.wa_lang : 'it';
   console.log('[WA-LANG] getWaLangFor:', supName, '→', v);
   return v;
 }
-// 设置某供应商语言并保存
-function setWaLangFor(supName, lang) {
-  _waLangBySupplier[supName] = lang;
-  console.log('[WA-LANG] setWaLangFor:', supName, '→', lang, '/ 全部:', _waLangBySupplier);
-  saveWaLangPref();
+// 设置某供应商语言（管理员操作）并保存到数据库
+async function setWaLangFor(supName, lang) {
+  if (!supName || !lang) return;
+  const sup = suppliers.find(s => (s.name||'').toLowerCase() === supName.toLowerCase());
+  if (!sup) { console.warn('[WA-LANG] supplier not found:', supName); return; }
+  // 本地立即更新
+  sup.wa_lang = lang;
+  console.log('[WA-LANG] setWaLangFor:', supName, '→', lang);
+  // 异步存数据库
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/cucina_suppliers?id=eq.' + sup.id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ wa_lang: lang })
+    });
+    console.log('[WA-LANG] save status:', r.status);
+  } catch(e) { console.warn('[WA-LANG] save err:', e); }
 }
 
 // 按用户排序数据应用到 items 数组（支持 grouped 和 flat 两种模式）
@@ -5666,8 +5653,8 @@ function renderSupplierList() {
 }
 
 // 在"供应商管理"卡片里切换该供应商的 WA 默认语言
-function onSupplierWaLangChange(supName, lang) {
-  setWaLangFor(supName, lang);
+async function onSupplierWaLangChange(supName, lang) {
+  await setWaLangFor(supName, lang);
   // 重新渲染高亮（不重渲整个列表，避免输入焦点丢失）
   const sup = suppliers.find(s => s.name === supName);
   if (!sup) return;
@@ -8092,7 +8079,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.15）
+// Realtime — 长轮询版（v2.7.16）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
