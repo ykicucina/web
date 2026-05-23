@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.16';
+const APP_VERSION = 'v2.7.17';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4905,6 +4905,21 @@ function onWaLangChange(supSafeId, supName, lang) {
 }
 
 async function mergeSendOrders() {
+  // 先刷新一次 suppliers，拿最新 wa_lang（防止管理员在其他设备改过后这边看到旧值）
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/cucina_suppliers?restaurant_id=eq.' + REST_ID + '&select=*&order=name', {
+      cache: 'no-store',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (r.ok) {
+      const fresh = await r.json();
+      if (Array.isArray(fresh)) {
+        suppliers = fresh;
+        console.log('[SUPPLIERS] refreshed before merge send:', suppliers.length);
+      }
+    }
+  } catch(e) { console.warn('[SUPPLIERS] refresh err:', e); }
+
   const targetDay = _weekdayFilter || getTodayWeekday();
   let ignoreCycle = document.getElementById('ignore-cycle')?.checked || false;
   const selected = orders.filter(o=>_selectedOrderIds.has(String(o.id)) && (o.status==='待处理'||o.status==='待處理') && o.type!=='consume');
@@ -5564,7 +5579,9 @@ function showSubmitConfirm(orderItems, today) {
   openModal('modal-submit-confirm');
 }
 
-function showSupplierModal() {
+async function showSupplierModal() {
+  openModal('modal-suppliers');
+  // 先显示当前缓存
   renderSupplierList();
   // 下拉显示items里所有供应商，包括已有的（可以更新号码）
   const sel = document.getElementById('new-sup-name');
@@ -5573,7 +5590,21 @@ function showSupplierModal() {
     sel.innerHTML = '<option value="">-- 选择供应商 --</option>' +
       supNames.map(s=>`<option value="${s}">${s}</option>`).join('');
   }
-  openModal('modal-suppliers');
+  // 异步刷新最新 suppliers（包括 wa_lang 等字段），刷完重渲
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/cucina_suppliers?restaurant_id=eq.' + REST_ID + '&select=*&order=name', {
+      cache: 'no-store',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (r.ok) {
+      const fresh = await r.json();
+      if (Array.isArray(fresh)) {
+        suppliers = fresh;
+        renderSupplierList();
+        console.log('[SUPPLIERS] refreshed:', suppliers.length);
+      }
+    }
+  } catch(e) { console.warn('[SUPPLIERS] refresh err:', e); }
 }
 
 function renderSupplierList() {
@@ -8079,7 +8110,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.16）
+// Realtime — 长轮询版（v2.7.17）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
