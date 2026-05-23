@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.14';
+const APP_VERSION = 'v2.7.15';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3495,17 +3495,18 @@ async function loadWaLangPref() {
     const r = await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
       headers: { 'Authorization': 'Bearer ' + SB_KEY }
     });
-    if (!r.ok) return;
+    if (!r.ok) { console.log('[WA-LANG] load failed:', r.status); return; }
     const data = await r.json();
+    console.log('[WA-LANG] loaded from DB:', data);
     if (data && data.value && typeof data.value === 'object') {
       _waLangBySupplier = data.value;
     }
-  } catch(e) { /* 静默失败 */ }
+  } catch(e) { console.warn('[WA-LANG] load err:', e); }
 }
 async function saveWaLangPref() {
   if (!SB_KEY) return;
   try {
-    await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
+    const r = await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + SB_KEY,
@@ -3513,15 +3514,19 @@ async function saveWaLangPref() {
       },
       body: JSON.stringify({ value: _waLangBySupplier })
     });
-  } catch(e) { /* 静默失败 */ }
+    console.log('[WA-LANG] save status:', r.status, '/ payload:', _waLangBySupplier);
+  } catch(e) { console.warn('[WA-LANG] save err:', e); }
 }
 // 取某供应商默认语言（无记录则用意语）
 function getWaLangFor(supName) {
-  return _waLangBySupplier[supName] || 'it';
+  const v = _waLangBySupplier[supName] || 'it';
+  console.log('[WA-LANG] getWaLangFor:', supName, '→', v);
+  return v;
 }
 // 设置某供应商语言并保存
 function setWaLangFor(supName, lang) {
   _waLangBySupplier[supName] = lang;
+  console.log('[WA-LANG] setWaLangFor:', supName, '→', lang, '/ 全部:', _waLangBySupplier);
   saveWaLangPref();
 }
 
@@ -5009,7 +5014,7 @@ async function mergeSendOrders() {
         <div>
           <span style="font-weight:600;font-size:14px;">📦 ${supName.toUpperCase()}</span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px;">${supItems.length}种食材</span>
-          ${renderWaLangSwitcher(supSafeId, supName)}
+          <span style="font-size:11px;color:var(--text3);margin-left:8px;background:#f5ecd0;padding:2px 8px;border-radius:6px;">📤 ${getWaLangFor(supName)==="zh"?"中文":"IT"}</span>
         </div>
       </div>
       <div id="wa-preview-${supSafeId}" data-items="${itemsJson}"
@@ -5548,7 +5553,7 @@ function showSubmitConfirm(orderItems, today) {
         <div>
           <span style="font-weight:600;font-size:14px;">📦 ${supName.toUpperCase()}</span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px;">${supItems.length}种食材</span>
-          ${renderWaLangSwitcher(supSafeId, supName)}
+          <span style="font-size:11px;color:var(--text3);margin-left:8px;background:#f5ecd0;padding:2px 8px;border-radius:6px;">📤 ${getWaLangFor(supName)==="zh"?"中文":"IT"}</span>
         </div>
         <a id="wa-link-${supSafeId}" href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
           data-date-str="${escapeAttr(today)}"
@@ -8087,7 +8092,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.14）
+// Realtime — 长轮询版（v2.7.15）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
