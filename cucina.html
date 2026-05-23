@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.9';
+const APP_VERSION = 'v2.7.10';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -5844,6 +5844,9 @@ function changeLang(v) {
   currentLang = v;
   const labels = {zh:'中文',it:'Italiano',bn:'বাংলা'};
   document.getElementById('current-lang-lbl').textContent = labels[v]||v;
+  // 同步顶部下拉的值（防止"我的页"和顶部不一致）
+  const topSel = document.getElementById('lang-select');
+  if (topSel) topSel.value = v;
   const se = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   // 登录页
   se('login-btn', t('loginBtn'));
@@ -7816,7 +7819,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.9）
+// Realtime — 长轮询版（v2.7.10）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
