@@ -1425,6 +1425,19 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   </div>
 </div>
 
+<!-- 选择最近订单作为重排依据 Modal -->
+<div class="modal-overlay" id="modal-pick-order">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 选择参考的订单</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5;">
+      选一张你最近的订单，系统会按那次的勾选顺序帮你重排
+    </div>
+    <div id="pick-order-list" style="max-height:60vh;overflow-y:auto;"></div>
+    <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="closeModal('modal-pick-order')">取消</button>
+  </div>
+</div>
+
 <!-- 批量改供应商 Modal -->
 <div class="modal-overlay" id="modal-batch-supplier">
   <div class="modal">
@@ -1588,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.20';
+const APP_VERSION = 'v2.7.22';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3424,13 +3437,13 @@ async function saveUserSortOrder() {
   } catch(e) { return false; }
 }
 
-// 按"该员工最近一张提交订单"重排自己的排序列表
-// 算法：查最近 1 张该员工提交的订单 → 拿订单里 item_code 顺序 → 这些商品调到列表顶部
+// 按"该员工最近订单"重排自己的排序列表
+// 流程：弹出最近 7 单 → 用户选一张 → 按那张订单的 item 顺序重排
 async function applyLastOrderToSort() {
   if (!currentUser) { toast('未登录','err'); return; }
   toast('查询最近订单中...');
   try {
-    // 查该员工提交过的最近 1 单（type=order，非 consume）
+    // 查该员工提交过的最近 7 单（type=order，非 consume）
     const r = await fetch(
       SB_URL + '/rest/v1/cucina_orders'
         + '?restaurant_id=eq.' + REST_ID
@@ -3438,18 +3451,60 @@ async function applyLastOrderToSort() {
         + '&type=eq.order'
         + '&select=id,date,items,created_at'
         + '&order=created_at.desc'
-        + '&limit=1',
+        + '&limit=7',
       { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
     );
     if (!r.ok) { toast('查询失败','err'); return; }
     const orders = await r.json();
     if (!orders.length) { toast('你还没有提交过订单','err'); return; }
 
-    const lastOrder = orders[0];
-    const orderItemCodes = (lastOrder.items || []).map(it => it.item_code).filter(Boolean);
-    if (!orderItemCodes.length) { toast('最近订单没有商品','err'); return; }
+    // 渲染订单列表
+    const listEl = document.getElementById('pick-order-list');
+    listEl.innerHTML = orders.map((o, idx) => {
+      const itemList = o.items || [];
+      const created = o.created_at ? new Date(o.created_at) : null;
+      const timeStr = created
+        ? `${created.getFullYear()}-${String(created.getMonth()+1).padStart(2,'0')}-${String(created.getDate()).padStart(2,'0')} ${String(created.getHours()).padStart(2,'0')}:${String(created.getMinutes()).padStart(2,'0')}`
+        : (o.date || '');
+      // 预览前几个商品
+      const preview = itemList.slice(0, 4).map(it => escapeHtml(it.name || '')).join('、')
+        + (itemList.length > 4 ? `...等 ${itemList.length} 种` : '');
+      return `
+        <div onclick="confirmPickOrder('${o.id}')"
+          style="padding:12px;margin-bottom:8px;background:#fff;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;"
+          onmouseover="this.style.borderColor='#c9a961';this.style.background='#fff8e1';"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='#fff';">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <strong style="font-size:14px;">📅 ${timeStr}</strong>
+            <span style="font-size:11px;color:var(--text3);background:#f5ecd0;padding:2px 8px;border-radius:6px;">${itemList.length} 种</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.4;">${preview}</div>
+        </div>
+      `;
+    }).join('');
 
-    // 对应到当前 items 数组（拿 id），保留顺序
+    openModal('modal-pick-order');
+  } catch(e) {
+    console.error('applyLastOrderToSort error:', e);
+    toast('操作失败：' + e.message, 'err');
+  }
+}
+
+// 用户选了一张订单后，按该订单的 item 顺序重排
+async function confirmPickOrder(orderId) {
+  try {
+    // 查这张订单的完整信息
+    const r = await fetch(
+      SB_URL + '/rest/v1/cucina_orders?id=eq.' + orderId + '&select=items',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+    );
+    if (!r.ok) { toast('订单查询失败','err'); return; }
+    const data = await r.json();
+    if (!data.length) { toast('订单不存在','err'); return; }
+    const orderItemCodes = (data[0].items || []).map(it => it.item_code).filter(Boolean);
+    if (!orderItemCodes.length) { toast('订单中没有商品','err'); return; }
+
+    // 对应到当前 items 数组（拿 id），保留订单顺序
     const orderedIds = [];
     orderItemCodes.forEach(code => {
       const item = items.find(i => i.item_code === code && !i.discontinued);
@@ -3464,33 +3519,31 @@ async function applyLastOrderToSort() {
       (i.chef||'').toLowerCase().trim() === _cu
     );
 
-    // 强制使用 flat 模式（全局排序，无视分类）：订单顺序排前，其余商品在后
+    // 强制 flat 模式：订单顺序排前，其余按原 flatOrder 或 myItems 顺序
     const seen = new Set(orderedIds);
     const rest = [];
-    // 其余商品保持原 flatOrder 顺序（如果之前是 grouped 模式则按当前 myItems 顺序）
     const existingFlat = (_userSortOrder && _userSortOrder.flatOrder) || myItems.map(i => i.id);
     existingFlat.forEach(id => {
       if (!seen.has(id) && myItems.some(i => i.id === id)) rest.push(id);
     });
-    // 补上不在 existingFlat 里的新商品
     myItems.forEach(i => {
       if (!seen.has(i.id) && !rest.includes(i.id)) rest.push(i.id);
     });
-    _userSortOrder = { mode: 'flat', flatOrder: [...orderedIds, ...rest] };
-    // 切换到 flat 显示模式
+    _userSortOrder = { mode: 'flat', flatOrder: [...orderedIds, ...rest], skipTodayPriority: true };
     _sortDisplayMode = 'flat';
 
     // 自动保存
     const ok = await saveUserSortOrder();
+    closeModal('modal-pick-order');
     if (ok) {
-      toast('✅ 已按最近订单重排并保存');
+      toast('✅ 已按所选订单重排并保存');
       renderOrderListSortMode();
     } else {
       toast('重排成功但保存失败，请手动点完成','err');
       renderOrderListSortMode();
     }
   } catch(e) {
-    console.error('applyLastOrderToSort error:', e);
+    console.error('confirmPickOrder error:', e);
     toast('操作失败：' + e.message, 'err');
   }
 }
@@ -3611,6 +3664,8 @@ function applyCustomSortOrder(items, sortData) {
       if (map.has(id)) { ordered.push(map.get(id)); map.delete(id); }
     });
     map.forEach(it => ordered.push(it));  // 没排过的放后面
+    // 若用户通过"按最近订单重排"生成的排序，跳过"今日优先"打乱
+    if (sortData.skipTodayPriority) return ordered;
     // 今日优先：拆出今日 + 非今日，保持各自手动顺序
     return splitByToday(ordered);
   }
@@ -3707,6 +3762,23 @@ async function exitSortMode() {
     return;
   }
   
+  // 检测 DOM 收集到的顺序跟当前 _userSortOrder 是否一致
+  // 一致 → 用户没拖动，保留原 skipTodayPriority 标记
+  const sameAsCurrent = (() => {
+    if (!_userSortOrder || !collected) return false;
+    if (_userSortOrder.mode !== collected.mode) return false;
+    if (collected.mode === 'flat') {
+      const a = _userSortOrder.flatOrder || [];
+      const b = collected.flatOrder || [];
+      if (a.length !== b.length) return false;
+      return a.every((id, i) => id === b[i]);
+    }
+    return false;  // grouped 模式不做这个判定（复杂度高）
+  })();
+  if (sameAsCurrent && _userSortOrder.skipTodayPriority) {
+    collected.skipTodayPriority = true;
+  }
+
   _userSortOrder = collected;
   _isInSortMode = false;
   // 清理 SortableJS 实例
@@ -3762,7 +3834,7 @@ function renderOrderListSortMode() {
     </div>
     <button onclick="applyLastOrderToSort()"
       style="width:100%;padding:10px;margin-bottom:10px;background:linear-gradient(135deg,#fff4d6,#ffe4a3);color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-      📋 按最近订单重排（自动应用）
+      📋 按最近订单重排（选一张）
     </button>
     <div style="display:flex;background:#f5f5f5;border-radius:8px;padding:3px;margin-bottom:10px;">
       <button onclick="setSortDisplayMode('grouped')"
@@ -8191,7 +8263,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.20）
+// Realtime — 长轮询版（v2.7.22）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
