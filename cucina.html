@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.6';
+const APP_VERSION = 'v2.7.7';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2251,6 +2251,80 @@ async function init() {
     showLoadErrorScreen();
     return;
   }
+
+  // ── 平台管理员协助登录：检测 URL 参数 _imp ──
+  // 携带 ?_imp=<token> 时，自动跳过登录，以该 token 身份进入
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const impToken = urlParams.get('_imp');
+    if (impToken) {
+      // 立即从 URL 抹掉 token（防止泄露 + 防止刷新重复登录）
+      urlParams.delete('_imp');
+      const newSearch = urlParams.toString();
+      const cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+      window.history.replaceState({}, '', cleanUrl);
+      // 解析 JWT payload（不验证签名，只读字段用于本地展示）
+      const parts = impToken.split('.');
+      if (parts.length === 3) {
+        try {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+          if (payload.impersonated && payload.restaurantId === REST_ID) {
+            SB_KEY = impToken;
+            currentUser = payload.username;
+            currentUserRole = payload.role || 'staff';
+            currentUserPerms = {
+              can_add_stock: !!payload.can_add_stock,
+              can_stocktake: !!payload.can_stocktake,
+              can_receive: !!payload.can_receive,
+            };
+            window._impersonated = true;
+            window._impUsername = payload.username;
+            // 隐藏登录页 + 显示主界面
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            // 显示警告横幅
+            showImpersonateBanner(payload.username);
+            // 加载全部数据
+            const ok = await loadAllData();
+            if (!ok) return;
+            // 写 IDB（推送用）
+            try {
+              await writeAuthToIDB({
+                restaurantId: REST_ID,
+                username: currentUser,
+                token: SB_KEY,
+                role: currentUserRole,
+                impersonated: true,
+              });
+            } catch(e) {}
+            // 加载用户偏好
+            try { await loadUserSortOrder(); } catch(e) {}
+            try { await loadUserLang(); } catch(e) {}
+            try { await loadUserSortMode(); } catch(e) {}
+            // 进入主界面（switchTab/初始化导航）
+            if (typeof showApp === 'function') showApp();
+            if (typeof initRealtime === 'function') initRealtime();
+            return;
+          }
+        } catch(e) {
+          console.warn('impersonate token 解析失败:', e);
+        }
+      }
+    }
+  } catch(e) {
+    console.warn('impersonate 检测失败:', e);
+  }
+}
+
+// 平台协助登录的警告横幅
+function showImpersonateBanner(username) {
+  // 避免重复
+  if (document.getElementById('imp-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'imp-banner';
+  banner.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#fff3cd,#ffe082);color:#8a6f3a;padding:8px 14px;font-size:13px;font-weight:600;text-align:center;border-bottom:2px solid #c9a961;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
+  banner.innerHTML = `🔧 平台管理员协助登录中 · 当前身份：<strong>${username}</strong> · 所有操作将记录为该员工 · <span style="font-weight:400;opacity:.8;">2 小时后过期</span>`;
+  document.body.insertBefore(banner, document.body.firstChild);
 }
 
 // ── 登录成功后加载全部数据（需要令牌）──
@@ -7737,7 +7811,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.6）
+// Realtime — 长轮询版（v2.7.7）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）

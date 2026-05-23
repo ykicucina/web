@@ -379,6 +379,26 @@
   </div>
 </div>
 
+<!-- ============ 弹窗：协助登录 ============ -->
+<div class="modal-overlay" id="modal-impersonate">
+  <div class="modal">
+    <div class="modal-title">🔧 协助登录</div>
+    <div class="modal-sub" id="imp-rest-name"></div>
+    <div style="background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:13px;color:#8a6f3a;margin:10px 0;line-height:1.5;border:1px solid #f0d98a;">
+      ⚠️ 你将以选中员工身份登录该餐厅的 cucina 系统。<br>
+      操作将留下该员工的痕迹（订单/库存修改记录），请谨慎使用。
+    </div>
+    <label class="field-label">选择要"扮演"的员工</label>
+    <select id="imp-chef-select">
+      <option value="">加载中...</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-impersonate')">取消</button>
+      <button class="btn btn-gold" onclick="doImpersonate()">🚀 协助登录</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -563,6 +583,7 @@ function renderRestaurants() {
           : `<button class="btn btn-danger btn-sm" onclick="toggleStatus('${r.id}','suspended')">暂停</button>`}
         <button class="btn btn-ghost btn-sm" onclick="openExpire('${r.id}')">改到期日</button>
         <button class="btn btn-ghost btn-sm" onclick="openReset('${r.id}')">重置密码</button>
+        <button class="btn btn-gold btn-sm" onclick="openImpersonate('${r.id}','${escapeHtml(r.name||'')}')">🔧 协助登录</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRestaurant('${r.id}','${escapeHtml(r.name||'')}')" style="margin-left:auto;">🗑️</button>
       </div>
     </div>`;
@@ -785,6 +806,59 @@ async function saveCreate() {
     toast('餐厅「' + name + '」已创建', 'ok');
     closeModal('modal-create');
     await loadRestaurants();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// 协助登录（Impersonate）
+// ============================================================
+let _impRestId = null;
+async function openImpersonate(restId, restName) {
+  _impRestId = restId;
+  document.getElementById('imp-rest-name').textContent = restName + ' · ' + restId;
+  const sel = document.getElementById('imp-chef-select');
+  sel.innerHTML = '<option value="">加载中...</option>';
+  openModal('modal-impersonate');
+  try {
+    const d = await api('/platform/chefs?restaurantId=' + encodeURIComponent(restId));
+    const chefs = d.chefs || [];
+    if (!chefs.length) {
+      sel.innerHTML = '<option value="">（该餐厅暂无员工）</option>';
+      return;
+    }
+    // 排序：admin 排前面
+    chefs.sort((a, b) => {
+      const ra = a.role === 'admin' ? 0 : 1;
+      const rb = b.role === 'admin' ? 0 : 1;
+      if (ra !== rb) return ra - rb;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    sel.innerHTML = chefs.map(c => {
+      const tag = c.role === 'admin' ? '👑 ' : '';
+      return `<option value="${escapeHtml(c.name)}">${tag}${escapeHtml(c.name)}${c.role && c.role !== 'staff' ? ' (' + escapeHtml(c.role) + ')' : ''}</option>`;
+    }).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">（加载失败）</option>';
+    toast(e.message, 'err');
+  }
+}
+
+async function doImpersonate() {
+  const username = document.getElementById('imp-chef-select').value;
+  if (!_impRestId || !username) { toast('请选择员工', 'err'); return; }
+  try {
+    const d = await api('/platform/impersonate', {
+      method: 'POST',
+      body: JSON.stringify({ restaurantId: _impRestId, username })
+    });
+    // 新 tab 打开 cucina，URL 带 _imp token
+    const url = '/cucina.html?r=' + encodeURIComponent(_impRestId)
+              + '&_imp=' + encodeURIComponent(d.token);
+    window.open(url, '_blank');
+    closeModal('modal-impersonate');
+    toast('已打开新窗口，以「' + username + '」身份登录', 'ok');
   } catch (e) {
     toast(e.message, 'err');
   }
