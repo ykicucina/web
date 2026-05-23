@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.7';
+const APP_VERSION = 'v2.7.8';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2267,7 +2267,13 @@ async function init() {
       const parts = impToken.split('.');
       if (parts.length === 3) {
         try {
-          const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+          // base64url → base64 → 字节序列 → UTF-8 字符串 → JSON
+          const b64 = parts[1].replace(/-/g,'+').replace(/_/g,'/');
+          const binaryStr = atob(b64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const jsonStr = new TextDecoder('utf-8').decode(bytes);
+          const payload = JSON.parse(jsonStr);
           if (payload.impersonated && payload.restaurantId === REST_ID) {
             SB_KEY = impToken;
             currentUser = payload.username;
@@ -2277,6 +2283,8 @@ async function init() {
               can_stocktake: !!payload.can_stocktake,
               can_receive: !!payload.can_receive,
             };
+            // 平台超级管理员协助登录：设置 isAdmin（让管理员菜单显示）
+            if (payload.isAdmin) isAdmin = true;
             window._impersonated = true;
             window._impUsername = payload.username;
             // 加载全部数据
@@ -7808,7 +7816,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.7）
+// Realtime — 长轮询版（v2.7.8）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）

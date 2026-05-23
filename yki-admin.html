@@ -824,10 +824,6 @@ async function openImpersonate(restId, restName) {
   try {
     const d = await api('/platform/chefs?restaurantId=' + encodeURIComponent(restId));
     const chefs = d.chefs || [];
-    if (!chefs.length) {
-      sel.innerHTML = '<option value="">（该餐厅暂无员工）</option>';
-      return;
-    }
     // 排序：admin 排前面
     chefs.sort((a, b) => {
       const ra = a.role === 'admin' ? 0 : 1;
@@ -835,10 +831,18 @@ async function openImpersonate(restId, restName) {
       if (ra !== rb) return ra - rb;
       return (a.name || '').localeCompare(b.name || '');
     });
-    sel.innerHTML = chefs.map(c => {
-      const tag = c.role === 'admin' ? '👑 ' : '';
-      return `<option value="${escapeHtml(c.name)}">${tag}${escapeHtml(c.name)}${c.role && c.role !== 'staff' ? ' (' + escapeHtml(c.role) + ')' : ''}</option>`;
-    }).join('');
+    // 第一个特殊选项：以"超级管理员"身份进入（看到所有功能）
+    let html = '<option value="__admin__" data-role="admin">👑 超级管理员（最高权限）</option>';
+    if (chefs.length) {
+      html += '<option disabled>──────────</option>';
+      html += chefs.map(c => {
+        const tag = c.role === 'admin' ? '👑 ' : '';
+        return `<option value="${escapeHtml(c.name)}" data-role="${escapeHtml(c.role || 'staff')}">${tag}${escapeHtml(c.name)}${c.role && c.role !== 'staff' ? ' (' + escapeHtml(c.role) + ')' : ''}</option>`;
+      }).join('');
+    } else {
+      html += '<option disabled>（该餐厅暂无员工）</option>';
+    }
+    sel.innerHTML = html;
   } catch (e) {
     sel.innerHTML = '<option value="">（加载失败）</option>';
     toast(e.message, 'err');
@@ -848,17 +852,23 @@ async function openImpersonate(restId, restName) {
 async function doImpersonate() {
   const username = document.getElementById('imp-chef-select').value;
   if (!_impRestId || !username) { toast('请选择员工', 'err'); return; }
+  // 特殊值：__admin__ 表示以超级管理员身份登录
+  const asAdmin = (username === '__admin__');
   try {
     const d = await api('/platform/impersonate', {
       method: 'POST',
-      body: JSON.stringify({ restaurantId: _impRestId, username })
+      body: JSON.stringify({
+        restaurantId: _impRestId,
+        username: asAdmin ? '__admin__' : username,
+      })
     });
     // 新 tab 打开 cucina，URL 带 _imp token
     const url = '/cucina.html?r=' + encodeURIComponent(_impRestId)
               + '&_imp=' + encodeURIComponent(d.token);
     window.open(url, '_blank');
     closeModal('modal-impersonate');
-    toast('已打开新窗口，以「' + username + '」身份登录', 'ok');
+    const label = asAdmin ? '超级管理员' : username;
+    toast('已打开新窗口，以「' + label + '」身份登录', 'ok');
   } catch (e) {
     toast(e.message, 'err');
   }
