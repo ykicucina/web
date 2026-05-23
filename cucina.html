@@ -249,12 +249,12 @@ body {
 @media (hover: none) {
   .order-item-card:hover { box-shadow: var(--shadow); }
 }
-.order-item-card.selected { border: 1.5px solid var(--primary); }
+.order-item-card.selected { border: 1.5px solid #4caf50; background: #e8f5e9; }
 /* 排序模式 SortableJS 视觉反馈 */
 .sort-chosen { background: #fff4d6 !important; box-shadow: 0 6px 20px rgba(201,169,97,0.35); }
 .sort-ghost { opacity: 0.35; }
 .sort-cat-header:active, .sort-item-card:active { cursor: grabbing; }
-.order-item-card.selected-low { border: 1.5px solid var(--primary); background: var(--primary-light); }
+.order-item-card.selected-low { border: 1.5px solid #4caf50; background: #c8e6c9; }
 .order-item-thumb {
   position: absolute; top: 14px; left: 14px;
   width: 44px; height: 44px;
@@ -808,6 +808,21 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     <div style="height:110px"></div><!-- spacer for footer -->
 
     <div class="order-footer" style="padding:10px 12px;">
+      <!-- 已选/未选过滤按钮组 -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <button id="btn-filter-selected" 
+          data-base-style="flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;"
+          style="flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:#f5f5f5;color:var(--text2);"
+          onclick="toggleOrderCheckedFilter('selected')">
+          <span id="lbl-filter-selected">✓ 仅看已选</span>
+        </button>
+        <button id="btn-filter-unselected"
+          data-base-style="flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;"
+          style="flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:#f5f5f5;color:var(--text2);"
+          onclick="toggleOrderCheckedFilter('unselected')">
+          <span id="lbl-filter-unselected">⚪ 仅看未选</span>
+        </button>
+      </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <input type="text" id="order-search" placeholder="🔍 搜索食材..." oninput="debouncedFilterOrderFromInput()"
           style="flex:2;min-width:0;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;">
@@ -1573,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.10';
+const APP_VERSION = 'v2.7.11';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1884,6 +1899,7 @@ let isAdmin     = false;
 let items       = [];      // cucina_items
 let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
+let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
@@ -1924,6 +1940,7 @@ const i18n = {
     // 订单
     ordersTitle:'订单系统', allOrders:'全部订单',
     filterPending:'待处理', filterDone:'已完成', filterConsume:'消耗记录',
+    filterSelected:'✓ 仅看已选', filterUnselected:'⚪ 仅看未选',
     exportBtn:'导出采购清单',
     allDate:'全部日期', today:'今天', yesterday:'昨天', custom:'自定义',
     allStaff:'全部员工', selected:'已选', selectAll:'全选',
@@ -1995,6 +2012,7 @@ const i18n = {
     consumeHint:'Negativo=consumo, positivo=carico', todayTag:'Oggi',
     ordersTitle:'Storico ordini', allOrders:'Tutti',
     filterPending:'In attesa', filterDone:'Completato', filterConsume:'Consumo',
+    filterSelected:'✓ Solo selezionati', filterUnselected:'⚪ Solo non selezionati',
     exportBtn:'Esporta lista acquisti',
     reportTitle:'Report', overview:'Panoramica',
     invAnalysis:'Analisi magazzino', consumeAnalysis:'Analisi consumi',
@@ -2111,6 +2129,7 @@ const i18n = {
     itemMgmtSub:'পণ্য যোগ ও সম্পাদনা',
     supplierWASub:'সরবরাহকারী যোগাযোগ সেট করুন',
     filterConsume:'ব্যবহার',
+    filterSelected:'✓ শুধু নির্বাচিত', filterUnselected:'⚪ শুধু অনির্বাচিত',
     orderDate:'তারিখ', orderBy:'অপারেটর',
     days:['','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি','রবি'],
   }
@@ -3212,6 +3231,13 @@ function renderOrderList() {
     sorted = sorted.filter(i=>(i.chef||'').toLowerCase().trim()===_cu);
   }
 
+  // 已选/未选过滤
+  if (_orderCheckedFilter === 'selected') {
+    sorted = sorted.filter(i => (parseFloat(i.need)||0) > 0);
+  } else if (_orderCheckedFilter === 'unselected') {
+    sorted = sorted.filter(i => !((parseFloat(i.need)||0) > 0));
+  }
+
   // 搜索过滤：优先级1 = 名称匹配（中文+意大利文）排前面，优先级2 = 其他字段匹配排后面
   let display;
   if (_orderSearchQ) {
@@ -3327,6 +3353,20 @@ let suppliers = []; // {name, wa_number}
 
 function filterOrderList(q) {
   _orderSearchQ = (q||'').toLowerCase().trim();
+  renderOrderList();
+}
+
+// 切换"仅看已选/未选"过滤；再点一次切回"全部"
+function toggleOrderCheckedFilter(mode) {
+  // 若当前已经是这个 mode，再点就取消（回到 all）
+  _orderCheckedFilter = (_orderCheckedFilter === mode) ? 'all' : mode;
+  // 更新按钮 UI
+  const btnSel = document.getElementById('btn-filter-selected');
+  const btnUns = document.getElementById('btn-filter-unselected');
+  const active = 'background:var(--primary,#c9a961);color:#fff;border-color:var(--primary,#c9a961);';
+  const idle = 'background:#f5f5f5;color:var(--text2);border-color:var(--border);';
+  if (btnSel) btnSel.style.cssText = (btnSel.dataset.baseStyle||'') + (_orderCheckedFilter === 'selected' ? active : idle);
+  if (btnUns) btnUns.style.cssText = (btnUns.dataset.baseStyle||'') + (_orderCheckedFilter === 'unselected' ? active : idle);
   renderOrderList();
 }
 
@@ -3935,6 +3975,11 @@ function toggleOrderItem(id, checked) {
   if (!checked) item.need = 0;
   item.orderModified = item.need > 0;
   updateOrderFooter();
+  // 如果当前在"仅看已选/未选"过滤模式，需重渲染列表（被过滤的商品要消失/出现）
+  if (_orderCheckedFilter !== 'all') {
+    renderOrderList();
+    return;
+  }
   const fc = calcForecast(item);
   const card = document.getElementById('ocard-'+id);
   if (card) card.className = `order-item-card ${checked?(ff('low_stock_highlight')&&fc>0?'selected-low':'selected'):''}`;
@@ -5876,6 +5921,9 @@ function changeLang(v) {
   se('filter-pending', t('pending'));
   se('filter-done', t('done'));
   se('filter-consume', t('filterConsume')||'消耗记录');
+  // 订货页 已选/未选 过滤标签
+  se('lbl-filter-selected', t('filterSelected')||'✓ 仅看已选');
+  se('lbl-filter-unselected', t('filterUnselected')||'⚪ 仅看未选');
   // 底部导航Tab
   const tabs = t('tabs');
   ['nav-inventory','nav-order','nav-orders','nav-report','nav-profile'].forEach((id,i)=>{
@@ -7819,7 +7867,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.10）
+// Realtime — 长轮询版（v2.7.11）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
