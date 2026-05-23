@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.18';
+const APP_VERSION = 'v2.7.19';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3424,6 +3424,103 @@ async function saveUserSortOrder() {
   } catch(e) { return false; }
 }
 
+// 按"该员工最近一张提交订单"重排自己的排序列表
+// 算法：查最近 1 张该员工提交的订单 → 拿订单里 item_code 顺序 → 这些商品调到列表顶部
+async function applyLastOrderToSort() {
+  if (!currentUser) { toast('未登录','err'); return; }
+  toast('查询最近订单中...');
+  try {
+    // 查该员工提交过的最近 1 单（type=order，非 consume）
+    const r = await fetch(
+      SB_URL + '/rest/v1/cucina_orders'
+        + '?restaurant_id=eq.' + REST_ID
+        + '&chef=eq.' + encodeURIComponent(currentUser)
+        + '&type=eq.order'
+        + '&select=id,date,items,created_at'
+        + '&order=created_at.desc'
+        + '&limit=1',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+    );
+    if (!r.ok) { toast('查询失败','err'); return; }
+    const orders = await r.json();
+    if (!orders.length) { toast('你还没有提交过订单','err'); return; }
+
+    const lastOrder = orders[0];
+    const orderItemCodes = (lastOrder.items || []).map(it => it.item_code).filter(Boolean);
+    if (!orderItemCodes.length) { toast('最近订单没有商品','err'); return; }
+
+    // 对应到当前 items 数组（拿 id），保留顺序
+    const orderedIds = [];
+    orderItemCodes.forEach(code => {
+      const item = items.find(i => i.item_code === code && !i.discontinued);
+      if (item) orderedIds.push(item.id);
+    });
+    if (!orderedIds.length) { toast('订单中的商品已停售或不在列表','err'); return; }
+
+    // 当前用户负责的食材
+    const _cu = (currentUser||'').toLowerCase().trim();
+    const myItems = items.filter(i =>
+      !i.discontinued &&
+      (i.chef||'').toLowerCase().trim() === _cu
+    );
+
+    // 根据当前显示模式重排
+    if (_sortDisplayMode === 'flat') {
+      // flat：订单顺序排前，其余按原 flatOrder 或 id
+      const existingFlat = (_userSortOrder && _userSortOrder.flatOrder) || myItems.map(i => i.id);
+      const seen = new Set(orderedIds);
+      const rest = existingFlat.filter(id => !seen.has(id));
+      // 补上原本不在 existingFlat 里的新商品
+      myItems.forEach(i => {
+        if (!seen.has(i.id) && !rest.includes(i.id)) rest.push(i.id);
+      });
+      _userSortOrder = { mode: 'flat', flatOrder: [...orderedIds, ...rest] };
+    } else {
+      // grouped：在每个分类内，订单出现的商品调到该分类顶部
+      const byCategory = {};
+      myItems.forEach(item => {
+        const cat = item.category || '其他';
+        if (!byCategory[cat]) byCategory[cat] = [];
+        byCategory[cat].push(item.id);
+      });
+      const itemOrders = {};
+      Object.keys(byCategory).forEach(cat => {
+        const ids = byCategory[cat];
+        const inOrder = orderedIds.filter(id => ids.includes(id));
+        const rest = ids.filter(id => !inOrder.includes(id));
+        itemOrders[cat] = [...inOrder, ...rest];
+      });
+      // 分类顺序：含订单商品的分类在前
+      const catsWithOrder = [];
+      const catsWithout = [];
+      Object.keys(byCategory).forEach(cat => {
+        if (orderedIds.some(id => byCategory[cat].includes(id))) {
+          catsWithOrder.push(cat);
+        } else {
+          catsWithout.push(cat);
+        }
+      });
+      _userSortOrder = {
+        categoryOrder: [...catsWithOrder, ...catsWithout],
+        itemOrders
+      };
+    }
+
+    // 自动保存
+    const ok = await saveUserSortOrder();
+    if (ok) {
+      toast('✅ 已按最近订单重排并保存');
+      renderOrderListSortMode();
+    } else {
+      toast('重排成功但保存失败，请手动点完成','err');
+      renderOrderListSortMode();
+    }
+  } catch(e) {
+    console.error('applyLastOrderToSort error:', e);
+    toast('操作失败：' + e.message, 'err');
+  }
+}
+
 // ── 用户语言偏好（per-user，跨设备同步）──
 async function loadUserLang() {
   if (!SB_KEY) return;
@@ -3689,6 +3786,10 @@ function renderOrderListSortMode() {
     <div style="padding:10px 14px;margin-bottom:8px;background:#fff8e1;color:#8a6f3a;border-radius:8px;font-size:13px;text-align:center;border:1px dashed #c9a961;">
       📌 拖动调整顺序，完成后点 <strong>"✓ 完成排序"</strong> 保存
     </div>
+    <button onclick="applyLastOrderToSort()"
+      style="width:100%;padding:10px;margin-bottom:10px;background:linear-gradient(135deg,#fff4d6,#ffe4a3);color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+      📋 按最近订单重排（自动应用）
+    </button>
     <div style="display:flex;background:#f5f5f5;border-radius:8px;padding:3px;margin-bottom:10px;">
       <button onclick="setSortDisplayMode('grouped')"
         style="flex:1;padding:8px;background:${_sortDisplayMode==='grouped'?'#fff':'transparent'};border:none;border-radius:6px;font-size:13px;font-weight:${_sortDisplayMode==='grouped'?'600':'normal'};color:${_sortDisplayMode==='grouped'?'var(--primary,#c9a961)':'var(--text2)'};cursor:pointer;${_sortDisplayMode==='grouped'?'box-shadow:0 1px 3px rgba(0,0,0,0.08);':''}">
@@ -8116,7 +8217,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.18）
+// Realtime — 长轮询版（v2.7.19）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
