@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.17';
+const APP_VERSION = 'v2.7.18';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4964,7 +4964,13 @@ async function mergeSendOrders() {
       if (!merged[sup]) merged[sup] = [];
       const exist = merged[sup].find(x=>x.item_code===item.item_code);
       if (exist) exist.need += item.need;
-      else merged[sup].push({...item});
+      else {
+        // 把 items 表的完整信息（特别是 italian 字段）合并进来，确保发送消息时能用意大利文名
+        const merged_item = itemInfo
+          ? { ...item, name: itemInfo.name || item.name, italian: itemInfo.italian || '' }
+          : { ...item };
+        merged[sup].push(merged_item);
+      }
       // 收集这张订单的备注到对应供应商（去重）
       if (order.note && order.note.trim()) {
         if (!mergedNotes[sup]) mergedNotes[sup] = new Set();
@@ -8110,7 +8116,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.17）
+// Realtime — 长轮询版（v2.7.18）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
