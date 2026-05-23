@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.11';
+const APP_VERSION = 'v2.7.14';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2323,6 +2323,7 @@ async function init() {
             try { await loadUserSortOrder(); } catch(e) {}
             try { await loadUserLang(); } catch(e) {}
             try { await loadUserSortMode(); } catch(e) {}
+            try { await loadWaLangPref(); } catch(e) {}
             // 进入主界面（switchTab/初始化导航 + 切换屏幕）
             if (typeof showApp === 'function') showApp();
             if (typeof initRealtime === 'function') initRealtime();
@@ -2496,6 +2497,7 @@ async function doLogin() {
   // 加载用户的语言偏好和排序模式偏好（跨设备同步）
   await loadUserLang();
   await loadUserSortMode();
+  await loadWaLangPref();
 
   btn.disabled = false;
   showApp();
@@ -2603,7 +2605,7 @@ async function toggleDiscontinueItem() {
   if (!isAdmin) return;
   const item = items.find(i=>i.id===editingItemId);
   if (!item) return;
-  const name = item.name || item.italian;
+  const name = displayName(item) || item.name || item.italian;
   const willDiscontinue = !item.discontinued;
   const actionTxt = willDiscontinue ? '停售' : '重新启用';
   const actionEmoji = willDiscontinue ? '🔴' : '🟢';
@@ -2629,7 +2631,7 @@ async function deleteEditItem() {
   if (!isAdmin) return;
   const item = items.find(i=>i.id===editingItemId);
   if (!item) return;
-  const name = item.name || item.italian;
+  const name = displayName(item) || item.name || item.italian;
   if (!confirm(`确定永久删除「${name}」？此操作不可撤销。`)) return;
   try {
     await sb('cucina_items?id=eq.'+editingItemId, {method:'DELETE'});
@@ -3016,7 +3018,7 @@ function showItemDetail(id) {
   const item = items.find(i=>i.id===id);
   if (!item) return;
   const fc = calcForecast(item);
-  document.getElementById('edit-item-title').textContent = item.name||item.italian;
+  document.getElementById('edit-item-title').textContent = displayName(item) || item.name || item.italian;
   document.getElementById('edit-item-form').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
       <div class="form-group"><label class="form-label">货物号</label><input class="form-control" id="ei-code" value="${item.item_code}"></div>
@@ -3484,6 +3486,45 @@ async function saveUserSortMode(mode) {
   } catch(e) { /* 静默失败 */ }
 }
 
+// ── WhatsApp 发送语言偏好（per-supplier，记每个供应商对应的语言）──
+// 数据结构：{"METRO":"it", "海鲜批发":"zh", ...}
+let _waLangBySupplier = {};
+async function loadWaLangPref() {
+  if (!SB_KEY) return;
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data && data.value && typeof data.value === 'object') {
+      _waLangBySupplier = data.value;
+    }
+  } catch(e) { /* 静默失败 */ }
+}
+async function saveWaLangPref() {
+  if (!SB_KEY) return;
+  try {
+    await fetch(SB_URL + '/user-prefs/wa_lang_by_supplier', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value: _waLangBySupplier })
+    });
+  } catch(e) { /* 静默失败 */ }
+}
+// 取某供应商默认语言（无记录则用意语）
+function getWaLangFor(supName) {
+  return _waLangBySupplier[supName] || 'it';
+}
+// 设置某供应商语言并保存
+function setWaLangFor(supName, lang) {
+  _waLangBySupplier[supName] = lang;
+  saveWaLangPref();
+}
+
 // 按用户排序数据应用到 items 数组（支持 grouped 和 flat 两种模式）
 // 改进：在保持用户手动顺序的前提下，今日订货品名优先（动态计算，每天不同）
 function applyCustomSortOrder(items, sortData) {
@@ -3714,10 +3755,16 @@ function renderOrderListSortMode() {
     }
     html += `<div id="sort-flat-list" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px;">`;
     orderedItems.forEach(item => {
+      // 按当前语言显示主名 + 另一语言作为辅助显示
+      const primary = displayName(item) || '(未命名)';
+      const secondary = (currentLang === 'zh')
+        ? (item.italian && item.italian !== primary ? item.italian : '')
+        : (item.name && item.name !== primary ? item.name : '');
       html += `
         <div class="sort-flat-item" data-id="${item.id}" style="padding:10px 12px;margin:3px 0;background:#fafafa;border:1px solid #eee;border-radius:6px;cursor:grab;user-select:none;display:flex;align-items:center;gap:10px;font-size:14px;">
           <span style="color:#c9a961;">⋮⋮</span>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.italian || item.name || '(未命名)')}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(primary)}</span>
+          ${secondary ? `<span style="color:var(--text3);font-size:12px;">${escapeHtml(secondary)}</span>` : ''}
           ${item.category ? `<span style="font-size:11px;color:var(--text3);background:#f5ecd0;padding:2px 8px;border-radius:6px;">${escapeHtml(item.category)}</span>` : ''}
         </div>
       `;
@@ -3809,13 +3856,20 @@ function renderOrderListSortMode() {
           <span style="margin-left:auto;font-size:13px;color:var(--text3);font-weight:normal;">(${catItems.length})</span>
         </div>
         <div class="sort-cat-items" data-cat="${escapeHtml(cat)}" style="padding:6px;">
-          ${catItems.map(item => `
+          ${catItems.map(item => {
+            // 按当前语言显示主名 + 另一语言作为辅助
+            const primary = displayName(item) || '(未命名)';
+            const secondary = (currentLang === 'zh')
+              ? (item.italian && item.italian !== primary ? item.italian : '')
+              : (item.name && item.name !== primary ? item.name : '');
+            return `
             <div class="sort-item-card" data-id="${item.id}" style="padding:10px 12px;margin:3px 0;background:#fafafa;border:1px solid #eee;border-radius:6px;cursor:grab;user-select:none;display:flex;align-items:center;gap:10px;font-size:14px;">
               <span style="color:#c9a961;">⋮⋮</span>
-              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.italian || item.name || '(未命名)')}</span>
-              ${item.name && item.italian ? `<span style="color:var(--text3);font-size:12px;">${escapeHtml(item.name)}</span>` : ''}
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(primary)}</span>
+              ${secondary ? `<span style="color:var(--text3);font-size:12px;">${escapeHtml(secondary)}</span>` : ''}
             </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
     `;
@@ -4402,7 +4456,7 @@ function renderReceiveTab() {
       <div style="background:var(--surface2);border-radius:8px;overflow:hidden;">
         ${itemList.map(i=>`
           <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">
-            <span>${i.name||i.italian}</span>
+            <span>${escapeHtml(displayName(i) || i.name || i.italian || '')}</span>
             <strong>× ${i.need} ${i.spec||''}</strong>
           </div>`).join('')}
       </div>
@@ -4772,6 +4826,92 @@ function showCycleWarningModal(targetDay, filtered) {
   });
 }
 
+// 按指定语言构造发给供应商的 WhatsApp 文本
+// lang: 'zh' / 'it'
+function buildWaMessage(supName, supItems, dateStr, lang, opts) {
+  const isZh = (lang === 'zh');
+  const header = isZh ? '🍳 *厨房订货单*' : '🍳 *Ordine cucina*';
+  const dateLbl = isZh ? '📅 日期：' : '📅 Data: ';
+  const supLbl = isZh ? '📦 供应商：' : '📦 Fornitore: ';
+  const noteLbl = isZh ? '📝 *备注*：' : '📝 *Note*:';
+  // 商品名优先按指定语言显示
+  const nameOf = (it) => isZh
+    ? (it.name || it.italian || '')
+    : (it.italian || it.name || '');
+  let msg = header + '\n' + dateLbl + dateStr + '\n' + supLbl + supName.toUpperCase() + '\n\n';
+  supItems.forEach(i => {
+    msg += `• ${nameOf(i)} × ${i.need}${i.spec ? ' (' + i.spec + ')' : ''}\n`;
+  });
+  // 备注（可选）
+  if (opts && opts.notes && opts.notes.length) {
+    msg += '\n' + noteLbl + '\n';
+    opts.notes.forEach(n => { msg += `${n}\n`; });
+  }
+  // 申购人（可选）
+  if (opts && opts.author) {
+    const lbl = isZh ? '🧑‍🍳 申购人：' : '🧑‍🍳 Operatore: ';
+    msg = header + '\n' + lbl + opts.author + '\n' + dateLbl + dateStr + '\n' + supLbl + supName.toUpperCase() + '\n\n'
+      + msg.substring(msg.indexOf('\n\n') + 2);
+  }
+  return msg;
+}
+
+// 渲染供应商卡片里的"中文/意语"切换按钮（被供应商分组卡片复用）
+// supKey: 供应商名（数据 key）
+// supSafeId: 用于 DOM id 的安全字符串
+function renderWaLangSwitcher(supSafeId, supName) {
+  const cur = getWaLangFor(supName);
+  const btnStyle = (active) =>
+    `padding:3px 8px;font-size:11px;border:1px solid ${active?'#c9a961':'#ddd'};background:${active?'#c9a961':'#fff'};color:${active?'#fff':'#888'};border-radius:6px;cursor:pointer;font-weight:${active?'700':'400'};transition:all .15s;`;
+  return `<div style="display:inline-flex;gap:4px;margin-left:8px;">
+    <button onclick="onWaLangChange('${escapeAttr(supSafeId)}','${escapeAttr(supName)}','zh')"
+      id="wa-lang-${supSafeId}-zh" style="${btnStyle(cur==='zh')}">中</button>
+    <button onclick="onWaLangChange('${escapeAttr(supSafeId)}','${escapeAttr(supName)}','it')"
+      id="wa-lang-${supSafeId}-it" style="${btnStyle(cur==='it')}">IT</button>
+  </div>`;
+}
+// 转义 HTML 属性中的引号
+function escapeAttr(s) { return String(s||'').replace(/['"\\]/g, '\\$&'); }
+
+// 用户切换某供应商发送语言时调用
+function onWaLangChange(supSafeId, supName, lang) {
+  setWaLangFor(supName, lang);
+  // 重新渲染该供应商卡片的预览 + 链接 + 切换按钮高亮
+  // 简单方式：刷新两类容器里的局部内容
+  ['zh','it'].forEach(L => {
+    const btn = document.getElementById('wa-lang-' + supSafeId + '-' + L);
+    if (!btn) return;
+    const active = (L === lang);
+    btn.style.cssText =
+      `padding:3px 8px;font-size:11px;border:1px solid ${active?'#c9a961':'#ddd'};background:${active?'#c9a961':'#fff'};color:${active?'#fff':'#888'};border-radius:6px;cursor:pointer;font-weight:${active?'700':'400'};transition:all .15s;`;
+  });
+  // 更新该供应商的预览文本和链接
+  const preview = document.getElementById('wa-preview-' + supSafeId);
+  const link = document.getElementById('wa-link-' + supSafeId);
+  if (preview && preview.dataset.items) {
+    try {
+      const items = JSON.parse(preview.dataset.items);
+      const isZh = (lang === 'zh');
+      const nameOf = (it) => isZh ? (it.name || it.italian || '') : (it.italian || it.name || '');
+      preview.innerHTML = items.map(i => `• ${escapeHtml(nameOf(i))} × ${i.need}${i.spec?' ('+escapeHtml(i.spec)+')':''}`).join('<br>');
+    } catch(e) {}
+  }
+  if (link && link.dataset.dateStr && link.dataset.items) {
+    try {
+      const items = JSON.parse(link.dataset.items);
+      const notes = link.dataset.notes ? JSON.parse(link.dataset.notes) : null;
+      const author = link.dataset.author || null;
+      const opts = {};
+      if (notes && notes.length) opts.notes = notes;
+      if (author) opts.author = author;
+      const msg = buildWaMessage(supName, items, link.dataset.dateStr, lang, opts);
+      const encoded = encodeURIComponent(msg);
+      const waNum = link.dataset.waNum;
+      link.href = `https://wa.me/${waNum}?text=${encoded}`;
+    } catch(e) {}
+  }
+}
+
 async function mergeSendOrders() {
   const targetDay = _weekdayFilter || getTodayWeekday();
   let ignoreCycle = document.getElementById('ignore-cycle')?.checked || false;
@@ -4835,22 +4975,33 @@ async function mergeSendOrders() {
   const today = new Date().toLocaleDateString('zh-CN');
   let html = `<p style="font-size:12px;color:var(--text3);margin-bottom:12px;">点击各供应商的发送按钮，逐个发送 WhatsApp</p>`;
 
+  let supIdx = 0;
   for (const [supName, supItems] of Object.entries(merged)) {
+    supIdx++;
+    const supSafeId = 'merge-' + supIdx;
     const supInfo = suppliers.find(s=>(s.name||'').toLowerCase()===supName.toLowerCase());
     const waNum = supInfo?.wa_number || '';
     const hasWa = !!waNum;
 
-    let msg = `🍳 *YioFish 订货单*\n📅 ${today}\n📦 ${supName.toUpperCase()}\n\n`;
-    supItems.forEach(i=>{
-      msg += `• ${i.name||i.italian} × ${i.need}${i.spec?' ('+i.spec+')':''}\n`;
-    });
-    // 附加备注（按供应商）
-    const notes = mergedNotes[supName];
-    if (notes && notes.size > 0) {
-      msg += '\n📝 *备注*：\n';
-      notes.forEach(n => { msg += `${n}\n`; });
-    }
+    // 按该供应商记忆的语言生成消息
+    const curLang = getWaLangFor(supName);
+    const notesSet = mergedNotes[supName];
+    const notesArr = notesSet && notesSet.size > 0 ? [...notesSet] : [];
+    const msgOpts = notesArr.length ? { notes: notesArr } : {};
+    const msg = buildWaMessage(supName, supItems, today, curLang, msgOpts);
     const encoded = encodeURIComponent(msg);
+
+    // 当前预览行（用当前语言显示品名）
+    const previewHtml = supItems.map(i => {
+      const nm = (curLang === 'zh') ? (i.name||i.italian||'') : (i.italian||i.name||'');
+      return `• ${escapeHtml(nm)} × ${i.need}${i.spec?' ('+escapeHtml(i.spec)+')':''}`;
+    }).join('<br>');
+
+    // 序列化数据放 dataset，切换语言时复用
+    const itemsJson = escapeHtml(JSON.stringify(supItems.map(i => ({
+      name: i.name||'', italian: i.italian||'', need: i.need, spec: i.spec||''
+    }))));
+    const notesJson = escapeHtml(JSON.stringify(notesArr));
 
     html += `
     <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
@@ -4858,19 +5009,24 @@ async function mergeSendOrders() {
         <div>
           <span style="font-weight:600;font-size:14px;">📦 ${supName.toUpperCase()}</span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px;">${supItems.length}种食材</span>
+          ${renderWaLangSwitcher(supSafeId, supName)}
         </div>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
-        ${supItems.map(i=>`• ${i.name||i.italian} × ${i.need}${i.spec?' ('+i.spec+')':''}`).join('<br>')}
+      <div id="wa-preview-${supSafeId}" data-items="${itemsJson}"
+        style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+        ${previewHtml}
       </div>
       ${(()=>{
-        const notes = mergedNotes[supName];
-        if (!notes || notes.size === 0) return '';
-        const list = [...notes].map(n => `📝 ${n}`).join('<br>');
+        if (!notesArr.length) return '';
+        const list = notesArr.map(n => `📝 ${escapeHtml(n)}`).join('<br>');
         return `<div style="background:#fff8e1;color:#e65100;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;line-height:1.5;border-left:3px solid #ffa726;">${list}</div>`;
       })()}
       ${hasWa
-        ? `<a href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
+        ? `<a id="wa-link-${supSafeId}" href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
+            data-date-str="${escapeAttr(today)}"
+            data-wa-num="${escapeAttr(waNum)}"
+            data-items="${itemsJson}"
+            data-notes="${notesJson}"
             style="display:block;width:100%;background:#25D366;color:#fff;border:none;border-radius:10px;
             padding:12px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box;">
             📲 发送给 ${supName.toUpperCase()}
@@ -5363,31 +5519,50 @@ function showSubmitConfirm(orderItems, today) {
   let html = `<p style="font-size:12px;color:var(--text3);margin-bottom:12px;">
     点击各供应商的发送按钮，逐个发送WhatsApp</p>`;
 
+  let supIdx = 0;
   Object.entries(supGroups).forEach(([supName, supItems])=>{
+    supIdx++;
+    const supSafeId = 'submit-' + supIdx;
     const supInfo = suppliers.find(s=>(s.name||'').toLowerCase()===supName.toLowerCase());
     const waNum = supInfo?.wa_number || WA_NUM;
     const hasWa = !!(supInfo?.wa_number);
 
-    let msg = `🍳 *YioFish 后厨申购单*\n🧑‍🍳 ${currentUser}\n📅 ${today}\n📦 ${supName.toUpperCase()}\n\n`;
-    supItems.forEach(i=>{
-      msg+=`• ${i.name} × ${i.need}${i.spec?' ('+i.spec+')':''}\n`;
-    });
+    // 按该供应商记忆的语言生成消息
+    const curLang = getWaLangFor(supName);
+    const msg = buildWaMessage(supName, supItems, today, curLang, { author: currentUser });
     const encoded = encodeURIComponent(msg);
+
+    // 当前预览
+    const previewHtml = supItems.map(i => {
+      const nm = (curLang === 'zh') ? (i.name||i.italian||'') : (i.italian||i.name||'');
+      return `• ${escapeHtml(nm)} × ${i.need}${i.spec?' ('+escapeHtml(i.spec)+')':''}`;
+    }).join('<br>');
+
+    // 序列化数据
+    const itemsJson = escapeHtml(JSON.stringify(supItems.map(i => ({
+      name: i.name||'', italian: i.italian||'', need: i.need, spec: i.spec||''
+    }))));
 
     html += `<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div>
           <span style="font-weight:600;font-size:14px;">📦 ${supName.toUpperCase()}</span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px;">${supItems.length}种食材</span>
+          ${renderWaLangSwitcher(supSafeId, supName)}
         </div>
-        <a href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
+        <a id="wa-link-${supSafeId}" href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
+          data-date-str="${escapeAttr(today)}"
+          data-wa-num="${escapeAttr(waNum)}"
+          data-items="${itemsJson}"
+          data-author="${escapeAttr(currentUser||'')}"
           style="background:${hasWa?'#25D366':'var(--text3)'};color:#fff;border:none;border-radius:8px;
           padding:6px 14px;font-size:12px;cursor:pointer;text-decoration:none;display:inline-block;">
           ${hasWa?'📲 发送':'📲 发送（默认号）'}
         </a>
       </div>
-      <div style="font-size:12px;color:var(--text2);">
-        ${supItems.map(i=>`• ${i.name} × ${i.need}${i.spec?' ('+i.spec+')':''}`).join('<br>')}
+      <div id="wa-preview-${supSafeId}" data-items="${itemsJson}"
+        style="font-size:12px;color:var(--text2);">
+        ${previewHtml}
       </div>
       ${!hasWa?`<div style="font-size:11px;color:var(--warn);margin-top:4px;">⚠️ 未设置此供应商WhatsApp</div>`:''}
     </div>`;
@@ -5412,47 +5587,92 @@ function showSupplierModal() {
 function renderSupplierList() {
   const el = document.getElementById('supplier-list-ui');
   if (!el) return;
-  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:8px 0;">暂无供应商，请添加</p>'; return; }
+  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:8px 0;text-align:center;">暂无供应商，请添加</p>'; return; }
   const buyerNames = Object.entries(chefs).filter(([n,v])=>(v.role||'staff')==='buyer').map(([n])=>n);
   const allStaff = Object.keys(chefs);
-  el.innerHTML = suppliers.map(s=>`
-    <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <strong style="font-size:14px;">${s.name}</strong>
+  el.innerHTML = suppliers.map(s=>{
+    const hasWa = !!(s.wa_number||'').trim();
+    const curLang = getWaLangFor(s.name);
+    const langBtn = (L, label) => {
+      const active = (curLang === L);
+      return `<button type="button" onclick="onSupplierWaLangChange('${escapeAttr(s.name)}','${L}')"
+        id="sup-card-walang-${s.id}-${L}"
+        style="padding:5px 12px;font-size:12px;border:1px solid ${active?'#c9a961':'#ddd'};background:${active?'#c9a961':'#fff'};color:${active?'#fff':'#888'};border-radius:6px;cursor:pointer;font-weight:${active?'700':'500'};transition:all .15s;">${label}</button>`;
+    };
+    return `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+      <!-- 卡片头部：供应商名 + 删除 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📦</span>
+          <strong style="font-size:16px;color:var(--text);">${escapeHtml(s.name)}</strong>
+        </div>
         <button onclick="deleteSupplier(${s.id})"
-          style="border:none;background:transparent;color:var(--danger);font-size:18px;cursor:pointer;padding:0 4px;">×</button>
+          title="删除供应商"
+          style="border:1px solid #f0d4d4;background:#fff5f5;color:#d32f2f;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;">🗑️</button>
       </div>
-      <div style="margin-bottom:6px;">
-        <span style="color:var(--text3);">📱 WA：</span>
-        <input type="text" value="${s.wa_number||''}" placeholder="WhatsApp号码"
-          style="width:calc(100% - 60px);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;"
+
+      <!-- WhatsApp 号码 -->
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">📱 WhatsApp 号码</label>
+        <input type="text" value="${escapeAttr(s.wa_number||'')}" placeholder="例如 393778826875（带国家区号，不要+号）"
+          style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;box-sizing:border-box;background:${hasWa?'#f9fdf9':'#fffaf0'};"
           onchange="updateSupplierWa(${s.id},this.value)">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+
+      <!-- WhatsApp 发送默认语言 -->
+      <div style="margin-bottom:10px;background:#faf8f2;padding:10px 12px;border-radius:8px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:600;">🌐 默认发送语言</label>
+        <div style="display:flex;gap:6px;">
+          ${langBtn('zh','🇨🇳 中文')}
+          ${langBtn('it','🇮🇹 Italiano')}
+        </div>
+      </div>
+
+      <!-- 采购员 + 截止时间 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div>
-          <div style="color:var(--text3);margin-bottom:3px;">采购员</div>
+          <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">🛒 采购员</label>
           <select onchange="updateSupplierBuyer(${s.id},this.value)"
-            style="width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:12px;background:var(--surface);">
+            style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px;background:var(--surface);">
             <option value="">-- 未指定 --</option>
-            ${buyerNames.map(b=>`<option value="${b}" ${s.buyer===b?'selected':''}>${b}</option>`).join('')}
+            ${buyerNames.map(b=>`<option value="${escapeAttr(b)}" ${s.buyer===b?'selected':''}>${escapeHtml(b)}</option>`).join('')}
           </select>
         </div>
         <div>
-          <div style="color:var(--text3);margin-bottom:3px;">截止时间</div>
-          <input type="time" value="${(s.order_deadline||'19:00').slice(0,5)}"
-            style="width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;"
+          <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">⏰ 截止时间</label>
+          <input type="time" value="${escapeAttr((s.order_deadline||'19:00').slice(0,5))}"
+            style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px;box-sizing:border-box;"
             onchange="updateSupplierDeadline(${s.id},this.value)">
         </div>
       </div>
+
+      <!-- 收货员 -->
       <div>
-        <div style="color:var(--text3);margin-bottom:3px;">收货员</div>
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">📥 收货员</label>
         <select onchange="updateSupplierReceiver(${s.id},this.value)"
-          style="width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:12px;background:var(--surface);">
+          style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px;background:var(--surface);">
           <option value="">-- 未指定 --</option>
-          ${allStaff.map(n=>`<option value="${n}" ${s.receiver===n?'selected':''}>${n}</option>`).join('')}
+          ${allStaff.map(n=>`<option value="${escapeAttr(n)}" ${s.receiver===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}
         </select>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// 在"供应商管理"卡片里切换该供应商的 WA 默认语言
+function onSupplierWaLangChange(supName, lang) {
+  setWaLangFor(supName, lang);
+  // 重新渲染高亮（不重渲整个列表，避免输入焦点丢失）
+  const sup = suppliers.find(s => s.name === supName);
+  if (!sup) return;
+  ['zh','it'].forEach(L => {
+    const btn = document.getElementById('sup-card-walang-' + sup.id + '-' + L);
+    if (!btn) return;
+    const active = (L === lang);
+    btn.style.cssText =
+      `padding:5px 12px;font-size:12px;border:1px solid ${active?'#c9a961':'#ddd'};background:${active?'#c9a961':'#fff'};color:${active?'#fff':'#888'};border-radius:6px;cursor:pointer;font-weight:${active?'700':'500'};transition:all .15s;`;
+  });
 }
 
 async function updateSupplierReceiver(id, receiver) {
@@ -7867,7 +8087,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.11）
+// Realtime — 长轮询版（v2.7.14）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
