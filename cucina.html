@@ -1588,7 +1588,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.19';
+const APP_VERSION = 'v2.7.20';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3464,47 +3464,21 @@ async function applyLastOrderToSort() {
       (i.chef||'').toLowerCase().trim() === _cu
     );
 
-    // 根据当前显示模式重排
-    if (_sortDisplayMode === 'flat') {
-      // flat：订单顺序排前，其余按原 flatOrder 或 id
-      const existingFlat = (_userSortOrder && _userSortOrder.flatOrder) || myItems.map(i => i.id);
-      const seen = new Set(orderedIds);
-      const rest = existingFlat.filter(id => !seen.has(id));
-      // 补上原本不在 existingFlat 里的新商品
-      myItems.forEach(i => {
-        if (!seen.has(i.id) && !rest.includes(i.id)) rest.push(i.id);
-      });
-      _userSortOrder = { mode: 'flat', flatOrder: [...orderedIds, ...rest] };
-    } else {
-      // grouped：在每个分类内，订单出现的商品调到该分类顶部
-      const byCategory = {};
-      myItems.forEach(item => {
-        const cat = item.category || '其他';
-        if (!byCategory[cat]) byCategory[cat] = [];
-        byCategory[cat].push(item.id);
-      });
-      const itemOrders = {};
-      Object.keys(byCategory).forEach(cat => {
-        const ids = byCategory[cat];
-        const inOrder = orderedIds.filter(id => ids.includes(id));
-        const rest = ids.filter(id => !inOrder.includes(id));
-        itemOrders[cat] = [...inOrder, ...rest];
-      });
-      // 分类顺序：含订单商品的分类在前
-      const catsWithOrder = [];
-      const catsWithout = [];
-      Object.keys(byCategory).forEach(cat => {
-        if (orderedIds.some(id => byCategory[cat].includes(id))) {
-          catsWithOrder.push(cat);
-        } else {
-          catsWithout.push(cat);
-        }
-      });
-      _userSortOrder = {
-        categoryOrder: [...catsWithOrder, ...catsWithout],
-        itemOrders
-      };
-    }
+    // 强制使用 flat 模式（全局排序，无视分类）：订单顺序排前，其余商品在后
+    const seen = new Set(orderedIds);
+    const rest = [];
+    // 其余商品保持原 flatOrder 顺序（如果之前是 grouped 模式则按当前 myItems 顺序）
+    const existingFlat = (_userSortOrder && _userSortOrder.flatOrder) || myItems.map(i => i.id);
+    existingFlat.forEach(id => {
+      if (!seen.has(id) && myItems.some(i => i.id === id)) rest.push(id);
+    });
+    // 补上不在 existingFlat 里的新商品
+    myItems.forEach(i => {
+      if (!seen.has(i.id) && !rest.includes(i.id)) rest.push(i.id);
+    });
+    _userSortOrder = { mode: 'flat', flatOrder: [...orderedIds, ...rest] };
+    // 切换到 flat 显示模式
+    _sortDisplayMode = 'flat';
 
     // 自动保存
     const ok = await saveUserSortOrder();
@@ -8217,7 +8191,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.19）
+// Realtime — 长轮询版（v2.7.20）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
