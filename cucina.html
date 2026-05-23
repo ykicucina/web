@@ -1573,7 +1573,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.8';
+const APP_VERSION = 'v2.7.9';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2321,15 +2321,15 @@ async function init() {
   }
 }
 
-// 平台协助登录的警告横幅
+// 平台协助登录的标识 —— 右上角小标签（不占空间）
 function showImpersonateBanner(username) {
-  // 避免重复
   if (document.getElementById('imp-banner')) return;
   const banner = document.createElement('div');
   banner.id = 'imp-banner';
-  banner.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#fff3cd,#ffe082);color:#8a6f3a;padding:8px 14px;font-size:13px;font-weight:600;text-align:center;border-bottom:2px solid #c9a961;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
-  banner.innerHTML = `🔧 平台管理员协助登录中 · 当前身份：<strong>${username}</strong> · 所有操作将记录为该员工 · <span style="font-weight:400;opacity:.8;">2 小时后过期</span>`;
-  document.body.insertBefore(banner, document.body.firstChild);
+  banner.style.cssText = 'position:fixed;right:8px;bottom:80px;z-index:9999;background:linear-gradient(135deg,#ffe082,#ffca28);color:#5a4a1f;padding:6px 12px;font-size:12px;font-weight:600;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:default;border:1px solid #c9a961;';
+  banner.title = '当前身份：' + username + '\n所有操作将记录为该员工\n2 小时后过期';
+  banner.innerHTML = '🔧 协助登录';
+  document.body.appendChild(banner);
 }
 
 // ── 登录成功后加载全部数据（需要令牌）──
@@ -7816,7 +7816,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.8）
+// Realtime — 长轮询版（v2.7.9）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
