@@ -1601,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.23';
+const APP_VERSION = 'v2.7.24';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2659,7 +2659,27 @@ async function doLogout() {
   try { await disablePush(); } catch(e) {}
   // 清 IDB（防止 SW 用过期令牌）
   await clearAuthFromIDB();
-  currentUser=null; isAdmin=false;
+  // 清所有 per-user 状态，防止下一个登录的用户看到上个用户的数据
+  SB_KEY = '';
+  currentUser = null;
+  currentUserRole = 'staff';
+  currentUserPerms = { can_add_stock: false, can_stocktake: false, can_receive: false };
+  isAdmin = false;
+  items = [];
+  orders = [];
+  suppliers = [];
+  chefs = {};
+  _userSortOrder = null;
+  _sortDisplayMode = null;
+  _orderCheckedFilter = 'all';
+  _orderSearchQ = '';
+  _orderSortMode = 'default';
+  _orderNote = '';
+  _weekdayFilter = '';
+  _selectedOrderIds = new Set();
+  window._pickEntries = null;
+  window._impersonated = false;
+  window._impUsername = null;
   document.getElementById('screen-app').classList.remove('active');
   document.getElementById('screen-login').classList.add('active');
   // 保留密码不清空（记住登录）
@@ -8352,7 +8372,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.23）
+// Realtime — 长轮询版（v2.7.24）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
