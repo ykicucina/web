@@ -1601,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.24';
+const APP_VERSION = 'v2.7.25';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8372,7 +8372,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.24）
+// Realtime — 长轮询版（v2.7.25）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）

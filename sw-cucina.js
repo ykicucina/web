@@ -52,8 +52,8 @@ self.addEventListener('fetch', e => {
   // 只处理 GET
   if (req.method !== 'GET') return;
 
-  // ① Supabase API → 网络优先，不缓存（数据必须实时）
-  if (url.hostname.includes('supabase.co')) {
+  // ① Supabase API / 我们自己的 Worker API → 网络优先，不缓存（数据必须实时）
+  if (url.hostname.includes('supabase.co') || url.hostname === 'api.yki.it') {
     return; // 让浏览器原生处理
   }
 
