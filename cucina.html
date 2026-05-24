@@ -1438,6 +1438,36 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   </div>
 </div>
 
+<!-- 保存当前排序 Modal -->
+<div class="modal-overlay" id="modal-save-sort">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💾 保存当前排序</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">
+      给这个排序起个名字（比如"周一菜单"、"周末备货"），方便以后切换
+    </div>
+    <input type="text" id="save-sort-name" class="form-control" placeholder="排序名称（最多 20 字）" maxlength="20" style="margin-bottom:10px;">
+    <div id="save-sort-warn" style="font-size:12px;color:#d32f2f;margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-save-sort')">取消</button>
+      <button class="btn btn-primary" style="flex:1" onclick="doSaveSortTemplate()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 我保存的排序列表 Modal -->
+<div class="modal-overlay" id="modal-saved-sorts">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📂 我保存的排序</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5;">
+      点 ▶ 应用某个排序 / 点 🗑️ 删除
+    </div>
+    <div id="saved-sorts-list" style="max-height:60vh;overflow-y:auto;"></div>
+    <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="closeModal('modal-saved-sorts')">关闭</button>
+  </div>
+</div>
+
 <!-- 批量改供应商 Modal -->
 <div class="modal-overlay" id="modal-batch-supplier">
   <div class="modal">
@@ -1601,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.27';
+const APP_VERSION = 'v2.7.28';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3509,6 +3539,214 @@ async function loadPickingSessions() {
   } catch(e) { return []; }
 }
 
+// ════════════════════════════════════════════════════════
+// 保存的排序模板（user_prefs.saved_sort_templates）
+// 最多 5 条，FIFO，per-user
+// 数据结构：[{ name, time: ISO, sortData: {...} }, ...]
+// ════════════════════════════════════════════════════════
+async function loadSavedSorts() {
+  if (!SB_KEY) return [];
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/saved_sort_templates', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return (data && Array.isArray(data.value)) ? data.value : [];
+  } catch(e) { return []; }
+}
+
+async function saveSavedSorts(list) {
+  if (!SB_KEY) return false;
+  try {
+    const r = await fetch(SB_URL + '/user-prefs/saved_sort_templates', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: list })
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+
+// 打开保存对话框
+async function openSaveSortTemplate() {
+  // 先收集当前 DOM 顺序，确保是用户最新调整后的
+  const current = collectSortFromDOM();
+  if (!current ||
+      (current.mode === 'flat' && (!current.flatOrder || !current.flatOrder.length)) ||
+      (current.mode === 'grouped' && (!current.categoryOrder || !current.categoryOrder.length))) {
+    toast('当前还没有排序，先拖一下', 'err');
+    return;
+  }
+  // 检查已有数量
+  const list = await loadSavedSorts();
+  if (list.length >= 5) {
+    if (!confirm('已有 5 个保存的排序，新存将挤掉最旧的"' + (list[list.length-1].name||'未命名') + '"，继续吗？')) return;
+  }
+  // 默认名字：用日期时间
+  const now = new Date();
+  const defName = `${now.getMonth()+1}-${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('save-sort-name').value = defName;
+  document.getElementById('save-sort-warn').style.display = 'none';
+  openModal('modal-save-sort');
+  // 暂存待保存的 sortData
+  window._pendingSaveSortData = current;
+}
+
+async function doSaveSortTemplate() {
+  const name = (document.getElementById('save-sort-name').value || '').trim();
+  const warn = document.getElementById('save-sort-warn');
+  if (!name) {
+    warn.textContent = '请输入名称';
+    warn.style.display = 'block';
+    return;
+  }
+  const sortData = window._pendingSaveSortData;
+  if (!sortData) { toast('保存数据丢失，请重试', 'err'); return; }
+
+  let list = await loadSavedSorts();
+  // 同名替换（友好体验，避免重名混乱）
+  const sameNameIdx = list.findIndex(s => s.name === name);
+  if (sameNameIdx >= 0) {
+    if (!confirm('已有同名"' + name + '"，覆盖它吗？')) return;
+    list.splice(sameNameIdx, 1);
+  }
+  // 新加到最前
+  list.unshift({
+    name,
+    time: new Date().toISOString(),
+    sortData: sortData,
+  });
+  // FIFO 5 条
+  if (list.length > 5) list = list.slice(0, 5);
+
+  const ok = await saveSavedSorts(list);
+  if (ok) {
+    toast('✅ 已保存"' + name + '"');
+    closeModal('modal-save-sort');
+    window._pendingSaveSortData = null;
+    refreshSavedSortsCount();
+  } else {
+    toast('保存失败', 'err');
+  }
+}
+
+async function openSavedSorts() {
+  const list = await loadSavedSorts();
+  const el = document.getElementById('saved-sorts-list');
+  if (!list.length) {
+    el.innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px 0;font-size:13px;">还没有保存的排序<br>拖好顺序后点 <strong>"💾 保存当前排序"</strong>～</p>';
+  } else {
+    el.innerHTML = list.map((s, idx) => {
+      const t = s.time ? new Date(s.time) : null;
+      const timeStr = t && !isNaN(t)
+        ? `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`
+        : '';
+      // 预览：根据 sortData 类型显示几个商品名
+      const sd = s.sortData || {};
+      let preview = '';
+      if (sd.mode === 'flat' && Array.isArray(sd.flatOrder)) {
+        const names = sd.flatOrder.slice(0, 4).map(id => {
+          const it = items.find(i => i.id === id);
+          return it ? escapeHtml(it.name || it.italian || '') : '';
+        }).filter(Boolean).join('→');
+        preview = names + (sd.flatOrder.length > 4 ? `...共 ${sd.flatOrder.length} 项` : '');
+      } else if (sd.categoryOrder) {
+        preview = `📁 ${sd.categoryOrder.slice(0,3).map(escapeHtml).join('、')}${sd.categoryOrder.length>3?'...':''}`;
+      }
+      const modeTag = sd.mode === 'flat'
+        ? '<span style="font-size:10px;color:#1976d2;background:#e3f2fd;padding:2px 6px;border-radius:4px;">全部</span>'
+        : '<span style="font-size:10px;color:#7b1fa2;background:#f3e5f5;padding:2px 6px;border-radius:4px;">分类</span>';
+      return `
+        <div style="padding:12px;margin-bottom:8px;background:#fff;border:1px solid var(--border);border-radius:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="flex:1;min-width:0;">
+              <strong style="font-size:14px;">${escapeHtml(s.name || '未命名')}</strong>
+              ${modeTag}
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${timeStr}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button onclick="applySavedSort(${idx})"
+                style="padding:6px 10px;background:#c9a961;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">▶ 应用</button>
+              <button onclick="renameSavedSort(${idx})"
+                style="padding:6px 8px;background:#fff;color:#666;border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">✏️</button>
+              <button onclick="deleteSavedSort(${idx})"
+                style="padding:6px 8px;background:#fff5f5;color:#d32f2f;border:1px solid #f0d4d4;border-radius:6px;font-size:12px;cursor:pointer;">🗑️</button>
+            </div>
+          </div>
+          ${preview ? `<div style="font-size:12px;color:var(--text2);line-height:1.4;">${preview}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  openModal('modal-saved-sorts');
+}
+
+async function applySavedSort(idx) {
+  const list = await loadSavedSorts();
+  if (idx < 0 || idx >= list.length) { toast('记录不存在', 'err'); return; }
+  const s = list[idx];
+  if (!s.sortData) { toast('数据损坏', 'err'); return; }
+  _userSortOrder = JSON.parse(JSON.stringify(s.sortData));  // 深拷贝
+  _sortDisplayMode = (s.sortData.mode === 'flat') ? 'flat' : 'grouped';
+  const ok = await saveUserSortOrder();
+  closeModal('modal-saved-sorts');
+  if (ok) {
+    toast('✅ 已应用"' + (s.name||'') + '"');
+    renderOrderListSortMode();
+  } else {
+    toast('应用成功但保存失败', 'err');
+    renderOrderListSortMode();
+  }
+}
+
+async function renameSavedSort(idx) {
+  const list = await loadSavedSorts();
+  if (idx < 0 || idx >= list.length) return;
+  const cur = list[idx];
+  const newName = prompt('改个新名字：', cur.name || '');
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { toast('名字不能空', 'err'); return; }
+  if (trimmed.length > 20) { toast('名字最多 20 字', 'err'); return; }
+  // 同名检查（除了自己）
+  if (list.some((s, i) => i !== idx && s.name === trimmed)) {
+    toast('已有同名，请换一个', 'err'); return;
+  }
+  list[idx].name = trimmed;
+  const ok = await saveSavedSorts(list);
+  if (ok) {
+    toast('已重命名');
+    openSavedSorts();  // 刷新列表
+  } else {
+    toast('保存失败', 'err');
+  }
+}
+
+async function deleteSavedSort(idx) {
+  const list = await loadSavedSorts();
+  if (idx < 0 || idx >= list.length) return;
+  const cur = list[idx];
+  if (!confirm('删除"' + (cur.name||'') + '"？')) return;
+  list.splice(idx, 1);
+  const ok = await saveSavedSorts(list);
+  if (ok) {
+    toast('已删除');
+    openSavedSorts();
+    refreshSavedSortsCount();
+  } else {
+    toast('删除失败', 'err');
+  }
+}
+
+// 刷新顶部按钮上的数字
+async function refreshSavedSortsCount() {
+  const el = document.getElementById('saved-sorts-count');
+  if (!el) return;
+  const list = await loadSavedSorts();
+  el.textContent = list.length ? `(${list.length})` : '';
+}
+
 // 按"该员工最近订单"重排自己的排序列表
 // 流程：弹出最近 7 次勾选会话 → 用户选一次 → 按完整勾选顺序重排
 // 数据源：优先用 user_prefs.picking_sessions（完整勾选顺序），降级到 cucina_orders（已按供应商拆分）
@@ -3937,9 +4175,19 @@ function renderOrderListSortMode() {
       📌 拖动调整顺序，完成后点 <strong>"✓ 完成排序"</strong> 保存
     </div>
     <button onclick="applyLastOrderToSort()"
-      style="width:100%;padding:10px;margin-bottom:10px;background:linear-gradient(135deg,#fff4d6,#ffe4a3);color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+      style="width:100%;padding:10px;margin-bottom:8px;background:linear-gradient(135deg,#fff4d6,#ffe4a3);color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
       📋 按最近订单重排（选一张）
     </button>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button onclick="openSaveSortTemplate()"
+        style="flex:1;padding:10px;background:#fff;color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+        💾 保存当前排序
+      </button>
+      <button onclick="openSavedSorts()"
+        style="flex:1;padding:10px;background:#fff;color:#5a4a1f;border:1px solid #c9a961;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+        📂 我保存的排序 <span id="saved-sorts-count" style="color:#c9a961;"></span>
+      </button>
+    </div>
     <div style="display:flex;background:#f5f5f5;border-radius:8px;padding:3px;margin-bottom:10px;">
       <button onclick="setSortDisplayMode('grouped')"
         style="flex:1;padding:8px;background:${_sortDisplayMode==='grouped'?'#fff':'transparent'};border:none;border-radius:6px;font-size:13px;font-weight:${_sortDisplayMode==='grouped'?'600':'normal'};color:${_sortDisplayMode==='grouped'?'var(--primary,#c9a961)':'var(--text2)'};cursor:pointer;${_sortDisplayMode==='grouped'?'box-shadow:0 1px 3px rgba(0,0,0,0.08);':''}">
@@ -4148,6 +4396,8 @@ function renderOrderListSortMode() {
     console.error('[Sort] Sortable 未定义，CDN 加载失败？');
     toast('排序工具加载失败，请检查网络', 'err');
   }
+  // 刷新顶部"我保存的排序"按钮上的数字
+  refreshSavedSortsCount();
 }
 
 // 切换排序显示模式（保留拖动状态）
@@ -8386,7 +8636,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.27）
+// Realtime — 长轮询版（v2.7.28）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
