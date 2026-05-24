@@ -612,11 +612,11 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     <div class="login-sub" id="login-sub">Cucina Management · Carpi</div>
     <div class="login-card">
       <div class="form-group">
-        <label class="form-label">选择员工 / Seleziona</label>
+        <label class="form-label" data-i18n="loginSelect">名字</label>
         <select id="login-name" class="form-control"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">密码 / Password</label>
+        <label class="form-label" data-i18n="loginPass">密码</label>
         <div class="pass-wrap">
           <input type="password" id="login-pass" class="form-control" placeholder="••••••"
                  onkeydown="if(event.key==='Enter')doLogin()">
@@ -628,8 +628,8 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       </div>
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">进入系统</button>
       <div style="text-align:center;margin-top:12px">
-        <span style="font-size:12px;color:var(--text3)">管理员？</span>
-        <span style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:600" onclick="showAdminLogin()"> 点击登录</span>
+        <span data-i18n="loginAdminQ" style="font-size:12px;color:var(--text3)">管理员？</span>
+        <span data-i18n="loginAdminClick" style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:600" onclick="showAdminLogin()"> 点击登录</span>
       </div>
     </div>
     <div id="app-version-label" style="text-align:center;margin-top:16px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;"></div>
@@ -858,7 +858,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
     <!-- 收货入口（有收货权限的人显示） -->
     <div id="receive-panel" style="display:none;background:#e8f5e9;border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📬 待收货清单</div>
+      <div data-i18n="recvList" style="font-size:13px;font-weight:600;margin-bottom:8px;">📬 待收货清单</div>
       <div id="receive-supplier-list"></div>
     </div>
 
@@ -882,18 +882,18 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
     <!-- 订货员发送区域（只有buyer角色显示） -->
     <div id="buyer-send-panel" style="display:none;background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📦 合并发送订单</div>
+      <div data-i18n="sendMergeOrders" style="font-size:13px;font-weight:600;margin-bottom:8px;">📦 合并发送订单</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:12px;color:var(--text3);">按星期发送：</span>
+        <span data-i18n="sendByDay" style="font-size:12px;color:var(--text3);">按星期发送：</span>
         <div id="weekday-tabs" style="display:flex;gap:4px;flex-wrap:wrap;">
-          <button class="weekday-btn active" data-day="" onclick="setWeekdayFilter(this,'')">今天</button>
-          <button class="weekday-btn" data-day="星期一" onclick="setWeekdayFilter(this,'星期一')">一</button>
-          <button class="weekday-btn" data-day="星期二" onclick="setWeekdayFilter(this,'星期二')">二</button>
-          <button class="weekday-btn" data-day="星期三" onclick="setWeekdayFilter(this,'星期三')">三</button>
-          <button class="weekday-btn" data-day="星期四" onclick="setWeekdayFilter(this,'星期四')">四</button>
-          <button class="weekday-btn" data-day="星期五" onclick="setWeekdayFilter(this,'星期五')">五</button>
-          <button class="weekday-btn" data-day="星期六" onclick="setWeekdayFilter(this,'星期六')">六</button>
-          <button class="weekday-btn" data-day="星期日" onclick="setWeekdayFilter(this,'星期日')">日</button>
+          <button class="weekday-btn active" data-day="" data-i18n="todayBtn" onclick="setWeekdayFilter(this,'')">今天</button>
+          <button class="weekday-btn" data-day="星期一" data-i18n="weekMonShort" onclick="setWeekdayFilter(this,'星期一')">一</button>
+          <button class="weekday-btn" data-day="星期二" data-i18n="weekTueShort" onclick="setWeekdayFilter(this,'星期二')">二</button>
+          <button class="weekday-btn" data-day="星期三" data-i18n="weekWedShort" onclick="setWeekdayFilter(this,'星期三')">三</button>
+          <button class="weekday-btn" data-day="星期四" data-i18n="weekThuShort" onclick="setWeekdayFilter(this,'星期四')">四</button>
+          <button class="weekday-btn" data-day="星期五" data-i18n="weekFriShort" onclick="setWeekdayFilter(this,'星期五')">五</button>
+          <button class="weekday-btn" data-day="星期六" data-i18n="weekSatShort" onclick="setWeekdayFilter(this,'星期六')">六</button>
+          <button class="weekday-btn" data-day="星期日" data-i18n="weekSunShort" onclick="setWeekdayFilter(this,'星期日')">日</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
@@ -910,7 +910,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     <div class="order-filter-tabs">
       <div class="order-filter-tab active" data-f="待处理" onclick="setOrderFilter(this,'待处理')" id="filter-pending">待处理</div>
       <div class="order-filter-tab"        data-f="已发送" onclick="setOrderFilter(this,'已发送')" id="filter-sent">已发送</div>
-      <div class="order-filter-tab"        data-f="已收货" onclick="setOrderFilter(this,'已收货')" id="filter-done">已收货</div>
+      <div class="order-filter-tab"        data-f="已收货" data-i18n="recvDone" onclick="setOrderFilter(this,'已收货')" id="filter-done">已收货</div>
       <div class="order-filter-tab"        data-f="消耗记录" onclick="setOrderFilter(this,'消耗记录')" id="filter-consume">消耗记录</div>
       <div class="order-filter-tab"        data-f="all"    onclick="setOrderFilter(this,'all')" id="filter-all">全部</div>
     </div>
@@ -1108,7 +1108,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     </div>
     <div class="nav-item" id="nav-receive" onclick="switchTab('receive')" style="position:relative;display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-      <span id="nav-lbl-receive">收货</span>
+      <span id="nav-lbl-receive" data-i18n="recvTabLabel">收货</span>
       <span id="receive-badge" style="display:none;position:absolute;top:4px;right:12px;background:var(--danger);color:#fff;border-radius:10px;font-size:10px;padding:1px 5px;"></span>
     </div>
     <div class="nav-item" id="nav-orders" onclick="switchTab('orders')" style="position:relative">
@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.31';
+const APP_VERSION = 'v2.7.33';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1966,7 +1966,7 @@ const i18n = {
     lowStock:'库存不足', ok:'正常', warn:'预警',
     // 登录
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
-    loginSelect:'选择员工 / Seleziona', loginPass:'密码 / Password',
+    loginSelect:'名字', loginPass:'密码',
     loginBtn:'进入系统', loginErr:'密码错误，请重试',
     // 库存
     invTitle:'库存管理', allFood:'全部食材', lowSafeStock:'低于安全库存',
@@ -2152,13 +2152,39 @@ const i18n = {
     continue_q: '，继续吗？',
     overwrite_q: '，覆盖它吗？',
     no_custom_sort_msg: '还没自定义排序，请点"编辑我的排序"开始',
+    // ── 收货 + 按星期发送 UI ──
+    recvList: '📬 待收货清单',
+    recvDone: '已收货',
+    recvTabLabel: '收货',
+    recvNoneWait: '暂无已发送待收货的订单',
+    recvNeedSendFirst: '订单需要采购员发送后才能确认收货',
+    recvNoneAssigned: '没有分配给你的待收货任务',
+    recvReceiver: '收货员',
+    recvBadgeDone: '📬 已收货',
+    recvConfirmBtn: '📬 确认收货',
+    recvConfirmAndStock: '✅ 确认收货并更新库存',
+    recvSupConfirm: '收货确认',
+    recvReceiverLabel: '📥 收货员',
+    recvCanReceive: '允许确认收货（按供应商合并收货）',
+    sendByDay: '按星期发送：',
+    sendMergeOrders: '📦 合并发送订单',
+    todayBtn: '今天',
+    weekMonShort: '一',
+    weekTueShort: '二',
+    weekWedShort: '三',
+    weekThuShort: '四',
+    weekFriShort: '五',
+    weekSatShort: '六',
+    weekSunShort: '日',
+    loginAdminQ: '管理员？',
+    loginAdminClick: '点击登录',
   },
   it: {
     tabs:['Magazzino','Ordini','Storico','Report','Profilo'],
     submit:'Invia', pending:'In attesa', done:'Completato', all:'Tutto',
     lowStock:'Scorta bassa', ok:'OK', warn:'Attenzione',
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
-    loginSelect:'Seleziona dipendente', loginPass:'Password',
+    loginSelect:'Nome', loginPass:'Password',
     loginBtn:'Accedi', loginErr:'Password errata, riprova',
     invTitle:'Magazzino', allFood:'Tutti gli alimenti', lowSafeStock:'Sotto scorta minima',
     totalVal:'Valore totale magazzino', searchFood:'Cerca alimento...',
@@ -2335,13 +2361,39 @@ const i18n = {
     continue_q: ', continuare?',
     overwrite_q: ', sovrascrivere?',
     no_custom_sort_msg: 'Nessun ordinamento personalizzato, clicca su "Modifica il mio ordinamento" per iniziare',
+    // ── 收货 + 按星期发送 UI ──
+    recvList: '📬 Lista da ricevere',
+    recvDone: 'Ricevuto',
+    recvTabLabel: 'Ricezione',
+    recvNoneWait: 'Nessun ordine inviato in attesa di ricezione',
+    recvNeedSendFirst: 'L\'ordine deve essere inviato prima della conferma di ricezione',
+    recvNoneAssigned: 'Nessun compito di ricezione assegnato',
+    recvReceiver: 'Ricevitore',
+    recvBadgeDone: '📬 Ricevuto',
+    recvConfirmBtn: '📬 Conferma ricezione',
+    recvConfirmAndStock: '✅ Conferma ricezione e aggiorna magazzino',
+    recvSupConfirm: 'Conferma ricezione',
+    recvReceiverLabel: '📥 Ricevitore',
+    recvCanReceive: 'Può confermare la ricezione (per fornitore)',
+    sendByDay: 'Invia per giorno:',
+    sendMergeOrders: '📦 Invia ordini uniti',
+    todayBtn: 'Oggi',
+    weekMonShort: 'Lun',
+    weekTueShort: 'Mar',
+    weekWedShort: 'Mer',
+    weekThuShort: 'Gio',
+    weekFriShort: 'Ven',
+    weekSatShort: 'Sab',
+    weekSunShort: 'Dom',
+    loginAdminQ: 'Amministratore?',
+    loginAdminClick: 'Clicca per accedere',
   },
   bn: {
     tabs:['ইনভেন্টরি','অর্ডার','অর্ডার তালিকা','রিপোর্ট','আমার'],
     submit:'জমা দিন', pending:'অপেক্ষমান', done:'সম্পন্ন', all:'সব',
     lowStock:'কম স্টক', ok:'স্বাভাবিক', warn:'সতর্কতা',
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
-    loginSelect:'কর্মী নির্বাচন করুন', loginPass:'পাসওয়ার্ড',
+    loginSelect:'নাম', loginPass:'পাসওয়ার্ড',
     loginBtn:'প্রবেশ করুন', loginErr:'পাসওয়ার্ড ভুল, আবার চেষ্টা করুন',
     invTitle:'ইনভেন্টরি', allFood:'সব খাবার', lowSafeStock:'নিরাপদ মজুদের নিচে',
     totalVal:'মোট মজুদ মূল্য', searchFood:'খাবার খুঁজুন...',
@@ -2526,6 +2578,32 @@ const i18n = {
     continue_q: ', চালিয়ে যাবেন?',
     overwrite_q: ', ওভাররাইট করবেন?',
     no_custom_sort_msg: 'কোনো কাস্টম সাজানো নেই, "আমার সাজানো সম্পাদনা" ক্লিক করে শুরু করুন',
+    // ── 收货 + 按星期发送 UI ──
+    recvList: '📬 গ্রহণের তালিকা',
+    recvDone: 'গৃহীত',
+    recvTabLabel: 'গ্রহণ',
+    recvNoneWait: 'পাঠানো অপেক্ষমান কোনো অর্ডার নেই',
+    recvNeedSendFirst: 'অর্ডার নিশ্চিতের আগে পাঠাতে হবে',
+    recvNoneAssigned: 'আপনার জন্য কোনো গ্রহণ কাজ বরাদ্দ নেই',
+    recvReceiver: 'গ্রহণকারী',
+    recvBadgeDone: '📬 গৃহীত',
+    recvConfirmBtn: '📬 গ্রহণ নিশ্চিত করুন',
+    recvConfirmAndStock: '✅ গ্রহণ নিশ্চিত করুন ও স্টক আপডেট',
+    recvSupConfirm: 'গ্রহণ নিশ্চিতকরণ',
+    recvReceiverLabel: '📥 গ্রহণকারী',
+    recvCanReceive: 'গ্রহণ নিশ্চিত করার অনুমতি (সরবরাহকারী অনুসারে)',
+    sendByDay: 'দিন অনুসারে পাঠান:',
+    sendMergeOrders: '📦 সম্মিলিত অর্ডার পাঠান',
+    todayBtn: 'আজ',
+    weekMonShort: 'সোম',
+    weekTueShort: 'মঙ্গল',
+    weekWedShort: 'বুধ',
+    weekThuShort: 'বৃহঃ',
+    weekFriShort: 'শুক্র',
+    weekSatShort: 'শনি',
+    weekSunShort: 'রবি',
+    loginAdminQ: 'অ্যাডমিন?',
+    loginAdminClick: 'লগইন করতে ক্লিক করুন',
   }
 };
 const t = k => (i18n[currentLang]||i18n.zh)[k] || k;
@@ -5261,8 +5339,8 @@ function renderReceiveTab() {
   if (!pending.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3);">
       <div style="font-size:48px;margin-bottom:12px;">📭</div>
-      <div>暂无已发送待收货的订单</div>
-      <div style="font-size:12px;margin-top:8px;">订单需要采购员发送后才能确认收货</div>
+      <div>${t('recvNoneWait')}</div>
+      <div style="font-size:12px;margin-top:8px;">${t('recvNeedSendFirst')}</div>
     </div>`;
     updateReceiveBadge(0);
     return;
@@ -5294,7 +5372,7 @@ function renderReceiveTab() {
   if (!filteredSups.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3);">
       <div style="font-size:48px;margin-bottom:12px;">✅</div>
-      <div>没有分配给你的待收货任务</div>
+      <div>${t('recvNoneAssigned')}</div>
     </div>`;
     return;
   }
@@ -5309,11 +5387,11 @@ function renderReceiveTab() {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div>
           <div style="font-weight:700;font-size:15px;">📦 ${supName}</div>
-          ${sup?.receiver?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">收货员：${sup.receiver}</div>`:''}
+          ${sup?.receiver?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t('recvReceiver')}：${sup.receiver}</div>`:''}
         </div>
         <button onclick="showReceiveConfirmBySup('${supName}','${orderIds}')"
           style="background:#27ae60;color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
-          ✅ 确认收货
+          ${t('recvConfirmAndStock')}
         </button>
       </div>
       <div style="background:var(--surface2);border-radius:8px;overflow:hidden;">
@@ -5375,7 +5453,7 @@ function showReceiveConfirmBySup(supName, orderIdsStr) {
   window._receiveItemList = itemList; // 全局存储避免onclick问题
   const html = `
     <div style="padding:4px 0;">
-      <p style="font-size:14px;font-weight:600;margin-bottom:4px;">📬 ${supName} 收货确认</p>
+      <p style="font-size:14px;font-weight:600;margin-bottom:4px;">📬 ${supName} ${t('recvSupConfirm')}</p>
       <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">填入实际到货数量，有出入直接修改</p>
       <div style="background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:14px;">
         ${itemList.map((i,idx)=>`
@@ -5395,7 +5473,7 @@ function showReceiveConfirmBySup(supName, orderIdsStr) {
       </div>
       <button class="btn btn-green" style="width:100%;margin-bottom:8px;"
         onclick="confirmReceiveBySup('${supName}','${orderIdsStr}')">
-        ✅ 确认收货并更新库存
+        ${t('recvConfirmAndStock')}
       </button>
       <button class="btn btn-ghost" style="width:100%;" onclick="closeModal('modal-receive-confirm')">取消</button>
     </div>
@@ -6046,7 +6124,7 @@ function renderOrders() {
     const isConsume = o.status==='消耗记录'||o.type==='consume';
     const isPending = o.status==='待处理'||o.status==='待處理';
     const st = isReceived
-      ? `<span class="badge badge-done">📬 已收货</span>`
+      ? `<span class="badge badge-done">${t('recvBadgeDone')}</span>`
       : isSent
       ? `<span class="badge" style="background:#f2e6d4;color:#6b4f1a;">📤 已发送</span>`
       : isDone
@@ -6147,7 +6225,7 @@ function showOrderDetail(id) {
   const isConsume = order.status==='消耗记录'||order.type==='consume';
   const isDone = order.status==='已確認'||order.status==='已确认'||isReceived;
   const st = isReceived
-    ? `<span class="badge badge-done">📬 已收货</span>`
+    ? `<span class="badge badge-done">${t('recvBadgeDone')}</span>`
     : isSent
     ? `<span class="badge" style="background:#f2e6d4;color:#6b4f1a;">📤 已发送</span>`
     : isDone
@@ -6183,7 +6261,7 @@ function showOrderDetail(id) {
         </div>`).join('')}
     </div>
     ${canReceive?`
-      <button class="btn btn-green" style="width:100%;margin-bottom:8px;" onclick="showReceiveConfirm('${order.id}')">📬 确认收货</button>
+      <button class="btn btn-green" style="width:100%;margin-bottom:8px;" onclick="showReceiveConfirm('${order.id}')">${t('recvConfirmBtn')}</button>
     `:''}
     ${isDone&&order.received_items?`
       <div style="background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:8px;">
@@ -6224,7 +6302,7 @@ function showReceiveConfirm(id) {
 
   const html = `
     <div style="padding:4px 0;">
-      <p style="font-size:14px;font-weight:600;margin-bottom:4px;">📬 确认收货</p>
+      <p style="font-size:14px;font-weight:600;margin-bottom:4px;">${t('recvConfirmBtn')}</p>
       <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">请填入实际到货数量，默认为订货量</p>
       <div style="background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:14px;">
         ${(order.items||[]).map((i,idx)=>`
@@ -6242,7 +6320,7 @@ function showReceiveConfirm(id) {
             </div>
           </div>`).join('')}
       </div>
-      <button class="btn btn-green" style="width:100%;margin-bottom:8px;" onclick="confirmReceive('${id}')">✅ 确认收货并更新库存</button>
+      <button class="btn btn-green" style="width:100%;margin-bottom:8px;" onclick="confirmReceive('${id}')">${t('recvConfirmAndStock')}</button>
       <button class="btn btn-ghost" style="width:100%;" onclick="closeModal('modal-receive-confirm')">取消</button>
     </div>
   `;
@@ -6549,7 +6627,7 @@ function renderSupplierList() {
 
       <!-- 收货员 -->
       <div>
-        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">📥 收货员</label>
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">${t('recvReceiverLabel')}</label>
         <select onchange="updateSupplierReceiver(${s.id},this.value)"
           style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px;background:var(--surface);">
           <option value="">-- 未指定 --</option>
@@ -7007,6 +7085,11 @@ function changeLangModal() {
 
 function changeLang(v) {
   currentLang = v;
+  // 通用：所有带 data-i18n 属性的元素自动更新文字
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (k) el.textContent = t(k);
+  });
   const labels = {zh:'中文',it:'Italiano',bn:'বাংলা'};
   document.getElementById('current-lang-lbl').textContent = labels[v]||v;
   // 同步顶部下拉的值（防止"我的页"和顶部不一致）
@@ -7167,7 +7250,7 @@ function showStaffSetting(name) {
         </label>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
           <input type="checkbox" id="perm-receive" ${canReceive?'checked':''} style="width:18px;height:18px;accent-color:var(--primary);">
-          <span style="font-size:13px;">允许确认收货（按供应商合并收货）</span>
+          <span style="font-size:13px;">${t('recvCanReceive')}</span>
         </label>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;">
@@ -8987,7 +9070,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.31）
+// Realtime — 长轮询版（v2.7.33）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
