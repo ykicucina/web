@@ -1601,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.25';
+const APP_VERSION = 'v2.7.26';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4196,6 +4196,9 @@ function stepQty(id, d) {
   let newNeed = Math.max(0, (parseInt(item.need)||0) + d);
   // 最大订货量截断
   if (item.max_order && newNeed > item.max_order) newNeed = item.max_order;
+  // 第一次从 0 增到 >0，记勾选时间戳
+  if (newNeed > 0 && !item.pickedAt) item.pickedAt = Date.now();
+  if (newNeed === 0) item.pickedAt = 0;
   item.need = newNeed;
   item.orderModified = item.need > 0;
   item.checked = item.need > 0;
@@ -4226,7 +4229,7 @@ function stepQty(id, d) {
 // 问题1：重置所有订货量和消耗量
 function resetOrder() {
   if (!confirm('确定重置所有订货量和库存调整？')) return;
-  items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; });
+  items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
   _orderNote = '';
   refreshOrderNoteBadge();
   renderOrderList();
@@ -4265,6 +4268,9 @@ function toggleOrderItem(id, checked) {
   const item = items.find(i=>i.id===id);
   if (!item) return;
   item.checked = checked;
+  // 记录勾选时间戳（用于按真实勾选顺序保存 picking_session）
+  if (checked && !item.pickedAt) item.pickedAt = Date.now();
+  if (!checked) item.pickedAt = 0;
   // 开关 auto_suggest_qty：开启时自动填建议量，关闭时只标记选中、不填数量
   if (ff('auto_suggest_qty') && checked && !item.need && !item.consume) {
     item.need = calcForecast(item)||0;
@@ -4292,6 +4298,9 @@ function updateOrderQty(id, val) {
       const el = document.getElementById('oqty-'+id);
       if (el) el.value = need;
     }
+    // 第一次从 0 改成 >0，记勾选时间戳（用户没点 checkbox 直接输数字的场景）
+    if (need > 0 && !item.pickedAt) item.pickedAt = Date.now();
+    if (need === 0) item.pickedAt = 0;
     item.need = need;
     item.orderModified = true;
     item.checked = item.need > 0;
@@ -4416,7 +4425,7 @@ async function submitOrder() {
 
     // ── 完成 ──
     renderOrderList();
-    items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; });
+    items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
     _orderNote = '';
     refreshOrderNoteBadge();
     const msg2 = sel.length>0&&toConsume.length>0 ? '✅ 订单已提交，消耗已记录' :
@@ -4425,8 +4434,10 @@ async function submitOrder() {
     if (sel.length > 0) {
       // 保存完整勾选记录到 user_prefs（最近 7 次，FIFO）
       // 用于"按最近订单重排"功能：记录用户真实的勾选顺序（跨多个供应商）
+      // 按 pickedAt 升序排：最先勾的在最前面（这才是用户的真实顺序）
       try {
-        await savePickingSession(sel);
+        const ordered = [...sel].sort((a, b) => (a.pickedAt || 0) - (b.pickedAt || 0));
+        await savePickingSession(ordered);
       } catch(e) { console.warn('[PICK-SESSION] save err:', e); }
       // 触发推送：通知采购员/管理员/主管有新订单
       triggerPush('new_order');
@@ -8372,7 +8383,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.25）
+// Realtime — 长轮询版（v2.7.26）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
