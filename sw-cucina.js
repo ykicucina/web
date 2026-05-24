@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-// YKI CucinaFlow Service Worker
+// YKI Supply Hub Service Worker
 // 版本号从注册 URL 的 ?v= 参数读取，单一数据源在 cucina.html
 // ════════════════════════════════════════════════════════════
 
@@ -162,7 +162,7 @@ self.addEventListener('push', e => {
 
     // 没登录或没令牌 → 显示通用通知
     if (!auth || !auth.token) {
-      await self.registration.showNotification('🍽 YKI CucinaFlow', {
+      await self.registration.showNotification('🍽 YKI Supply Hub', {
         body: '有新动态，打开 App 查看',
         icon: '/icon.png',
         badge: '/icon.png',
@@ -177,7 +177,7 @@ self.addEventListener('push', e => {
     let title, body, badgeCount;
 
     if (!info) {
-      title = '🍽 YKI CucinaFlow';
+      title = '🍽 YKI Supply Hub';
       body = '有新动态，打开查看';
       badgeCount = 1;
     } else if (info.pending > 0) {
