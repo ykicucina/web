@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.33';
+const APP_VERSION = 'v2.7.34';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1646,6 +1646,7 @@ const DEFAULT_FEATURE_FLAGS = {
   show_recent_order:    false,  // 显示"上次订货：X，N天前"（新功能）
   consume_track:        true,   // 库存调整 +/- 按钮（消耗记录）
   approve_orders:       true,   // 审批订单菜单（不需要审批时关闭）
+  buyer_own_items_only: false,  // 采购员只看 chef=自己 的食材（默认 false=看全部，避免重复订货时开启）
 };
 let featureFlags = {...DEFAULT_FEATURE_FLAGS};
 // 简化访问：ff('show_stock')
@@ -3654,7 +3655,12 @@ function renderOrderList() {
     searchEl.value = _orderSearchQ;
   }
   // 今日待订提示
-  const myItems = (!isAdmin && currentUserRole==='staff')
+  // staff 角色：只看自己负责的；buyer 角色：如果开关开启，也只看自己的
+  const _isOwnOnly = !isAdmin && (
+    currentUserRole==='staff' ||
+    (currentUserRole==='buyer' && ff('buyer_own_items_only'))
+  );
+  const myItems = _isOwnOnly
     ? items.filter(i=>(i.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim())
     : items;
   const todayItems = myItems.filter(i=>isTodayCycle(i));
@@ -3720,6 +3726,10 @@ function renderOrderList() {
   // 角色过滤：普通员工只看自己负责的物料
   const _cu = (currentUser||'').toLowerCase().trim();
   if (!isAdmin && currentUserRole==='staff') {
+    sorted = sorted.filter(i=>(i.chef||'').toLowerCase().trim()===_cu);
+  }
+  // 采购员：如果管理员开启了 buyer_own_items_only 开关，也只看自己的食材（避免重复订货）
+  if (!isAdmin && currentUserRole==='buyer' && ff('buyer_own_items_only')) {
     sorted = sorted.filter(i=>(i.chef||'').toLowerCase().trim()===_cu);
   }
 
@@ -7622,6 +7632,7 @@ function showFeatureFlagsModal() {
       title: '🔄 工作流程',
       flags: [
         {key:'approve_orders',  label:'启用"审批订单"功能',  desc:'关闭后管理员菜单不显示"审批订单"入口（订单系统 tab 仍可查看待处理订单）'},
+        {key:'buyer_own_items_only', label:'采购员只看自己的食材', desc:'开启后采购员在订货系统只能看到 chef = 自己 的食材，避免多个采购员重复订同一种食材'},
       ]
     }
   ];
@@ -9070,7 +9081,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.33）
+// Realtime — 长轮询版（v2.7.34）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
