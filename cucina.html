@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.34';
+const APP_VERSION = 'v2.7.35';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1955,7 +1955,23 @@ let reportTab   = 'overview';
 let pendingImport = [];
 let _importFileName = '';
 let editingItemId = null;
-let currentLang = 'zh';
+// 语言：先读 localStorage（瞬间应用，登录前也能用对的语言），登录后从 user_prefs 同步覆盖
+let currentLang = (() => {
+  try {
+    const saved = localStorage.getItem('cucina_lang');
+    if (saved && ['zh','it','bn'].includes(saved)) return saved;
+  } catch(e) {}
+  return 'zh';
+})();
+
+// 页面 DOM 加载完即应用当前语言（即使没登录，也能让登录页是上次选的语言）
+document.addEventListener('DOMContentLoaded', () => {
+  if (currentLang === 'zh') return;  // 默认 zh，不用动
+  // 触发一次 changeLang 让 data-i18n 元素都更新到对应语言
+  if (typeof changeLang === 'function') {
+    try { changeLang(currentLang); } catch(e) {}
+  }
+});
 
 // ════════════════════════════════════════
 // I18N (minimal — key strings)
@@ -7091,6 +7107,7 @@ function changeLangModal() {
   switchTab(currentTab);
   // 持久化语言偏好
   saveUserLang(currentLang);
+  try { localStorage.setItem('cucina_lang', currentLang); } catch(e) {}
 }
 
 function changeLang(v) {
@@ -7171,6 +7188,8 @@ function changeLang(v) {
   switchTab(currentTab);
   // 持久化语言偏好到 user_prefs（per-user，登录后才会真实发请求）
   saveUserLang(v);
+  // 同时存 localStorage（浏览器本地，登录前的下次打开就能瞬间应用）
+  try { localStorage.setItem('cucina_lang', v); } catch(e) {}
 }
 
 // ════════════════════════════════════════
@@ -9081,7 +9100,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.34）
+// Realtime — 长轮询版（v2.7.35）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
