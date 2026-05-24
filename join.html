@@ -97,9 +97,13 @@
   .phone-screen {
     width: 100%; height: 100%; background: #faf6ed;
     border-radius: 26px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    background-image: url('/screenshots/hero-mobile.png');
-    background-size: cover; background-position: top center;
+    position: relative;
+  }
+  .phone-screen > img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
   }
   .phone-screen-placeholder {
     text-align: center; color: #c9a961; padding: 20px;
@@ -206,7 +210,6 @@
     aspect-ratio: 9 / 18; background: #2c2418; border-radius: 22px;
     display: flex; align-items: center; justify-content: center;
     color: #c9a961; font-size: 32px;
-    background-size: cover; background-position: top center;
     overflow: hidden;
     max-width: 260px; margin: 0 auto;
     padding: 8px;
@@ -214,14 +217,15 @@
   }
   .screenshot-placeholder > .screen-inner {
     width: 100%; height: 100%; border-radius: 14px; overflow: hidden;
-    background-size: cover; background-position: top center;
     background-color: #faf6ed;
-    display: flex; align-items: center; justify-content: center;
+    position: relative;
   }
-  #scr-1 .screen-inner { background-image: url('/screenshots/order.png'); }
-  #scr-2 .screen-inner { background-image: url('/screenshots/inventory.png'); }
-  #scr-3 .screen-inner { background-image: url('/screenshots/orders.png'); }
-  #scr-4 .screen-inner { background-image: url('/screenshots/report.png'); }
+  .screenshot-placeholder > .screen-inner > img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
 
   /* === SOCIAL PROOF（客户数字） === */
   section.proof {
@@ -475,7 +479,7 @@
     </div>
     <div class="hero-visual">
       <div class="phone-mockup">
-        <div class="phone-screen"></div>
+        <div class="phone-screen"><img src="/screenshots/hero-mobile.png" alt="YKI Supply Hub 演示" loading="eager"></div>
       </div>
     </div>
   </div>
@@ -709,7 +713,7 @@
           <span class="lang-zh">勾选 → 数量 → 提交</span>
           <span class="lang-it">Seleziona → Quantità → Invia</span>
         </div>
-        <div class="screenshot-placeholder" id="scr-1"><div class="screen-inner"></div></div>
+        <div class="screenshot-placeholder" id="scr-1"><div class="screen-inner"><img src="/screenshots/order.png" alt="订货系统截图" loading="lazy"></div></div>
       </div>
       <div class="gallery-item">
         <div class="label">
@@ -720,7 +724,7 @@
           <span class="lang-zh">一眼看清库存状态</span>
           <span class="lang-it">Tutto l'inventario a colpo d'occhio</span>
         </div>
-        <div class="screenshot-placeholder" id="scr-2"><div class="screen-inner"></div></div>
+        <div class="screenshot-placeholder" id="scr-2"><div class="screen-inner"><img src="/screenshots/inventory.png" alt="库存管理截图" loading="lazy"></div></div>
       </div>
       <div class="gallery-item">
         <div class="label">
@@ -731,7 +735,7 @@
           <span class="lang-zh">追踪每一笔订单</span>
           <span class="lang-it">Tracciamento di ogni ordine</span>
         </div>
-        <div class="screenshot-placeholder" id="scr-3"><div class="screen-inner"></div></div>
+        <div class="screenshot-placeholder" id="scr-3"><div class="screen-inner"><img src="/screenshots/orders.png" alt="订单系统截图" loading="lazy"></div></div>
       </div>
       <div class="gallery-item">
         <div class="label">
@@ -742,7 +746,7 @@
           <span class="lang-zh">月度数据一目了然</span>
           <span class="lang-it">Statistiche mensili chiare</span>
         </div>
-        <div class="screenshot-placeholder" id="scr-4"><div class="screen-inner"></div></div>
+        <div class="screenshot-placeholder" id="scr-4"><div class="screen-inner"><img src="/screenshots/report.png" alt="报表分析截图" loading="lazy"></div></div>
       </div>
     </div>
   </div>
