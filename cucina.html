@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.35';
+const APP_VERSION = 'v2.7.36';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2808,10 +2808,12 @@ async function init() {
                 impersonated: true,
               });
             } catch(e) {}
-            // 加载用户偏好
-            try { await loadUserSortOrder(); } catch(e) {}
-            try { await loadUserLang(); } catch(e) {}
-            try { await loadUserSortMode(); } catch(e) {}
+            // 加载用户偏好（并行，省 ~200ms）
+            await Promise.all([
+              loadUserSortOrder().catch(()=>{}),
+              loadUserLang().catch(()=>{}),
+              loadUserSortMode().catch(()=>{}),
+            ]);
             // 进入主界面（switchTab/初始化导航 + 切换屏幕）
             if (typeof showApp === 'function') showApp();
             if (typeof initRealtime === 'function') initRealtime();
@@ -2979,12 +2981,12 @@ async function doLogin() {
     role: currentUserRole
   });
 
-  // 加载用户的订货排序偏好（跨设备同步）
-  await loadUserSortOrder();
-
-  // 加载用户的语言偏好和排序模式偏好（跨设备同步）
-  await loadUserLang();
-  await loadUserSortMode();
+  // 加载用户偏好（订货排序 + 语言 + 排序模式）—— 并行加载，节省 ~200ms
+  await Promise.all([
+    loadUserSortOrder().catch(()=>{}),
+    loadUserLang().catch(()=>{}),
+    loadUserSortMode().catch(()=>{}),
+  ]);
 
   btn.disabled = false;
   showApp();
@@ -9100,7 +9102,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.35）
+// Realtime — 长轮询版（v2.7.36）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
