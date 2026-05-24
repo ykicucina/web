@@ -1601,7 +1601,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.26';
+const APP_VERSION = 'v2.7.27';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4425,6 +4425,16 @@ async function submitOrder() {
 
     // ── 完成 ──
     renderOrderList();
+    // 保存完整勾选记录到 user_prefs（最近 7 次，FIFO）
+    // 必须在重置 pickedAt 之前调用！sel 里的元素是 items 数组对象的引用
+    // 用于"按最近订单重排"功能：记录用户真实的勾选顺序（跨多个供应商）
+    // 按 pickedAt 升序排：最先勾的在最前面（这才是用户的真实顺序）
+    if (sel.length > 0) {
+      try {
+        const ordered = [...sel].sort((a, b) => (a.pickedAt || 0) - (b.pickedAt || 0));
+        await savePickingSession(ordered);
+      } catch(e) { console.warn('[PICK-SESSION] save err:', e); }
+    }
     items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
     _orderNote = '';
     refreshOrderNoteBadge();
@@ -4432,13 +4442,6 @@ async function submitOrder() {
                  sel.length>0 ? '✅ 订单已提交' : '✅ 库存调整已记录';
     toast(msg2);
     if (sel.length > 0) {
-      // 保存完整勾选记录到 user_prefs（最近 7 次，FIFO）
-      // 用于"按最近订单重排"功能：记录用户真实的勾选顺序（跨多个供应商）
-      // 按 pickedAt 升序排：最先勾的在最前面（这才是用户的真实顺序）
-      try {
-        const ordered = [...sel].sort((a, b) => (a.pickedAt || 0) - (b.pickedAt || 0));
-        await savePickingSession(ordered);
-      } catch(e) { console.warn('[PICK-SESSION] save err:', e); }
       // 触发推送：通知采购员/管理员/主管有新订单
       triggerPush('new_order');
       switchTab('orders');
@@ -8383,7 +8386,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.26）
+// Realtime — 长轮询版（v2.7.27）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
