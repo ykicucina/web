@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.29';
+const APP_VERSION = 'v2.7.31';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1745,12 +1745,12 @@ function _urlB64ToUint8Array(b64) {
 
 // ── 开启推送（订阅）──
 async function enablePush() {
-  if (!pushSupported()) { toast('此浏览器不支持推送', 'err'); return false; }
+  if (!pushSupported()) { toast(t('push_not_supported'), 'err'); return false; }
 
   // 1. 申请通知权限
   let perm = Notification.permission;
   if (perm === 'default') perm = await Notification.requestPermission();
-  if (perm !== 'granted') { toast('需要授予通知权限', 'err'); return false; }
+  if (perm !== 'granted') { toast(t('push_need_permission'), 'err'); return false; }
 
   // 2. 拿 VAPID 公钥
   let vapidKey;
@@ -1759,7 +1759,7 @@ async function enablePush() {
     const d = await r.json();
     vapidKey = d.key;
     if (!vapidKey) throw new Error('无 VAPID 公钥');
-  } catch (e) { toast('获取推送密钥失败', 'err'); return false; }
+  } catch (e) { toast(t('push_key_fail'), 'err'); return false; }
 
   // 3. 订阅
   let sub;
@@ -1772,7 +1772,7 @@ async function enablePush() {
     });
   } catch (e) {
     console.error('订阅失败', e);
-    toast('订阅失败：' + (e.message || e), 'err');
+    toast(t('subscribe_fail_colon') + (e.message || e), 'err');
     return false;
   }
 
@@ -1786,11 +1786,11 @@ async function enablePush() {
     if (!r.ok) throw new Error('Worker 拒绝');
   } catch (e) {
     console.error('保存订阅失败', e);
-    toast('保存订阅失败', 'err');
+    toast(t('sub_save_fail'), 'err');
     return false;
   }
 
-  toast('✅ 推送已开启');
+  toast(t('push_enabled'));
   return true;
 }
 
@@ -1807,7 +1807,7 @@ async function disablePush() {
       body: JSON.stringify({ endpoint })
     });
   } catch (e) {}
-  toast('已关闭推送');
+  toast(t('push_disabled'));
   return true;
 }
 
@@ -2035,6 +2035,123 @@ const i18n = {
     importPreview:'预览', importCancel:'取消',
     // 周
     days:['','周一','周二','周三','周四','周五','周六','周日'],
+    // ── i18n Phase 1: 30 个高频 toast ──
+    save_fail: '保存失败',
+    saved_ok: '✅ 已保存',
+    delete_fail: '删除失败',
+    deleted_ok: '✅ 已删除',
+    updated_ok: '✅ 已更新',
+    modify_fail: '修改失败',
+    update_fail: '更新失败',
+    op_fail: '操作失败',
+    pwd_mismatch: '两次密码不一致',
+    pwd_wrong: '当前密码错误',
+    pwd_too_short: '密码至少4位',
+    pwd_min_4: '密码太短，至少4位',
+    pwd_changed: '✅ 密码修改成功',
+    fill_all_fields: '请填写所有字段',
+    fill_new_supplier: '请填写新供应商',
+    select_buyer: '请选择订货员',
+    select_items_first: '请先勾选物料',
+    no_items_in_filter: '当前筛选下没有物料',
+    excel_load_fail: '加载 Excel 组件失败，请检查网络',
+    sort_tool_load_fail: '排序工具加载失败，请检查网络',
+    record_not_found: '记录不存在',
+    push_not_supported: '此浏览器不支持推送',
+    push_need_permission: '需要授予通知权限',
+    push_enabled: '✅ 推送已开启',
+    push_disabled: '已关闭推送',
+    sort_empty_pls_drag: '当前还没有排序，先拖一下',
+    data_corrupted: '数据损坏',
+    apply_ok_save_fail: '应用成功但保存失败',
+    enter_name: '请输入名称',
+    unauthorized: '未授权',
+    // ── i18n Phase 2: 81 个员工常见 toast ──
+    pwd_changed_ok: '✅ 密码已修改',
+    saved_colon: '✅ 已保存：',
+    deleted_colon: '✅ 已删除：',
+    refreshed_ok: '✅ 已刷新',
+    applied_ok: '✅ 已应用',
+    reorder_saved_ok: '✅ 已按所选记录重排并保存',
+    updated_colon: '✅ 已更新：',
+    added_colon: '✅ 已添加：',
+    cutoff_saved: '✅ 截止时间已保存',
+    sort_saved: '✅ 排序已保存',
+    received_ok: '✅ 收货确认，库存已更新',
+    order_recalled: '✅ 订单已撤回，请到订货系统重新修改',
+    order_sent_wait: '✅ 订单已标记为已发送，等待收货确认',
+    order_confirmed: '✅ 订单已确认',
+    settings_saved_reload: '✅ 设置已保存，重新加载页面...',
+    modify_fail_x: '❌ 修改失败',
+    delete_fail_x: '❌ 删除失败',
+    no_orders_yet: '你还没有提交过订单',
+    save_fail_colon: '保存失败: ',
+    save_fail_retry: '保存失败，请重试',
+    save_data_lost: '保存数据丢失，请重试',
+    sub_save_fail: '保存订阅失败',
+    modify_fail_colon: '修改失败：',
+    delete_word: '删除',
+    del_chef: '删除员工 ',
+    del_supplier_q: '删除此供应商？',
+    refresh_fail: '刷新失败',
+    name_required: '名字不能空',
+    name_max_20: '名字最多 20 字',
+    img_max_20mb: '图片不能超过 20MB',
+    deleted_short: '已删除',
+    deleted_short_colon: '已删除：',
+    send_cancelled: '已取消发送',
+    sorted_by_stock: '已按库存状态排序',
+    sort_5_full: '已有 5 个保存的排序，新存将挤掉最旧的',
+    name_exists: '已有同名',
+    name_exists_change: '已有同名，请换一个',
+    renamed_ok: '已重命名',
+    reset_ok: '已重置',
+    item_not_found: '找不到该食材',
+    submit_fail_colon: '提交失败：',
+    recall_fail_colon: '撤回失败：',
+    op_fail_colon: '操作失败：',
+    new_name_prompt: '改个新名字：',
+    filename_lost: '文件名丢失，请重新选择文件',
+    same_supplier: '新旧供应商相同',
+    no_records: '暂无可用记录',
+    no_orders: '暂无订单',
+    no_sort_change: '未检测到排序变化，保持原有排序',
+    not_logged_in: '未登录',
+    query_fail: '查询失败',
+    querying_recent: '查询最近订单中...',
+    no_image_to_upload: '没有可上传的图片',
+    no_image_match: '没有可上传的图片（文件名都没匹配上）',
+    no_pending_save: '没有待保存数据',
+    no_matching_records: '没有符合条件的记录',
+    add_fail: '添加失败',
+    confirm_recall_order: '确定撤回这个订单？撤回后可以重新修改再提交。',
+    confirm_reset_all: '确定重置所有订货量和库存调整？',
+    confirm_fail_colon: '确认失败：',
+    push_key_fail: '获取推送密钥失败',
+    parse_fail_colon: '解析失败：',
+    subscribe_fail_colon: '订阅失败：',
+    no_items_in_record: '记录中没有商品',
+    items_discontinued: '记录中的商品已停售或不在列表',
+    supplier_no_items: '该供应商名下没有食材',
+    lang_switched: '语言已切换 / Language changed',
+    please_modify_first: '请先修改订货量或填写库存调整',
+    select_sent_first: '请先勾选已发送的订单',
+    select_pending_first: '请先勾选待处理订单',
+    select_to_delete: '请先勾选要删除的食材',
+    reenter_new_pwd: '请再次输入新密码：',
+    select_to_modify: '请勾选要修改的食材',
+    fill_name_pwd: '请填写姓名和密码',
+    fill_italian: '请填写意大利文名称',
+    enter_new_pwd: '请输入新密码（至少4位）：',
+    select_supplier_name: '请选择供应商名称',
+    select_old_supplier: '请选择原供应商',
+    select_image_file: '请选择图片文件',
+    no_custom_sort_yet: '还没自定义排序，请点',
+    reorder_save_fail: '重排成功但保存失败，请手动点完成',
+    unnamed: '未命名',
+    continue_q: '，继续吗？',
+    overwrite_q: '，覆盖它吗？',
+    no_custom_sort_msg: '还没自定义排序，请点"编辑我的排序"开始',
   },
   it: {
     tabs:['Magazzino','Ordini','Storico','Report','Profilo'],
@@ -2101,6 +2218,123 @@ const i18n = {
     alertNotSent:'I seguenti fornitori non hanno ancora ricevuto ordini',
     orderNo:'Ordine', orderDate:'Data', orderBy:'Operatore',
     days:['','Lun','Mar','Mer','Gio','Ven','Sab','Dom'],
+    // ── i18n Phase 1: 30 个高频 toast ──
+    save_fail: 'Salvataggio fallito',
+    saved_ok: '✅ Salvato',
+    delete_fail: 'Eliminazione fallita',
+    deleted_ok: '✅ Eliminato',
+    updated_ok: '✅ Aggiornato',
+    modify_fail: 'Modifica fallita',
+    update_fail: 'Aggiornamento fallito',
+    op_fail: 'Operazione fallita',
+    pwd_mismatch: 'Le due password non coincidono',
+    pwd_wrong: 'Password attuale errata',
+    pwd_too_short: 'La password deve avere almeno 4 caratteri',
+    pwd_min_4: 'Password troppo corta, almeno 4 caratteri',
+    pwd_changed: '✅ Password aggiornata',
+    fill_all_fields: 'Compila tutti i campi',
+    fill_new_supplier: 'Inserisci il nuovo fornitore',
+    select_buyer: 'Seleziona un addetto agli ordini',
+    select_items_first: 'Seleziona prima gli articoli',
+    no_items_in_filter: 'Nessun articolo nel filtro corrente',
+    excel_load_fail: 'Caricamento Excel fallito, controlla la rete',
+    sort_tool_load_fail: 'Caricamento strumento ordinamento fallito, controlla la rete',
+    record_not_found: 'Record non trovato',
+    push_not_supported: 'Questo browser non supporta le notifiche',
+    push_need_permission: 'Devi consentire le notifiche',
+    push_enabled: '✅ Notifiche attivate',
+    push_disabled: 'Notifiche disattivate',
+    sort_empty_pls_drag: 'Non hai ancora un ordinamento, trascina prima',
+    data_corrupted: 'Dati danneggiati',
+    apply_ok_save_fail: 'Applicato ma salvataggio fallito',
+    enter_name: 'Inserisci un nome',
+    unauthorized: 'Non autorizzato',
+    // ── i18n Phase 2: 81 个员工常见 toast ──
+    pwd_changed_ok: '✅ Password modificata',
+    saved_colon: '✅ Salvato:',
+    deleted_colon: '✅ Eliminato:',
+    refreshed_ok: '✅ Aggiornato',
+    applied_ok: '✅ Applicato',
+    reorder_saved_ok: '✅ Riordinato e salvato',
+    updated_colon: '✅ Aggiornato:',
+    added_colon: '✅ Aggiunto:',
+    cutoff_saved: '✅ Orario di chiusura salvato',
+    sort_saved: '✅ Ordinamento salvato',
+    received_ok: '✅ Ricevuta confermata, magazzino aggiornato',
+    order_recalled: '✅ Ordine annullato, modifica nel sistema ordini',
+    order_sent_wait: '✅ Ordine inviato, in attesa di ricezione',
+    order_confirmed: '✅ Ordine confermato',
+    settings_saved_reload: '✅ Impostazioni salvate, ricarico la pagina...',
+    modify_fail_x: '❌ Modifica fallita',
+    delete_fail_x: '❌ Eliminazione fallita',
+    no_orders_yet: 'Non hai ancora inviato ordini',
+    save_fail_colon: 'Salvataggio fallito: ',
+    save_fail_retry: 'Salvataggio fallito, riprova',
+    save_data_lost: 'Dati di salvataggio persi, riprova',
+    sub_save_fail: 'Salvataggio iscrizione fallito',
+    modify_fail_colon: 'Modifica fallita:',
+    delete_word: 'Elimina',
+    del_chef: 'Elimina dipendente ',
+    del_supplier_q: 'Eliminare questo fornitore?',
+    refresh_fail: 'Aggiornamento fallito',
+    name_required: 'Il nome non può essere vuoto',
+    name_max_20: 'Il nome può contenere al massimo 20 caratteri',
+    img_max_20mb: 'L\'immagine non può superare 20MB',
+    deleted_short: 'Eliminato',
+    deleted_short_colon: 'Eliminato:',
+    send_cancelled: 'Invio annullato',
+    sorted_by_stock: 'Ordinato per stato di magazzino',
+    sort_5_full: 'Hai già 5 ordinamenti salvati, il nuovo sostituirà il più vecchio',
+    name_exists: 'Esiste già un nome uguale',
+    name_exists_change: 'Nome già esistente, scegline un altro',
+    renamed_ok: 'Rinominato',
+    reset_ok: 'Reimpostato',
+    item_not_found: 'Articolo non trovato',
+    submit_fail_colon: 'Invio fallito:',
+    recall_fail_colon: 'Annullamento fallito:',
+    op_fail_colon: 'Operazione fallita:',
+    new_name_prompt: 'Inserisci un nuovo nome:',
+    filename_lost: 'Nome file perso, riseleziona il file',
+    same_supplier: 'Il nuovo fornitore è uguale al precedente',
+    no_records: 'Nessun record disponibile',
+    no_orders: 'Nessun ordine',
+    no_sort_change: 'Nessuna modifica rilevata, ordinamento invariato',
+    not_logged_in: 'Non autenticato',
+    query_fail: 'Ricerca fallita',
+    querying_recent: 'Caricamento ordini recenti...',
+    no_image_to_upload: 'Nessuna immagine da caricare',
+    no_image_match: 'Nessuna immagine corrispondente (nomi file non corrispondono)',
+    no_pending_save: 'Nessun dato da salvare',
+    no_matching_records: 'Nessun record corrisponde ai criteri',
+    add_fail: 'Aggiunta fallita',
+    confirm_recall_order: 'Annullare questo ordine? Potrai modificarlo e reinviarlo.',
+    confirm_reset_all: 'Reimpostare tutti gli ordini e le regolazioni di magazzino?',
+    confirm_fail_colon: 'Conferma fallita:',
+    push_key_fail: 'Recupero chiave notifiche fallito',
+    parse_fail_colon: 'Analisi fallita:',
+    subscribe_fail_colon: 'Iscrizione fallita:',
+    no_items_in_record: 'Nessun prodotto nel record',
+    items_discontinued: 'I prodotti nel record sono fuori catalogo o non in lista',
+    supplier_no_items: 'Nessun articolo per questo fornitore',
+    lang_switched: 'Lingua cambiata / Language changed',
+    please_modify_first: 'Modifica prima la quantità o aggiungi una regolazione',
+    select_sent_first: 'Seleziona prima gli ordini inviati',
+    select_pending_first: 'Seleziona prima gli ordini in attesa',
+    select_to_delete: 'Seleziona prima gli articoli da eliminare',
+    reenter_new_pwd: 'Reinserisci la nuova password:',
+    select_to_modify: 'Seleziona gli articoli da modificare',
+    fill_name_pwd: 'Inserisci nome e password',
+    fill_italian: 'Inserisci il nome in italiano',
+    enter_new_pwd: 'Inserisci la nuova password (almeno 4 caratteri):',
+    select_supplier_name: 'Seleziona il nome del fornitore',
+    select_old_supplier: 'Seleziona il fornitore precedente',
+    select_image_file: 'Seleziona un\'immagine',
+    no_custom_sort_yet: 'Nessun ordinamento personalizzato, clicca',
+    reorder_save_fail: 'Riordinato ma salvataggio fallito, clicca completa manualmente',
+    unnamed: 'Senza nome',
+    continue_q: ', continuare?',
+    overwrite_q: ', sovrascrivere?',
+    no_custom_sort_msg: 'Nessun ordinamento personalizzato, clicca su "Modifica il mio ordinamento" per iniziare',
   },
   bn: {
     tabs:['ইনভেন্টরি','অর্ডার','অর্ডার তালিকা','রিপোর্ট','আমার'],
@@ -2175,6 +2409,123 @@ const i18n = {
     filterSelected:'✓ শুধু নির্বাচিত', filterUnselected:'⚪ শুধু অনির্বাচিত',
     orderDate:'তারিখ', orderBy:'অপারেটর',
     days:['','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি','রবি'],
+    // ── i18n Phase 1: 30 个高频 toast ──
+    save_fail: 'সংরক্ষণ ব্যর্থ',
+    saved_ok: '✅ সংরক্ষিত',
+    delete_fail: 'মুছে ফেলা ব্যর্থ',
+    deleted_ok: '✅ মুছে ফেলা হয়েছে',
+    updated_ok: '✅ আপডেট করা হয়েছে',
+    modify_fail: 'পরিবর্তন ব্যর্থ',
+    update_fail: 'আপডেট ব্যর্থ',
+    op_fail: 'অপারেশন ব্যর্থ',
+    pwd_mismatch: 'দুটি পাসওয়ার্ড মিলছে না',
+    pwd_wrong: 'বর্তমান পাসওয়ার্ড ভুল',
+    pwd_too_short: 'পাসওয়ার্ড কমপক্ষে ৪ অক্ষর',
+    pwd_min_4: 'পাসওয়ার্ড খুব ছোট, কমপক্ষে ৪ অক্ষর',
+    pwd_changed: '✅ পাসওয়ার্ড পরিবর্তিত',
+    fill_all_fields: 'সব ক্ষেত্র পূরণ করুন',
+    fill_new_supplier: 'নতুন সরবরাহকারী লিখুন',
+    select_buyer: 'অর্ডার দায়িত্বে থাকা ব্যক্তি নির্বাচন করুন',
+    select_items_first: 'প্রথমে আইটেম নির্বাচন করুন',
+    no_items_in_filter: 'বর্তমান ফিল্টারে কোনো আইটেম নেই',
+    excel_load_fail: 'Excel লোড ব্যর্থ, নেটওয়ার্ক চেক করুন',
+    sort_tool_load_fail: 'সাজানোর সরঞ্জাম লোড ব্যর্থ, নেটওয়ার্ক চেক করুন',
+    record_not_found: 'রেকর্ড পাওয়া যায়নি',
+    push_not_supported: 'এই ব্রাউজার পুশ সমর্থন করে না',
+    push_need_permission: 'বিজ্ঞপ্তির অনুমতি দরকার',
+    push_enabled: '✅ পুশ সক্রিয়',
+    push_disabled: 'পুশ বন্ধ',
+    sort_empty_pls_drag: 'এখনও কোনো সাজানো নেই, প্রথমে টেনে নিন',
+    data_corrupted: 'ডেটা ক্ষতিগ্রস্ত',
+    apply_ok_save_fail: 'প্রয়োগ সফল কিন্তু সংরক্ষণ ব্যর্থ',
+    enter_name: 'নাম লিখুন',
+    unauthorized: 'অননুমোদিত',
+    // ── i18n Phase 2: 81 个员工常见 toast ──
+    pwd_changed_ok: '✅ পাসওয়ার্ড পরিবর্তিত',
+    saved_colon: '✅ সংরক্ষিত:',
+    deleted_colon: '✅ মুছে ফেলা হয়েছে:',
+    refreshed_ok: '✅ রিফ্রেশ হয়েছে',
+    applied_ok: '✅ প্রয়োগ করা হয়েছে',
+    reorder_saved_ok: '✅ পুনঃসাজানো ও সংরক্ষিত',
+    updated_colon: '✅ আপডেট:',
+    added_colon: '✅ যোগ করা হয়েছে:',
+    cutoff_saved: '✅ সময়সীমা সংরক্ষিত',
+    sort_saved: '✅ সাজানো সংরক্ষিত',
+    received_ok: '✅ গ্রহণ নিশ্চিত, স্টক আপডেট',
+    order_recalled: '✅ অর্ডার ফেরত, অর্ডার সিস্টেমে পুনরায় সম্পাদনা করুন',
+    order_sent_wait: '✅ অর্ডার পাঠানো হয়েছে, গ্রহণের অপেক্ষায়',
+    order_confirmed: '✅ অর্ডার নিশ্চিত',
+    settings_saved_reload: '✅ সেটিংস সংরক্ষিত, পেজ পুনরায় লোড হচ্ছে...',
+    modify_fail_x: '❌ পরিবর্তন ব্যর্থ',
+    delete_fail_x: '❌ মুছে ফেলা ব্যর্থ',
+    no_orders_yet: 'আপনি এখনো কোনো অর্ডার জমা দেননি',
+    save_fail_colon: 'সংরক্ষণ ব্যর্থ: ',
+    save_fail_retry: 'সংরক্ষণ ব্যর্থ, আবার চেষ্টা করুন',
+    save_data_lost: 'সংরক্ষণের ডেটা হারিয়েছে, আবার চেষ্টা করুন',
+    sub_save_fail: 'সাবস্ক্রিপশন সংরক্ষণ ব্যর্থ',
+    modify_fail_colon: 'পরিবর্তন ব্যর্থ:',
+    delete_word: 'মুছুন',
+    del_chef: 'কর্মী মুছুন ',
+    del_supplier_q: 'এই সরবরাহকারী মুছবেন?',
+    refresh_fail: 'রিফ্রেশ ব্যর্থ',
+    name_required: 'নাম খালি রাখা যাবে না',
+    name_max_20: 'নাম সর্বোচ্চ ২০ অক্ষর',
+    img_max_20mb: 'ছবি ২০MB এর বেশি হতে পারে না',
+    deleted_short: 'মুছে ফেলা হয়েছে',
+    deleted_short_colon: 'মুছে ফেলা হয়েছে:',
+    send_cancelled: 'পাঠানো বাতিল',
+    sorted_by_stock: 'স্টক স্ট্যাটাস দ্বারা সাজানো',
+    sort_5_full: 'ইতিমধ্যে ৫টি সংরক্ষিত সাজানো আছে, নতুন সংরক্ষণ সবচেয়ে পুরনোটি প্রতিস্থাপন করবে',
+    name_exists: 'একই নাম ইতিমধ্যে আছে',
+    name_exists_change: 'নাম ইতিমধ্যে আছে, অন্য নাম দিন',
+    renamed_ok: 'নাম পরিবর্তন হয়েছে',
+    reset_ok: 'রিসেট করা হয়েছে',
+    item_not_found: 'উপাদান পাওয়া যায়নি',
+    submit_fail_colon: 'জমা ব্যর্থ:',
+    recall_fail_colon: 'প্রত্যাহার ব্যর্থ:',
+    op_fail_colon: 'অপারেশন ব্যর্থ:',
+    new_name_prompt: 'নতুন নাম দিন:',
+    filename_lost: 'ফাইলের নাম হারিয়েছে, আবার নির্বাচন করুন',
+    same_supplier: 'নতুন ও পুরনো সরবরাহকারী একই',
+    no_records: 'কোনো রেকর্ড নেই',
+    no_orders: 'কোনো অর্ডার নেই',
+    no_sort_change: 'কোনো পরিবর্তন সনাক্ত হয়নি, সাজানো অপরিবর্তিত',
+    not_logged_in: 'লগইন নেই',
+    query_fail: 'অনুসন্ধান ব্যর্থ',
+    querying_recent: 'সাম্প্রতিক অর্ডার লোড হচ্ছে...',
+    no_image_to_upload: 'আপলোড করার জন্য কোনো ছবি নেই',
+    no_image_match: 'কোনো মিলে যাওয়া ছবি নেই (ফাইলের নাম মিলেনি)',
+    no_pending_save: 'সংরক্ষণের জন্য কোনো ডেটা নেই',
+    no_matching_records: 'মানদণ্ডের সাথে কোনো রেকর্ড মিলে না',
+    add_fail: 'যোগ করা ব্যর্থ',
+    confirm_recall_order: 'এই অর্ডার প্রত্যাহার করবেন? প্রত্যাহারের পর আপনি পুনরায় সম্পাদনা করে জমা দিতে পারবেন।',
+    confirm_reset_all: 'সমস্ত অর্ডার ও স্টক সমন্বয় রিসেট করবেন?',
+    confirm_fail_colon: 'নিশ্চিতকরণ ব্যর্থ:',
+    push_key_fail: 'পুশ কী পাওয়া ব্যর্থ',
+    parse_fail_colon: 'বিশ্লেষণ ব্যর্থ:',
+    subscribe_fail_colon: 'সাবস্ক্রিপশন ব্যর্থ:',
+    no_items_in_record: 'রেকর্ডে কোনো পণ্য নেই',
+    items_discontinued: 'রেকর্ডের পণ্য বন্ধ বা তালিকায় নেই',
+    supplier_no_items: 'এই সরবরাহকারীর কোনো উপাদান নেই',
+    lang_switched: 'ভাষা পরিবর্তিত / Language changed',
+    please_modify_first: 'প্রথমে পরিমাণ পরিবর্তন করুন বা স্টক সমন্বয় যোগ করুন',
+    select_sent_first: 'প্রথমে পাঠানো অর্ডার নির্বাচন করুন',
+    select_pending_first: 'প্রথমে অপেক্ষমান অর্ডার নির্বাচন করুন',
+    select_to_delete: 'প্রথমে মুছে ফেলার জন্য আইটেম নির্বাচন করুন',
+    reenter_new_pwd: 'নতুন পাসওয়ার্ড পুনরায় লিখুন:',
+    select_to_modify: 'পরিবর্তন করার জন্য আইটেম নির্বাচন করুন',
+    fill_name_pwd: 'নাম ও পাসওয়ার্ড লিখুন',
+    fill_italian: 'ইতালীয় নাম লিখুন',
+    enter_new_pwd: 'নতুন পাসওয়ার্ড লিখুন (কমপক্ষে ৪ অক্ষর):',
+    select_supplier_name: 'সরবরাহকারীর নাম নির্বাচন করুন',
+    select_old_supplier: 'পূর্ববর্তী সরবরাহকারী নির্বাচন করুন',
+    select_image_file: 'একটি ছবি নির্বাচন করুন',
+    no_custom_sort_yet: 'কোনো কাস্টম সাজানো নেই, ক্লিক করুন',
+    reorder_save_fail: 'পুনঃসাজানো হয়েছে কিন্তু সংরক্ষণ ব্যর্থ, ম্যানুয়ালি সম্পন্ন ক্লিক করুন',
+    unnamed: 'নামহীন',
+    continue_q: ', চালিয়ে যাবেন?',
+    overwrite_q: ', ওভাররাইট করবেন?',
+    no_custom_sort_msg: 'কোনো কাস্টম সাজানো নেই, "আমার সাজানো সম্পাদনা" ক্লিক করে শুরু করুন',
   }
 };
 const t = k => (i18n[currentLang]||i18n.zh)[k] || k;
@@ -2609,11 +2960,11 @@ async function saveAdminPass() {
   const old = document.getElementById('admin-pass-old').value;
   const nw = document.getElementById('admin-pass-new').value;
   const cf = document.getElementById('admin-pass-confirm').value;
-  if (!old||!nw||!cf) { toast('请填写所有字段','err'); return; }
+  if (!old||!nw||!cf) { toast(t('fill_all_fields'),'err'); return; }
   const oldHash = await sha256(old);
-  if (oldHash !== _adminPassHash) { toast('当前密码错误','err'); return; }
-  if (nw !== cf) { toast('两次密码不一致','err'); return; }
-  if (nw.length < 4) { toast('密码至少4位','err'); return; }
+  if (oldHash !== _adminPassHash) { toast(t('pwd_wrong'),'err'); return; }
+  if (nw !== cf) { toast(t('pwd_mismatch'),'err'); return; }
+  if (nw.length < 4) { toast(t('pwd_too_short'),'err'); return; }
   const newHash = await sha256(nw);
   try {
     await fetch(SB_URL+'/rest/v1/cucina_settings?restaurant_id=eq.'+REST_ID+'&key=eq.admin_pass_hash', {
@@ -2624,21 +2975,21 @@ async function saveAdminPass() {
     _adminPassHash = newHash;
     closeModal('modal-change-admin-pass');
     toast('✅ 管理员密码已修改');
-  } catch(e){ toast('修改失败','err'); }
+  } catch(e){ toast(t('modify_fail'),'err'); }
 }
 
 async function showChangePass() {
-  const newPass = prompt('请输入新密码（至少4位）：');
-  if (!newPass || newPass.length < 4) { toast('密码太短，至少4位','err'); return; }
-  const cf = prompt('请再次输入新密码：');
-  if (newPass !== cf) { toast('两次密码不一致','err'); return; }
+  const newPass = prompt(t('enter_new_pwd'));
+  if (!newPass || newPass.length < 4) { toast(t('pwd_min_4'),'err'); return; }
+  const cf = prompt(t('reenter_new_pwd'));
+  if (newPass !== cf) { toast(t('pwd_mismatch'),'err'); return; }
   const newHash = await sha256(newPass);
   sb('cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(currentUser), {
     method:'PATCH', body:JSON.stringify({password:newHash})
   }).then(()=>{
     if (chefs[currentUser]) chefs[currentUser].hash = newHash;
-    toast('✅ 密码修改成功');
-  }).catch(()=>toast('❌ 修改失败','err'));
+    toast(t('pwd_changed'));
+  }).catch(()=>toast(t('modify_fail_x'),'err'));
 }
 
 // 🔴 软删除：停售 / 重新启用切换
@@ -2679,8 +3030,8 @@ async function deleteEditItem() {
     items = items.filter(i=>i.id!==editingItemId);
     closeModal('modal-edit-item');
     renderInventory();
-    toast('✅ 已删除：'+name);
-  } catch(e) { toast('❌ 删除失败','err'); }
+    toast(t('deleted_colon')+name);
+  } catch(e) { toast(t('delete_fail_x'),'err'); }
 }
 
 async function doLogout() {
@@ -3015,7 +3366,7 @@ function toggleInvSelect(id, checked) {
 function invSelectFiltered() {
   if (!isAdmin) { toast('需要管理员权限','err'); return; }
   const data = getFilteredInventoryData();
-  if (!data.length) { toast('当前筛选下没有物料','err'); return; }
+  if (!data.length) { toast(t('no_items_in_filter'),'err'); return; }
   data.forEach(i => _invSelected.add(i.id));
   renderInvTable();
   toast(`已勾选 ${data.length} 条（可再选目标订货员并确认）`);
@@ -3038,8 +3389,8 @@ function invClearSelect() {
 
 async function invBulkChangeChef() {
   const chef = document.getElementById('inv-bulk-chef').value;
-  if (!chef) { toast('请选择订货员','err'); return; }
-  if (!_invSelected.size) { toast('请先勾选物料','err'); return; }
+  if (!chef) { toast(t('select_buyer'),'err'); return; }
+  if (!_invSelected.size) { toast(t('select_items_first'),'err'); return; }
   if (!confirm(`确定把 ${_invSelected.size} 条物料的订货员改为 ${chef}？`)) return;
 
   let count = 0;
@@ -3072,7 +3423,7 @@ function showInvFilter() {
     return o[sa]-o[sb];
   });
   renderInvTable();
-  toast('已按库存状态排序');
+  toast(t('sorted_by_stock'));
 }
 
 function showItemDetail(id) {
@@ -3206,8 +3557,8 @@ async function saveEditItem() {
     Object.assign(item, u, {stock:parseFloat(u.stock),safety:parseFloat(u.safety),price:parseFloat(u.price),safety_by_day:u.safety_by_day,max_order:u.max_order});
     closeModal('modal-edit-item');
     renderInventory();
-    toast('✅ 已更新');
-  } catch(e) { toast('更新失败','err'); }
+    toast(t('updated_ok'));
+  } catch(e) { toast(t('update_fail'),'err'); }
 }
 
 // ════════════════════════════════════════
@@ -3405,7 +3756,7 @@ function renderOrderList() {
 function applyOrderSort(v) {
   _orderSortMode = v;
   if (v === 'custom' && !_userSortOrder) {
-    toast('还没自定义排序，请点"编辑我的排序"开始', 'err');
+    toast(t('no_custom_sort_msg'), 'err');
   }
   renderOrderList();
   // 持久化排序模式偏好（per-user）
@@ -3575,13 +3926,13 @@ async function openSaveSortTemplate() {
   if (!current ||
       (current.mode === 'flat' && (!current.flatOrder || !current.flatOrder.length)) ||
       (current.mode === 'grouped' && (!current.categoryOrder || !current.categoryOrder.length))) {
-    toast('当前还没有排序，先拖一下', 'err');
+    toast(t('sort_empty_pls_drag'), 'err');
     return;
   }
   // 检查已有数量
   const list = await loadSavedSorts();
   if (list.length >= 5) {
-    if (!confirm('已有 5 个保存的排序，新存将挤掉最旧的"' + (list[list.length-1].name||'未命名') + '"，继续吗？')) return;
+    if (!confirm(t('sort_5_full') + '"' + (list[list.length-1].name||t('unnamed')) + '"' + t('continue_q'))) return;
   }
   // 默认名字：用日期时间
   const now = new Date();
@@ -3597,18 +3948,18 @@ async function doSaveSortTemplate() {
   const name = (document.getElementById('save-sort-name').value || '').trim();
   const warn = document.getElementById('save-sort-warn');
   if (!name) {
-    warn.textContent = '请输入名称';
+    warn.textContent = t('enter_name');
     warn.style.display = 'block';
     return;
   }
   const sortData = window._pendingSaveSortData;
-  if (!sortData) { toast('保存数据丢失，请重试', 'err'); return; }
+  if (!sortData) { toast(t('save_data_lost'), 'err'); return; }
 
   let list = await loadSavedSorts();
   // 同名替换（友好体验，避免重名混乱）
   const sameNameIdx = list.findIndex(s => s.name === name);
   if (sameNameIdx >= 0) {
-    if (!confirm('已有同名"' + name + '"，覆盖它吗？')) return;
+    if (!confirm(t('name_exists') + '"' + name + '"' + t('overwrite_q'))) return;
     list.splice(sameNameIdx, 1);
   }
   // 新加到最前
@@ -3627,7 +3978,7 @@ async function doSaveSortTemplate() {
     window._pendingSaveSortData = null;
     refreshSavedSortsCount();
   } else {
-    toast('保存失败', 'err');
+    toast(t('save_fail'), 'err');
   }
 }
 
@@ -3684,18 +4035,18 @@ async function openSavedSorts() {
 
 async function applySavedSort(idx) {
   const list = await loadSavedSorts();
-  if (idx < 0 || idx >= list.length) { toast('记录不存在', 'err'); return; }
+  if (idx < 0 || idx >= list.length) { toast(t('record_not_found'), 'err'); return; }
   const s = list[idx];
-  if (!s.sortData) { toast('数据损坏', 'err'); return; }
+  if (!s.sortData) { toast(t('data_corrupted'), 'err'); return; }
   _userSortOrder = JSON.parse(JSON.stringify(s.sortData));  // 深拷贝
   _sortDisplayMode = (s.sortData.mode === 'flat') ? 'flat' : 'grouped';
   const ok = await saveUserSortOrder();
   closeModal('modal-saved-sorts');
   if (ok) {
-    toast('✅ 已应用"' + (s.name||'') + '"');
+    toast(t('applied_ok') + '"' + (s.name||'') + '"');
     renderOrderListSortMode();
   } else {
-    toast('应用成功但保存失败', 'err');
+    toast(t('apply_ok_save_fail'), 'err');
     renderOrderListSortMode();
   }
 }
@@ -3704,22 +4055,22 @@ async function renameSavedSort(idx) {
   const list = await loadSavedSorts();
   if (idx < 0 || idx >= list.length) return;
   const cur = list[idx];
-  const newName = prompt('改个新名字：', cur.name || '');
+  const newName = prompt(t('new_name_prompt'), cur.name || '');
   if (newName === null) return;
   const trimmed = newName.trim();
-  if (!trimmed) { toast('名字不能空', 'err'); return; }
-  if (trimmed.length > 20) { toast('名字最多 20 字', 'err'); return; }
+  if (!trimmed) { toast(t('name_required'), 'err'); return; }
+  if (trimmed.length > 20) { toast(t('name_max_20'), 'err'); return; }
   // 同名检查（除了自己）
   if (list.some((s, i) => i !== idx && s.name === trimmed)) {
-    toast('已有同名，请换一个', 'err'); return;
+    toast(t('name_exists_change'), 'err'); return;
   }
   list[idx].name = trimmed;
   const ok = await saveSavedSorts(list);
   if (ok) {
-    toast('已重命名');
+    toast(t('renamed_ok'));
     openSavedSorts();  // 刷新列表
   } else {
-    toast('保存失败', 'err');
+    toast(t('save_fail'), 'err');
   }
 }
 
@@ -3731,11 +4082,11 @@ async function deleteSavedSort(idx) {
   list.splice(idx, 1);
   const ok = await saveSavedSorts(list);
   if (ok) {
-    toast('已删除');
+    toast(t('deleted_short'));
     openSavedSorts();
     refreshSavedSortsCount();
   } else {
-    toast('删除失败', 'err');
+    toast(t('delete_fail'), 'err');
   }
 }
 
@@ -3751,8 +4102,8 @@ async function refreshSavedSortsCount() {
 // 流程：弹出最近 7 次勾选会话 → 用户选一次 → 按完整勾选顺序重排
 // 数据源：优先用 user_prefs.picking_sessions（完整勾选顺序），降级到 cucina_orders（已按供应商拆分）
 async function applyLastOrderToSort() {
-  if (!currentUser) { toast('未登录','err'); return; }
-  toast('查询最近订单中...');
+  if (!currentUser) { toast(t('not_logged_in'),'err'); return; }
+  toast(t('querying_recent'));
   try {
     // 优先取勾选会话
     const sessions = await loadPickingSessions();
@@ -3779,9 +4130,9 @@ async function applyLastOrderToSort() {
           + '&limit=7',
         { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
       );
-      if (!r.ok) { toast('查询失败','err'); return; }
+      if (!r.ok) { toast(t('query_fail'),'err'); return; }
       const orders = await r.json();
-      if (!orders.length) { toast('你还没有提交过订单','err'); return; }
+      if (!orders.length) { toast(t('no_orders_yet'),'err'); return; }
       entries = orders.map(o => ({
         label: o.created_at || o.date,
         time: o.created_at || o.date,
@@ -3791,7 +4142,7 @@ async function applyLastOrderToSort() {
       }));
     }
 
-    if (!entries.length) { toast('暂无可用记录','err'); return; }
+    if (!entries.length) { toast(t('no_records'),'err'); return; }
 
     // 渲染列表
     const listEl = document.getElementById('pick-order-list');
@@ -3826,7 +4177,7 @@ async function applyLastOrderToSort() {
     openModal('modal-pick-order');
   } catch(e) {
     console.error('applyLastOrderToSort error:', e);
-    toast('操作失败：' + e.message, 'err');
+    toast(t('op_fail_colon') + e.message, 'err');
   }
 }
 
@@ -3841,10 +4192,10 @@ async function confirmPickEntry(dataKey) {
       const oid = dataKey.slice(1);
       entry = entries.find(e => String(e.orderId) === oid);
     }
-    if (!entry) { toast('记录不存在','err'); return; }
+    if (!entry) { toast(t('record_not_found'),'err'); return; }
 
     const orderItemCodes = (entry.items || []).map(it => it.item_code).filter(Boolean);
-    if (!orderItemCodes.length) { toast('记录中没有商品','err'); return; }
+    if (!orderItemCodes.length) { toast(t('no_items_in_record'),'err'); return; }
 
     // 对应到当前 items 数组（拿 id），保留记录顺序
     const orderedIds = [];
@@ -3852,7 +4203,7 @@ async function confirmPickEntry(dataKey) {
       const item = items.find(i => i.item_code === code && !i.discontinued);
       if (item) orderedIds.push(item.id);
     });
-    if (!orderedIds.length) { toast('记录中的商品已停售或不在列表','err'); return; }
+    if (!orderedIds.length) { toast(t('items_discontinued'),'err'); return; }
 
     // 当前用户负责的食材
     const _cu = (currentUser||'').toLowerCase().trim();
@@ -3878,15 +4229,15 @@ async function confirmPickEntry(dataKey) {
     const ok = await saveUserSortOrder();
     closeModal('modal-pick-order');
     if (ok) {
-      toast('✅ 已按所选记录重排并保存');
+      toast(t('reorder_saved_ok'));
       renderOrderListSortMode();
     } else {
-      toast('重排成功但保存失败，请手动点完成','err');
+      toast(t('reorder_save_fail'),'err');
       renderOrderListSortMode();
     }
   } catch(e) {
     console.error('confirmPickEntry error:', e);
-    toast('操作失败：' + e.message, 'err');
+    toast(t('op_fail_colon') + e.message, 'err');
   }
 }
 
@@ -4058,7 +4409,7 @@ async function toggleSortMode() {
 
 async function enterSortMode() {
   const ok = await ensureSortableLoaded();
-  if (!ok) { toast('排序工具加载失败，请检查网络', 'err'); return; }
+  if (!ok) { toast(t('sort_tool_load_fail'), 'err'); return; }
   _isInSortMode = true;
   _sortDisplayMode = null;  // 让 render 时根据已保存的数据自动判断（flat 还是 grouped）
   // 确保在订货 tab（点编辑按钮时如果在其他 tab，自动切过来）
@@ -4099,7 +4450,7 @@ async function exitSortMode() {
     document.getElementById('btn-sort-mode').style.background = 'transparent';
     document.getElementById('btn-sort-mode').style.color = 'var(--primary,#c9a961)';
     document.getElementById('btn-sort-mode').style.borderStyle = 'dashed';
-    toast('未检测到排序变化，保持原有排序');
+    toast(t('no_sort_change'));
     renderOrderList();
     return;
   }
@@ -4137,11 +4488,11 @@ async function exitSortMode() {
     _orderSortMode = 'custom';
     const sortSel = document.getElementById('side-sort-select');
     if (sortSel) sortSel.value = 'custom';
-    toast('✅ 排序已保存');
+    toast(t('sort_saved'));
     // 持久化排序模式（自动切到 custom）
     saveUserSortMode('custom');
   } else {
-    toast('保存失败，请重试', 'err');
+    toast(t('save_fail_retry'), 'err');
   }
   renderOrderList();
 }
@@ -4394,7 +4745,7 @@ function renderOrderListSortMode() {
     });
   } else {
     console.error('[Sort] Sortable 未定义，CDN 加载失败？');
-    toast('排序工具加载失败，请检查网络', 'err');
+    toast(t('sort_tool_load_fail'), 'err');
   }
   // 刷新顶部"我保存的排序"按钮上的数字
   refreshSavedSortsCount();
@@ -4478,12 +4829,12 @@ function stepQty(id, d) {
 
 // 问题1：重置所有订货量和消耗量
 function resetOrder() {
-  if (!confirm('确定重置所有订货量和库存调整？')) return;
+  if (!confirm(t('confirm_reset_all'))) return;
   items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
   _orderNote = '';
   refreshOrderNoteBadge();
   renderOrderList();
-  toast('已重置');
+  toast(t('reset_ok'));
 }
 
 function stepConsume(id, d) {
@@ -4570,7 +4921,7 @@ async function submitOrder() {
   const toConsume = items.filter(i=>i.consume&&i.consume!==0);
 
   if (!sel.length && !toConsume.length) {
-    toast('请先修改订货量或填写库存调整','err'); return;
+    toast(t('please_modify_first'),'err'); return;
   }
 
   const btn = document.getElementById('order-submit-btn');
@@ -4702,7 +5053,7 @@ async function submitOrder() {
       }, 50);
     }
   } catch(e) {
-    toast('提交失败：'+e.message,'err');
+    toast(t('submit_fail_colon')+e.message,'err');
     console.error('submitOrder error:', e);
   } finally {
     btn.disabled=false; btn.innerHTML=t('submit');
@@ -4814,7 +5165,7 @@ async function bulkConfirmOrders() {
     o.status==='已发送' &&
     o.type!=='consume'
   );
-  if (!selected.length) { toast('请先勾选已发送的订单','err'); return; }
+  if (!selected.length) { toast(t('select_sent_first'),'err'); return; }
 
   // 检查是否所有订单都已经过收货Tab确认（有received_items记录）
   const notReceived = selected.filter(o=>!o.received_items||!o.received_items.length);
@@ -4879,7 +5230,7 @@ async function clearOrders() {
     o.date < cutoffStr &&
     !o.hidden
   );
-  if (!toHide.length) { toast('没有符合条件的记录'); closeModal('modal-clear-orders'); return; }
+  if (!toHide.length) { toast(t('no_matching_records')); closeModal('modal-clear-orders'); return; }
   try {
     for (const o of toHide) {
       await fetch(SB_URL+'/rest/v1/cucina_orders?id=eq.'+o.id, {
@@ -4892,7 +5243,7 @@ async function clearOrders() {
     closeModal('modal-clear-orders');
     renderOrders();
     toast(`✅ 已隐藏 ${toHide.length} 条记录`);
-  } catch(e) { toast('操作失败','err'); }
+  } catch(e) { toast(t('op_fail'),'err'); }
 }
 
 function renderReceiveTab() {
@@ -5134,7 +5485,7 @@ async function confirmReceiveBySup(supName, orderIdsStr) {
       toast(`✅ ${supName} 收货完成，库存已更新`);
     }
   } catch(e) {
-    toast('确认失败：'+e.message, 'err');
+    toast(t('confirm_fail_colon')+e.message, 'err');
     if (btn) btn.disabled = false;
   }
 }
@@ -5443,7 +5794,7 @@ async function mergeSendOrders() {
   const targetDay = _weekdayFilter || getTodayWeekday();
   let ignoreCycle = document.getElementById('ignore-cycle')?.checked || false;
   const selected = orders.filter(o=>_selectedOrderIds.has(String(o.id)) && (o.status==='待处理'||o.status==='待處理') && o.type!=='consume');
-  if (!selected.length) { toast('请先勾选待处理订单','err'); return; }
+  if (!selected.length) { toast(t('select_pending_first'),'err'); return; }
 
   // 🔍 第一遍扫描：先收集"被周期过滤掉的食材"，让采购员决定怎么处理
   if (!ignoreCycle) {
@@ -5467,7 +5818,7 @@ async function mergeSendOrders() {
     // 如果有被过滤掉的，弹警告让采购员决定
     if (filtered.length > 0) {
       const choice = await showCycleWarningModal(targetDay, filtered);
-      if (choice === 'cancel') { toast('已取消发送'); return; }
+      if (choice === 'cancel') { toast(t('send_cancelled')); return; }
       if (choice === 'all') ignoreCycle = true;  // "全部发送" → 不过滤
       // 'skip' → 保持 ignoreCycle = false，按原逻辑跳过
     }
@@ -5597,7 +5948,7 @@ async function confirmMergedOrders() {
   closeModal('modal-submit-confirm');
   renderOrders();
   updatePendingBadge();
-  toast(`✅ 订单已标记为已发送，等待收货确认`);
+  toast(t('order_sent_wait'));
 }
 
 
@@ -5968,18 +6319,18 @@ async function confirmReceive(id) {
       const diffMsg = diffs.map(i=>`${i.name}: 订${i.ordered} 到${i.received}`).join('、');
       toast(`⚠️ 数量有出入：${diffMsg}`, 'err');
     } else {
-      toast('✅ 收货确认，库存已更新');
+      toast(t('received_ok'));
     }
     // 触发推送：通知主管/管理员订单已收货
     triggerPush('order_received');
   } catch(e) {
-    toast('确认失败：'+e.message, 'err');
+    toast(t('confirm_fail_colon')+e.message, 'err');
     if (btn) btn.disabled = false;
   }
 }
 
 async function recallOrder(id) {
-  if (!confirm('确定撤回这个订单？撤回后可以重新修改再提交。')) return;
+  if (!confirm(t('confirm_recall_order'))) return;
   const order = orders.find(o=>String(o.id)===String(id));
   if (!order) return;
   try {
@@ -6006,11 +6357,11 @@ async function recallOrder(id) {
     closeModal('modal-order-detail');
     renderOrders();
     updatePendingBadge();
-    toast('✅ 订单已撤回，请到订货系统重新修改');
+    toast(t('order_recalled'));
     // 跳转到订货系统
     setTimeout(()=>switchTab('order'), 1000);
   } catch(e) {
-    toast('撤回失败：'+e.message,'err');
+    toast(t('recall_fail_colon')+e.message,'err');
   }
 }
 
@@ -6022,13 +6373,13 @@ async function confirmOrder(id) {
     closeModal('modal-order-detail');
     renderOrders();
     updatePendingBadge();
-    toast('✅ 订单已确认');
-  } catch(e){ toast('操作失败','err'); }
+    toast(t('order_confirmed'));
+  } catch(e){ toast(t('op_fail'),'err'); }
 }
 
 function exportOrders() {
   const data = isAdmin ? orders : orders.filter(o=>o.chef===currentUser);
-  if(!data.length){toast('暂无订单','err');return;}
+  if(!data.length){toast(t('no_orders'),'err');return;}
   let txt = '后厨采购清单\n================\n';
   data.forEach(o=>{
     txt+=`\n提报人: ${o.chef} (${o.date}) [${o.status}]\n`;
@@ -6233,8 +6584,8 @@ async function updateSupplierReceiver(id, receiver) {
     });
     const s = suppliers.find(s=>s.id===id);
     if (s) s.receiver = receiver||null;
-    toast('✅ 已更新');
-  } catch(e){ toast('保存失败','err'); }
+    toast(t('updated_ok'));
+  } catch(e){ toast(t('save_fail'),'err'); }
 }
 
 async function updateSupplierDeadline(id, deadline) {
@@ -6246,8 +6597,8 @@ async function updateSupplierDeadline(id, deadline) {
     });
     const s = suppliers.find(s=>s.id===id);
     if (s) s.order_deadline = deadline;
-    toast('✅ 截止时间已保存');
-  } catch(e){ toast('保存失败','err'); }
+    toast(t('cutoff_saved'));
+  } catch(e){ toast(t('save_fail'),'err'); }
 }
 
 async function updateSupplierBuyer(id, buyer) {
@@ -6259,14 +6610,14 @@ async function updateSupplierBuyer(id, buyer) {
     });
     const s = suppliers.find(s=>s.id===id);
     if (s) s.buyer = buyer||null;
-    toast('✅ 已更新');
-  } catch(e){ toast('保存失败','err'); }
+    toast(t('updated_ok'));
+  } catch(e){ toast(t('save_fail'),'err'); }
 }
 
 async function addSupplier() {
   const name = document.getElementById('new-sup-name').value.trim();
   const wa = document.getElementById('new-sup-wa').value.trim();
-  if (!name) { toast('请选择供应商名称','err'); return; }
+  if (!name) { toast(t('select_supplier_name'),'err'); return; }
   try {
     const chkRes = await fetch(SB_URL+'/rest/v1/cucina_suppliers?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(name),
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
@@ -6289,8 +6640,8 @@ async function addSupplier() {
     document.getElementById('new-sup-name').value='';
     document.getElementById('new-sup-wa').value='';
     renderSupplierList();
-    toast('✅ 已保存：'+name);
-  } catch(e){ toast('保存失败: '+e.message,'err'); console.error('addSupplier error:',e); }
+    toast(t('saved_colon')+name);
+  } catch(e){ toast(t('save_fail_colon')+e.message,'err'); console.error('addSupplier error:',e); }
 }
 
 async function updateSupplierWa(id, wa) {
@@ -6298,18 +6649,18 @@ async function updateSupplierWa(id, wa) {
     await sb('cucina_suppliers?id=eq.'+id,{method:'PATCH',body:JSON.stringify({wa_number:wa})});
     const s = suppliers.find(s=>s.id===id);
     if (s) s.wa_number = wa;
-    toast('✅ 已保存');
-  } catch(e){ toast('保存失败','err'); }
+    toast(t('saved_ok'));
+  } catch(e){ toast(t('save_fail'),'err'); }
 }
 
 async function deleteSupplier(id) {
-  if (!confirm('删除此供应商？')) return;
+  if (!confirm(t('del_supplier_q'))) return;
   try {
     await sb('cucina_suppliers?id=eq.'+id,{method:'DELETE'});
     suppliers = suppliers.filter(s=>s.id!==id);
     renderSupplierList();
-    toast('✅ 已删除');
-  } catch(e){ toast('删除失败','err'); }
+    toast(t('deleted_ok'));
+  } catch(e){ toast(t('delete_fail'),'err'); }
 }
 
 function updatePendingBadge() {
@@ -6619,10 +6970,10 @@ async function doChangePwd() {
   const old = document.getElementById('pwd-old').value;
   const nw  = document.getElementById('pwd-new').value;
   const cf  = document.getElementById('pwd-confirm').value;
-  if (!old || !nw) { toast('请填写所有字段','err'); return; }
+  if (!old || !nw) { toast(t('fill_all_fields'),'err'); return; }
   const oldHash = await sha256(old);
-  if (!chefs[currentUser] || chefs[currentUser].hash !== oldHash) { toast('当前密码错误','err'); return; }
-  if (nw !== cf) { toast('两次密码不一致','err'); return; }
+  if (!chefs[currentUser] || chefs[currentUser].hash !== oldHash) { toast(t('pwd_wrong'),'err'); return; }
+  if (nw !== cf) { toast(t('pwd_mismatch'),'err'); return; }
   const newHash = await sha256(nw);
   try {
     await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(currentUser), {
@@ -6631,8 +6982,8 @@ async function doChangePwd() {
     });
     if (chefs[currentUser]) chefs[currentUser].hash = newHash;
     closeModal('modal-change-pwd');
-    toast('✅ 密码已修改');
-  } catch(e){ toast('修改失败','err'); }
+    toast(t('pwd_changed_ok'));
+  } catch(e){ toast(t('modify_fail'),'err'); }
 }
 
 function changeLangModal() {
@@ -6648,7 +6999,7 @@ function changeLangModal() {
   se('warn-th-stock', t('colStock'));
   se('warn-th-safe', t('colSafe'));
   se('warn-th-status', t('colStatus'));
-  toast('语言已切换 / Language changed');
+  toast(t('lang_switched'));
   switchTab(currentTab);
   // 持久化语言偏好
   saveUserLang(currentLang);
@@ -6862,15 +7213,15 @@ async function saveStaffRole(name) {
       chefs[name].can_receive = canReceive;
     }
     renderStaffPanel();
-    toast('✅ 已更新：'+name);
-  } catch(e) { toast('保存失败','err'); }
+    toast(t('updated_colon')+name);
+  } catch(e) { toast(t('save_fail'),'err'); }
 }
 
 async function saveStaff() {
   const n=document.getElementById('new-staff-name').value.trim();
   const p=document.getElementById('new-staff-pass').value.trim();
   const r=document.getElementById('new-staff-role').value||'staff';
-  if(!n||!p){toast('请填写姓名和密码','err');return;}
+  if(!n||!p){toast(t('fill_name_pwd'),'err');return;}
   const pHash = await sha256(p);
   try {
     const chk=await(await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(n),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})).json();
@@ -6882,19 +7233,19 @@ async function saveStaff() {
     chefs[n]={hash:pHash,role:r};
     populateLoginSelect();
     renderStaffList();
-    toast('✅ 已保存：'+n);
-  } catch(e){ toast('保存失败','err'); }
+    toast(t('saved_colon')+n);
+  } catch(e){ toast(t('save_fail'),'err'); }
 }
 
 async function deleteStaff(n) {
-  if(!confirm('删除员工 '+n+' ？')) return;
+  if(!confirm(t('del_chef')+n+' ？')) return;
   try {
     await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(n),{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     delete chefs[n];
     populateLoginSelect();
     renderStaffList();
-    toast('已删除：'+n);
-  } catch(e){ toast('删除失败','err'); }
+    toast(t('deleted_short_colon')+n);
+  } catch(e){ toast(t('delete_fail'),'err'); }
 }
 
 function renderItemsPanel() {
@@ -6930,7 +7281,7 @@ function renderItemsPanel() {
 
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value;
-  if(!italian){toast('请填写意大利文名称','err');return;}
+  if(!italian){toast(t('fill_italian'),'err');return;}
   const newItem = {
     restaurant_id:REST_ID,
     item_code:document.getElementById('ni-code').value,
@@ -6948,10 +7299,10 @@ async function saveNewItem() {
     const r=await sb('cucina_items',{method:'POST',prefer:'return=representation',body:JSON.stringify(newItem)});
     const saved=await r.json();
     items.push({...newItem,id:saved[0].id,price:parseFloat(newItem.price),stock:parseFloat(newItem.stock),safety:parseFloat(newItem.safety),need:0,checked:false});
-    toast('✅ 已添加：'+(newItem.name||italian));
+    toast(t('added_colon')+(newItem.name||italian));
     closeModal('modal-admin-panel');
     renderInventory();
-  } catch(e){ toast('添加失败','err'); }
+  } catch(e){ toast(t('add_fail'),'err'); }
 }
 
 // ════════════════════════════════════════
@@ -7247,11 +7598,11 @@ async function saveFeatureFlags() {
 
     featureFlags = newFlags;
     closeModal('modal-feature-flags');
-    toast('✅ 设置已保存，重新加载页面...');
+    toast(t('settings_saved_reload'));
     setTimeout(() => location.reload(), 1000);
   } catch (err) {
     console.error('保存功能开关失败:', err);
-    toast('保存失败: ' + err.message, 'err');
+    toast(t('save_fail_colon') + err.message, 'err');
   }
 }
 
@@ -7354,18 +7705,18 @@ async function executeBatchSupplier() {
   if (_batchSupMode === 1) {
     const from = document.getElementById('bs-from').value;
     newSup = document.getElementById('bs-to1').value.trim();
-    if (!from) { toast('请选择原供应商', 'err'); return; }
-    if (!newSup) { toast('请填写新供应商', 'err'); return; }
-    if (from === newSup) { toast('新旧供应商相同', 'err'); return; }
+    if (!from) { toast(t('select_old_supplier'), 'err'); return; }
+    if (!newSup) { toast(t('fill_new_supplier'), 'err'); return; }
+    if (from === newSup) { toast(t('same_supplier'), 'err'); return; }
     affectedIds = items.filter(i => i.supplier === from).map(i => i.id);
-    if (!affectedIds.length) { toast('该供应商名下没有食材', 'err'); return; }
+    if (!affectedIds.length) { toast(t('supplier_no_items'), 'err'); return; }
     if (!confirm(`确定把「${from}」名下的 ${affectedIds.length} 个食材，全部改成「${newSup}」吗？`)) return;
     query = 'supplier=eq.' + encodeURIComponent(from);
   } else {
     affectedIds = [...document.querySelectorAll('.bs-item-cb:checked')].map(c => parseInt(c.value));
     newSup = document.getElementById('bs-to2').value.trim();
-    if (!affectedIds.length) { toast('请勾选要修改的食材', 'err'); return; }
-    if (!newSup) { toast('请填写新供应商', 'err'); return; }
+    if (!affectedIds.length) { toast(t('select_to_modify'), 'err'); return; }
+    if (!newSup) { toast(t('fill_new_supplier'), 'err'); return; }
     if (!confirm(`确定把选中的 ${affectedIds.length} 个食材，改成供应商「${newSup}」吗？`)) return;
     query = 'id=in.(' + affectedIds.join(',') + ')';
   }
@@ -7385,7 +7736,7 @@ async function executeBatchSupplier() {
     if (typeof renderInventory === 'function') renderInventory();
   } catch (e) {
     console.error('批量改供应商失败:', e);
-    toast('修改失败：' + (e.message || '请重试'), 'err');
+    toast(t('modify_fail_colon') + (e.message || '请重试'), 'err');
   }
 }
 
@@ -7461,7 +7812,7 @@ function handleBatchImages(input) {
   document.getElementById('batch-img-upload-btn').textContent = `✓ 开始上传 ${_batchImgMatched.length} 张`;
 
   if (_batchImgMatched.length === 0) {
-    toast('没有可上传的图片（文件名都没匹配上）', 'err');
+    toast(t('no_image_match'), 'err');
   }
 }
 
@@ -7521,7 +7872,7 @@ async function uploadImageForItemSilent(itemId, file) {
 }
 
 async function performBatchImageUpload() {
-  if (_batchImgMatched.length === 0) { toast('没有可上传的图片', 'err'); return; }
+  if (_batchImgMatched.length === 0) { toast(t('no_image_to_upload'), 'err'); return; }
 
   const total = _batchImgMatched.length;
   const cancelBtn = document.getElementById('batch-img-cancel-btn');
@@ -7600,7 +7951,7 @@ async function handleOrphanFile(input) {
   try {
     await ensureXlsxLoaded();
   } catch (e) {
-    toast('加载 Excel 组件失败，请检查网络', 'err');
+    toast(t('excel_load_fail'), 'err');
     input.value = '';
     return;
   }
@@ -7650,7 +8001,7 @@ async function handleOrphanFile(input) {
       }
     } catch(err) {
       console.error('解析 XLSX 失败:', err);
-      toast('解析失败：' + err.message, 'err');
+      toast(t('parse_fail_colon') + err.message, 'err');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -7701,7 +8052,7 @@ async function deleteSelectedOrphans() {
     const cb = document.getElementById('orphan-cb-'+idx);
     return cb && cb.checked;
   });
-  if (toDelete.length === 0) { toast('请先勾选要删除的食材', 'err'); return; }
+  if (toDelete.length === 0) { toast(t('select_to_delete'), 'err'); return; }
 
   // 二次确认
   if (!confirm(`确定永久删除选中的 ${toDelete.length} 个食材？\n\n这会同时删除它们的图片，操作不可恢复。`)) return;
@@ -7931,7 +8282,7 @@ function getRecentOrder(item) {
 // ════════════════════════════════════════
 function showOrderItemDetail(itemId) {
   const item = items.find(i => i.id === itemId);
-  if (!item) { toast('找不到该食材', 'err'); return; }
+  if (!item) { toast(t('item_not_found'), 'err'); return; }
 
   // 查找供应商的 WhatsApp 号码（如果有）
   const supplierInfo = (typeof suppliers !== 'undefined' && Array.isArray(suppliers))
@@ -8151,12 +8502,12 @@ async function uploadItemImage(itemId, fileInput) {
 
   // 检查文件类型
   if (!file.type.startsWith('image/')) {
-    toast('请选择图片文件', 'err');
+    toast(t('select_image_file'), 'err');
     return;
   }
   // 限制原始文件大小（最大 20MB，压缩后会变得很小）
   if (file.size > 20 * 1024 * 1024) {
-    toast('图片不能超过 20MB', 'err');
+    toast(t('img_max_20mb'), 'err');
     return;
   }
 
@@ -8259,7 +8610,7 @@ async function exportInventoryExcel() {
   try {
     await ensureXlsxLoaded();
   } catch (e) {
-    toast('加载 Excel 组件失败，请检查网络', 'err');
+    toast(t('excel_load_fail'), 'err');
     return;
   }
   try {
@@ -8349,7 +8700,7 @@ async function handleImport(input) {
   try {
     await ensureXlsxLoaded();
   } catch (e) {
-    toast('加载 Excel 组件失败，请检查网络', 'err');
+    toast(t('excel_load_fail'), 'err');
     input.value = '';
     return;
   }
@@ -8405,8 +8756,8 @@ async function handleImport(input) {
 }
 
 async function saveImport() {
-  if(!pendingImport.length){toast('没有待保存数据','err');return;}
-  if(!_importFileName){toast('文件名丢失，请重新选择文件','err');return;}
+  if(!pendingImport.length){toast(t('no_pending_save'),'err');return;}
+  if(!_importFileName){toast(t('filename_lost'),'err');return;}
   const total = pendingImport.length;
   const btn = document.getElementById('save-import-btn');
   const progressEl = document.getElementById('import-progress');
@@ -8636,7 +8987,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ════════════════════════════════════════════════════════════
-// Realtime — 长轮询版（v2.7.29）
+// Realtime — 长轮询版（v2.7.31）
 // ════════════════════════════════════════════════════════════
 // 设计：每 8 秒轮询 cucina_orders；页面隐藏时暂停，可见时立即触发一次
 // 通过 Worker 走，多租户安全（Worker 用 JWT 强制注入 restaurant_id 过滤）
@@ -8730,9 +9081,9 @@ async function refreshOrders() {
       if (currentTab==='receive') renderReceiveTab();
       updatePendingBadge();
       renderReceivePanel();
-      toast('✅ 已刷新');
+      toast(t('refreshed_ok'));
     }
-  } catch(e) { toast('刷新失败','err'); }
+  } catch(e) { toast(t('refresh_fail'),'err'); }
   finally {
     if (btn) { btn.disabled=false; btn.textContent='🔄 刷新'; }
   }
