@@ -1039,7 +1039,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         <div class="menu-item-text"><div class="title" id="lbl-item-mgmt">物料管理</div><div class="sub" id="lbl-item-sub">新增、编辑物料信息</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
-      <div class="menu-item" onclick="showItemsPublicModal()">
+      <div class="menu-item" onclick="showItemsPublicModal()" style="display:none">
         <div class="menu-item-icon" style="background:#FFFBEB">📚</div>
         <div class="menu-item-text"><div class="title">从公共库导入食材</div><div class="sub">浏览所有餐厅共享的食材，批量导入</div></div>
         <span class="menu-item-arrow">›</span>
@@ -1631,7 +1631,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.36';
+const APP_VERSION = 'v2.7.37';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -7364,7 +7364,7 @@ async function deleteStaff(n) {
 
 function renderItemsPanel() {
   document.getElementById('admin-panel-content').innerHTML = `
-    <button class="btn btn-ghost" onclick="showItemsPublicModal()" style="width:100%;margin-bottom:12px;border:1.5px dashed #c9a961;color:#c9a961;">📚 从公共库选食材</button>
+    <button class="btn btn-ghost" onclick="showItemsPublicModal()" style="display:none;width:100%;margin-bottom:12px;border:1.5px dashed #c9a961;color:#c9a961;">📚 从公共库选食材</button>
     <p style="font-size:13px;font-weight:600;margin-bottom:12px">新增物料</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group"><label class="form-label">货物号</label><input id="ni-code" class="form-control" placeholder="001"></div>

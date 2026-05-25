@@ -290,6 +290,7 @@
     <div class="header-title">YKI <span class="dot">·</span> 平台管理后台</div>
     <div class="header-actions">
       <button class="btn btn-ghost btn-sm" onclick="openNotify()">📢 发通知</button>
+      <button class="btn btn-ghost btn-sm" onclick="openItemsCopy()">🔄 食材复制</button>
       <button class="btn btn-gold btn-sm" onclick="openCreate()">+ 新增餐厅</button>
       <button class="btn btn-ghost btn-sm" onclick="location.reload()">退出</button>
     </div>
@@ -395,6 +396,50 @@
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('modal-impersonate')">取消</button>
       <button class="btn btn-gold" onclick="doImpersonate()">🚀 协助登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：跨餐厅食材复制 ============ -->
+<div class="modal-overlay" id="modal-items-copy">
+  <div class="modal" style="max-width: 720px;">
+    <div class="modal-title">🔄 跨餐厅食材复制</div>
+    <div class="modal-sub">从源餐厅选食材，复制到目标餐厅。同名食材会自动跳过。</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">
+      <div>
+        <label class="field-label">源餐厅</label>
+        <select id="ic-source" onchange="onIcSourceChange()">
+          <option value="">— 选择 —</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">目标餐厅</label>
+        <select id="ic-target" onchange="onIcTargetChange()">
+          <option value="">— 选择 —</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="ic-controls" style="display:none;margin-bottom:10px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+        <input id="ic-search" type="text" placeholder="搜索食材名…" oninput="renderIcList()" style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);font-size:14px;">
+        <button class="btn btn-ghost btn-sm" onclick="icSelectAllCopyable()">全选可复制</button>
+        <button class="btn btn-ghost btn-sm" onclick="icClearSelection()">清空</button>
+      </div>
+      <div id="ic-stats" style="font-size:13px;color:var(--text-dim);padding:8px 0;"></div>
+    </div>
+
+    <div id="ic-list" style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface-2);display:none;">
+    </div>
+
+    <div id="ic-empty" style="text-align:center;padding:30px 10px;color:var(--text-dim);">
+      请先选择源餐厅
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-items-copy')">取消</button>
+      <button class="btn btn-gold" id="ic-copy-btn" onclick="doItemsCopy()" disabled>🚀 开始复制</button>
     </div>
   </div>
 </div>
@@ -885,6 +930,261 @@ document.querySelectorAll('.modal-overlay').forEach(ov => {
     if (e.target === ov) ov.classList.remove('show');
   });
 });
+
+// ============================================================
+// 跨餐厅食材复制
+// ============================================================
+let _icSourceItems = [];      // 源餐厅所有食材
+let _icTargetKeys = new Set(); // 目标餐厅已有 (name+italian) key
+let _icSelected = new Set();   // 选中的 item id
+
+function openItemsCopy() {
+  // 重置状态
+  _icSourceItems = [];
+  _icTargetKeys = new Set();
+  _icSelected = new Set();
+  document.getElementById('ic-search').value = '';
+  document.getElementById('ic-controls').style.display = 'none';
+  document.getElementById('ic-list').style.display = 'none';
+  document.getElementById('ic-empty').style.display = 'block';
+  document.getElementById('ic-empty').textContent = '请先选择源餐厅';
+  document.getElementById('ic-copy-btn').disabled = true;
+
+  // 填充餐厅下拉
+  const opts = ['<option value="">— 选择 —</option>'];
+  for (const r of RESTAURANTS) {
+    if (r.status === 'pending') continue;  // 跳过待审核餐厅
+    const tag = r.status === 'suspended' ? '（已暂停）' : '';
+    opts.push(`<option value="${r.id}">${escapeHtml(r.name)} (${r.id})${tag}</option>`);
+  }
+  document.getElementById('ic-source').innerHTML = opts.join('');
+  document.getElementById('ic-target').innerHTML = opts.join('');
+  openModal('modal-items-copy');
+}
+
+async function onIcSourceChange() {
+  const sourceId = document.getElementById('ic-source').value;
+  _icSourceItems = [];
+  _icSelected = new Set();
+  if (!sourceId) {
+    document.getElementById('ic-controls').style.display = 'none';
+    document.getElementById('ic-list').style.display = 'none';
+    document.getElementById('ic-empty').style.display = 'block';
+    document.getElementById('ic-empty').textContent = '请先选择源餐厅';
+    updateIcCopyBtn();
+    return;
+  }
+  // 防止目标餐厅 = 源餐厅
+  const targetSel = document.getElementById('ic-target');
+  if (targetSel.value === sourceId) {
+    targetSel.value = '';
+    _icTargetKeys = new Set();
+  }
+  document.getElementById('ic-empty').style.display = 'block';
+  document.getElementById('ic-empty').textContent = '加载源餐厅食材中…';
+
+  try {
+    const data = await api('/platform/items/list?restaurantId=' + encodeURIComponent(sourceId));
+    _icSourceItems = data.items || [];
+    if (!_icSourceItems.length) {
+      document.getElementById('ic-empty').textContent = '源餐厅没有食材';
+      return;
+    }
+    // 如果目标已选，刷新目标 keys
+    if (document.getElementById('ic-target').value) {
+      await loadIcTargetKeys();
+    }
+    document.getElementById('ic-controls').style.display = 'block';
+    document.getElementById('ic-list').style.display = 'block';
+    document.getElementById('ic-empty').style.display = 'none';
+    renderIcList();
+  } catch (e) {
+    document.getElementById('ic-empty').textContent = '加载失败：' + e.message;
+  }
+}
+
+async function onIcTargetChange() {
+  const targetId = document.getElementById('ic-target').value;
+  const sourceId = document.getElementById('ic-source').value;
+  if (targetId && targetId === sourceId) {
+    toast('源餐厅和目标餐厅不能相同', 'err');
+    document.getElementById('ic-target').value = '';
+    _icTargetKeys = new Set();
+    renderIcList();
+    return;
+  }
+  if (!targetId) {
+    _icTargetKeys = new Set();
+    renderIcList();
+    return;
+  }
+  await loadIcTargetKeys();
+  renderIcList();
+}
+
+async function loadIcTargetKeys() {
+  const targetId = document.getElementById('ic-target').value;
+  if (!targetId) {
+    _icTargetKeys = new Set();
+    return;
+  }
+  try {
+    const data = await api('/platform/items/list?restaurantId=' + encodeURIComponent(targetId));
+    _icTargetKeys = new Set(
+      (data.items || []).map(i =>
+        (i.name || '').toLowerCase().trim() + '|' + (i.italian || '').toLowerCase().trim()
+      )
+    );
+  } catch (e) {
+    _icTargetKeys = new Set();
+    toast('加载目标食材失败：' + e.message, 'err');
+  }
+}
+
+function renderIcList() {
+  const q = (document.getElementById('ic-search').value || '').toLowerCase().trim();
+  const targetSelected = !!document.getElementById('ic-target').value;
+  const listEl = document.getElementById('ic-list');
+
+  const filtered = _icSourceItems.filter(it => {
+    if (!q) return true;
+    const name = (it.name || '').toLowerCase();
+    const italian = (it.italian || '').toLowerCase();
+    const cat = (it.category || '').toLowerCase();
+    return name.includes(q) || italian.includes(q) || cat.includes(q);
+  });
+
+  const html = [];
+  let copyableCount = 0;
+  let duplicateCount = 0;
+
+  for (const it of filtered) {
+    const key = (it.name || '').toLowerCase().trim() + '|' + (it.italian || '').toLowerCase().trim();
+    const isDup = targetSelected && _icTargetKeys.has(key);
+    if (isDup) duplicateCount++;
+    else copyableCount++;
+
+    const checked = _icSelected.has(it.id);
+    const disabled = isDup ? 'disabled' : '';
+    const bg = isDup ? 'background:rgba(240,96,110,0.05);' : '';
+    const name = escapeHtml(it.name || '');
+    const italian = escapeHtml(it.italian || '');
+    const cat = escapeHtml(it.category || '');
+    const chef = escapeHtml(it.chef || '');
+    const dupTag = isDup ? '<span style="color:var(--red);font-size:11px;margin-left:6px;">⚠ 已存在</span>' : '';
+
+    html.push(`
+      <label style="display:flex;align-items:flex-start;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);cursor:${isDup ? 'not-allowed' : 'pointer'};${bg}">
+        <input type="checkbox" ${checked ? 'checked' : ''} ${disabled} onchange="toggleIcItem(${it.id})" style="margin-top:2px;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:500;font-size:14px;">${name}${italian ? ' <span style="color:var(--text-dim);font-weight:400;">/ ' + italian + '</span>' : ''}${dupTag}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">
+            ${cat ? '📁 ' + cat : ''}${chef ? ' · 👤 ' + chef : ''}${it.item_code ? ' · #' + escapeHtml(it.item_code) : ''}
+          </div>
+        </div>
+      </label>
+    `);
+  }
+
+  listEl.innerHTML = html.join('') || '<div style="text-align:center;padding:20px;color:var(--text-dim);">没有匹配的食材</div>';
+
+  // 统计条
+  const stats = document.getElementById('ic-stats');
+  if (!targetSelected) {
+    stats.innerHTML = `共 <strong>${filtered.length}</strong> 条 · 请选择目标餐厅后查看冲突`;
+  } else {
+    stats.innerHTML = `共 <strong>${filtered.length}</strong> 条 · 可复制 <strong style="color:var(--green);">${copyableCount}</strong> · 同名跳过 <strong style="color:var(--red);">${duplicateCount}</strong> · 已选 <strong style="color:var(--gold);">${_icSelected.size}</strong>`;
+  }
+
+  updateIcCopyBtn();
+}
+
+function toggleIcItem(id) {
+  if (_icSelected.has(id)) _icSelected.delete(id);
+  else _icSelected.add(id);
+  updateIcCopyBtn();
+  // 不需要 renderIcList，只更新统计
+  const stats = document.getElementById('ic-stats');
+  if (stats) {
+    const html = stats.innerHTML.replace(/已选 <strong[^>]*>\d+<\/strong>/, '已选 <strong style="color:var(--gold);">' + _icSelected.size + '</strong>');
+    stats.innerHTML = html;
+  }
+}
+
+function icSelectAllCopyable() {
+  const targetSelected = !!document.getElementById('ic-target').value;
+  const q = (document.getElementById('ic-search').value || '').toLowerCase().trim();
+  for (const it of _icSourceItems) {
+    if (q) {
+      const name = (it.name || '').toLowerCase();
+      const italian = (it.italian || '').toLowerCase();
+      const cat = (it.category || '').toLowerCase();
+      if (!name.includes(q) && !italian.includes(q) && !cat.includes(q)) continue;
+    }
+    const key = (it.name || '').toLowerCase().trim() + '|' + (it.italian || '').toLowerCase().trim();
+    if (targetSelected && _icTargetKeys.has(key)) continue;
+    _icSelected.add(it.id);
+  }
+  renderIcList();
+}
+
+function icClearSelection() {
+  _icSelected = new Set();
+  renderIcList();
+}
+
+function updateIcCopyBtn() {
+  const btn = document.getElementById('ic-copy-btn');
+  const sourceId = document.getElementById('ic-source').value;
+  const targetId = document.getElementById('ic-target').value;
+  const n = _icSelected.size;
+  if (!sourceId || !targetId || sourceId === targetId || n === 0) {
+    btn.disabled = true;
+    btn.textContent = '🚀 开始复制';
+  } else {
+    btn.disabled = false;
+    btn.textContent = `🚀 复制 ${n} 个食材`;
+  }
+}
+
+async function doItemsCopy() {
+  const sourceId = document.getElementById('ic-source').value;
+  const targetId = document.getElementById('ic-target').value;
+  if (!sourceId || !targetId) { toast('请选择源餐厅和目标餐厅', 'err'); return; }
+  if (sourceId === targetId) { toast('源餐厅和目标餐厅不能相同', 'err'); return; }
+  const ids = Array.from(_icSelected);
+  if (!ids.length) { toast('请勾选要复制的食材', 'err'); return; }
+
+  const sourceName = (RESTAURANTS.find(r => r.id === sourceId) || {}).name || sourceId;
+  const targetName = (RESTAURANTS.find(r => r.id === targetId) || {}).name || targetId;
+
+  if (!confirm(`确认从「${sourceName}」复制 ${ids.length} 个食材到「${targetName}」？\n\n• 同名食材会自动跳过\n• 货号冲突会清空（避免破坏目标餐厅）\n• 库存/员工分配等字段完整复制`)) return;
+
+  const btn = document.getElementById('ic-copy-btn');
+  btn.disabled = true;
+  btn.textContent = '复制中...';
+
+  try {
+    const data = await api('/platform/items/copy', {
+      method: 'POST',
+      body: JSON.stringify({ sourceId, targetId, itemIds: ids }),
+    });
+    let msg = `✅ 复制完成 · 成功 ${data.copied || 0}`;
+    if (data.skipped) msg += ` · 跳过 ${data.skipped}`;
+    toast(msg, 'ok');
+    closeModal('modal-items-copy');
+  } catch (e) {
+    toast('复制失败：' + e.message, 'err');
+    btn.disabled = false;
+    updateIcCopyBtn();
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 </script>
 </body>
 </html>
