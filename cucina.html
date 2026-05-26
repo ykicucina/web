@@ -623,9 +623,19 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 </div>
 <script>
 (function() {
+  var LAST_RID_KEY = 'yki_last_rid';
   var params = new URLSearchParams(location.search);
   var r = (params.get('r') || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
   if (!r) {
+    // 没 ?r= 参数:先看 localStorage 有没有上次的代号
+    var lastRid = '';
+    try { lastRid = (localStorage.getItem(LAST_RID_KEY) || '').toLowerCase().replace(/[^a-z0-9_]/g, ''); } catch(e) {}
+    if (lastRid) {
+      // 有上次的代号 → 直接跳转,不显示 picker
+      location.replace('/cucina.html?r=' + encodeURIComponent(lastRid));
+      return;
+    }
+    // 真的没记忆 → 显示 picker
     document.documentElement.style.background = 'linear-gradient(135deg,#faf6ed 0%,#f0e8d4 100%)';
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('rid-picker').style.display = '';
@@ -636,6 +646,9 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
       });
     });
+  } else {
+    // 有 ?r= 参数 → 顺便存到 localStorage,下次没参数也能记得
+    try { localStorage.setItem(LAST_RID_KEY, r); } catch(e) {}
   }
 })();
 function ridPickerGo() {
@@ -646,6 +659,7 @@ function ridPickerGo() {
     err.style.display = '';
     return;
   }
+  try { localStorage.setItem('yki_last_rid', v); } catch(e) {}
   location.href = '/cucina.html?r=' + encodeURIComponent(v);
 }
 </script>
@@ -1708,7 +1722,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.48';
+const APP_VERSION = 'v2.7.49';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
