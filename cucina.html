@@ -1111,7 +1111,7 @@ function ridPickerGo() {
         <div class="menu-item-text"><div class="title" id="lbl-approve">审批订单</div><div class="sub" id="pending-badge-text">查看待处理订单</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
-      <div class="menu-item" onclick="showChangeAdminPass()">
+      <div class="menu-item" id="menu-change-admin-pass-top" onclick="showChangeAdminPass()">
         <div class="menu-item-icon" style="background:#FFF0F0">🔐</div>
         <div class="menu-item-text"><div class="title">修改管理员密码</div><div class="sub">更改管理后台登录密码</div></div>
         <span class="menu-item-arrow">›</span>
@@ -1140,9 +1140,14 @@ function ridPickerGo() {
 
     <div class="menu-section">
       <div class="menu-section-title" id="lbl-system">系统</div>
-      <div class="menu-item" onclick="showChangePass()">
+      <div class="menu-item" id="menu-change-pass" onclick="showChangePass()">
         <div class="menu-item-icon" style="background:#F0F4FF">🔑</div>
         <div class="menu-item-text"><div class="title" id="lbl-change-pass">修改密码</div><div class="sub" id="lbl-change-pass-sub">更改登录密码</div></div>
+        <span class="menu-item-arrow">›</span>
+      </div>
+      <div class="menu-item" id="menu-change-admin-pass-bottom" onclick="showChangeAdminPass()" style="display:none;">
+        <div class="menu-item-icon" style="background:#FFF0F0">🔐</div>
+        <div class="menu-item-text"><div class="title">修改管理员密码</div><div class="sub">更改管理后台登录密码</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
       <div class="menu-item" onclick="doLogout()" style="color:var(--danger)">
@@ -1703,7 +1708,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.46';
+const APP_VERSION = 'v2.7.47';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -9823,6 +9828,13 @@ function showSideMenu() {
   const roleEl = document.getElementById('side-user-role');
   if (nameEl) nameEl.textContent = currentUser || '';
   if (roleEl) roleEl.textContent = isAdmin ? '管理员' : '员工';
+  // 管理员视图:把"修改管理员密码"放到底部"系统"组(代替"修改密码");员工视图反之
+  const topAdminPass = document.getElementById('menu-change-admin-pass-top');
+  const bottomAdminPass = document.getElementById('menu-change-admin-pass-bottom');
+  const myPass = document.getElementById('menu-change-pass');
+  if (topAdminPass) topAdminPass.style.display = isAdmin ? 'none' : '';
+  if (bottomAdminPass) bottomAdminPass.style.display = isAdmin ? '' : 'none';
+  if (myPass) myPass.style.display = isAdmin ? 'none' : '';
   // 订货页面显示排序
   if (sortSection) sortSection.style.display = currentTab === 'order' ? 'block' : 'none';
   // 同步排序选择
