@@ -268,6 +268,17 @@ function chooseKind(kind) {
   window.scrollTo(0, 0);
 }
 
+// URL 带 ?kind=supplier 直接跳供应商表单
+(function() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const kind = params.get('kind');
+    if (kind === 'supplier' || kind === 'restaurant') {
+      chooseKind(kind);
+    }
+  } catch (e) {}
+})();
+
 function backToChoose() {
   document.getElementById('form-card').style.display = 'none';
   document.getElementById('supplier-form-card').style.display = 'none';
