@@ -297,6 +297,7 @@
       <button class="btn btn-ghost btn-sm" onclick="openNotify()">📢 发通知</button>
       <button class="btn btn-ghost btn-sm" onclick="openItemsCopy()">🔄 食材复制</button>
       <button class="btn btn-ghost btn-sm" onclick="openSuppliers()">👥 供应商</button>
+      <button class="btn btn-ghost btn-sm" onclick="doBackup()">💾 备份</button>
       <button class="btn btn-gold btn-sm" onclick="openCreate()">+ 新增餐厅</button>
       <button class="btn btn-ghost btn-sm" onclick="location.reload()">退出</button>
     </div>
@@ -560,7 +561,7 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
-const ADMIN_VERSION = 'v1.2.0';   // 2026-05-26: 供应商管理 + 一键审批 + modal 滚动
+const ADMIN_VERSION = 'v1.3.0';   // 2026-05-26: 一键备份 + 供应商管理 + 审批
 // 立即把版本号显示到登录界面
 (function() {
   const el = document.getElementById('login-version');
@@ -1584,6 +1585,39 @@ async function deleteSupUser(id, username) {
     await refreshSupUsers();
   } catch (e) {
     toast('删除失败:' + e.message, 'err');
+  }
+}
+
+// ============================================================
+// 一键备份 - 下载所有关键表数据为 JSON 文件
+// ============================================================
+async function doBackup() {
+  if (!confirm('备份所有数据为 JSON 文件下载到本地?\n\n说明:\n- 包含所有餐厅/供应商/订单/食材等数据\n- 不含数据库表结构(免费版限制)\n- 文件大小取决于数据量,可能几 MB')) return;
+
+  toast('正在备份,可能要 10-30 秒...');
+
+  try {
+    const res = await fetch(WORKER_URL + '/platform/backup', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || ('HTTP ' + res.status));
+    }
+    // 直接下载文件
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.href = url;
+    a.download = `yki-backup-${ts}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✓ 备份已下载到您的电脑', 'ok');
+  } catch (e) {
+    toast('备份失败:' + e.message, 'err');
   }
 }
 
