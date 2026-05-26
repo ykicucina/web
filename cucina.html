@@ -595,6 +595,61 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 </head>
 <body>
 
+<!-- ══════════════════════════════════
+     餐厅代号输入页(URL 无 ?r= 时显示)
+══════════════════════════════════ -->
+<div id="rid-picker" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#faf6ed 0%,#f0e8d4 100%);padding:20px;overflow-y:auto;">
+  <div style="max-width:420px;margin:60px auto 0;background:#fff;border-radius:16px;padding:28px 24px;box-shadow:0 4px 24px rgba(180,150,100,0.12);">
+    <div style="text-align:center;margin-bottom:22px;">
+      <img src="/logo.png" alt="YKI" style="height:60px;margin-bottom:8px;">
+      <div style="color:#8a7858;font-size:13px;letter-spacing:2px;">SUPPLY HUB</div>
+    </div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:6px;color:#2c2418;">请输入餐厅代号</div>
+    <div style="font-size:13px;color:#8a7858;margin-bottom:18px;">您的餐厅在注册时设置的短代号</div>
+    <input id="rid-picker-input" type="text" placeholder="例如: carpi"
+      autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30"
+      style="width:100%;padding:12px 14px;font-size:16px;border:1.5px solid #e8dec5;border-radius:10px;background:#fafaf6;color:#2c2418;font-family:inherit;-webkit-appearance:none;">
+    <div id="rid-picker-err" style="display:none;color:#d05050;font-size:13px;margin-top:8px;"></div>
+    <button onclick="ridPickerGo()" style="width:100%;padding:14px;font-size:16px;font-weight:600;background:linear-gradient(135deg,#c9a961 0%,#b3924c 100%);color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:16px;font-family:inherit;letter-spacing:0.5px;">
+      进入登录
+    </button>
+    <div style="text-align:center;margin-top:18px;font-size:13px;color:#8a7858;">
+      还没有账号? <a href="/register.html" style="color:#c9a961;text-decoration:none;font-weight:500;">立即注册</a>
+    </div>
+    <div style="text-align:center;margin-top:10px;font-size:12px;color:#a89878;">
+      <a href="/" style="color:#a89878;text-decoration:none;">← 返回首页</a>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var params = new URLSearchParams(location.search);
+  var r = (params.get('r') || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!r) {
+    document.documentElement.style.background = 'linear-gradient(135deg,#faf6ed 0%,#f0e8d4 100%)';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('rid-picker').style.display = '';
+      var inp = document.getElementById('rid-picker-input');
+      inp.focus();
+      inp.addEventListener('keypress', function(e) { if (e.key === 'Enter') ridPickerGo(); });
+      inp.addEventListener('input', function(e) {
+        e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      });
+    });
+  }
+})();
+function ridPickerGo() {
+  var v = document.getElementById('rid-picker-input').value.trim();
+  var err = document.getElementById('rid-picker-err');
+  if (!v || v.length < 2) {
+    err.textContent = '请输入餐厅代号(至少 2 位)';
+    err.style.display = '';
+    return;
+  }
+  location.href = '/cucina.html?r=' + encodeURIComponent(v);
+}
+</script>
+
 <!-- ═══════════════════════
      试用期到期提醒横幅
 ═══════════════════════ -->
@@ -1648,7 +1703,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.43';
+const APP_VERSION = 'v2.7.44';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1904,9 +1959,9 @@ const debouncedFilterOrderFromInput = debounce(() => {
   filterOrderList(el ? el.value : '');
 }, 200);
 
-// ── 从URL参数读取餐厅ID，默认carpi ──
+// ── 从URL参数读取餐厅ID(没传时 picker 已经拦截了) ──
 const _urlParams = new URLSearchParams(window.location.search);
-let REST_ID = (_urlParams.get('r') || 'carpi').toLowerCase().replace(/[^a-z0-9_]/g,'');
+let REST_ID = (_urlParams.get('r') || '').toLowerCase().replace(/[^a-z0-9_]/g,'');
 
 // 餐厅信息（从数据库加载）
 let restaurantInfo = {id: REST_ID, name: '', status: 'active'};
