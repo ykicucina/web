@@ -223,6 +223,8 @@
     padding: 24px;
     width: 100%;
     max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
   .modal-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px; }
@@ -267,6 +269,7 @@
   <div class="login-card">
     <div class="brand">YKI</div>
     <div class="brand-sub">PLATFORM CONSOLE · 平台管理后台</div>
+    <div id="login-version" style="text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:18px;"></div>
     <label class="field-label">平台超级密码</label>
     <div style="position:relative;">
       <input type="password" id="pw" placeholder="输入平台密码" autocomplete="off"
@@ -557,7 +560,12 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
-const ADMIN_VERSION = 'v1.1.0';   // 2026-05-26: 加供应商管理(+ items 复制 + 协助登录)
+const ADMIN_VERSION = 'v1.1.1';   // 2026-05-26: 加供应商管理 + modal 超长可滚动
+// 立即把版本号显示到登录界面
+(function() {
+  const el = document.getElementById('login-version');
+  if (el) el.textContent = ADMIN_VERSION;
+})();
 let TOKEN = '';
 let RESTAURANTS = [];
 
