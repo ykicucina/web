@@ -1633,7 +1633,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.38';
+const APP_VERSION = 'v2.7.39';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2115,6 +2115,13 @@ const i18n = {
     received_ok: '✅ 收货确认，库存已更新',
     order_recalled: '✅ 订单已撤回，请到订货系统重新修改',
     order_sent_wait: '✅ 订单已标记为已发送，等待收货确认',
+    // v2.7.39 供应商发送状态
+    oss_unsent: '未发送',
+    oss_sent: '已发送',
+    oss_confirm_sent: '已发送给 {sup} 了吗？',
+    oss_marked_sent: '✓ 已标记为已发送',
+    oss_unmark: '撤销标记',
+    oss_progress: '已发送 {n}/{total} 供应商',
     order_confirmed: '✅ 订单已确认',
     settings_saved_reload: '✅ 设置已保存，重新加载页面...',
     modify_fail_x: '❌ 修改失败',
@@ -2340,6 +2347,13 @@ const i18n = {
     received_ok: '✅ Ricevuta confermata, magazzino aggiornato',
     order_recalled: '✅ Ordine annullato, modifica nel sistema ordini',
     order_sent_wait: '✅ Ordine inviato, in attesa di ricezione',
+    // v2.7.39 stato invio fornitori
+    oss_unsent: 'Non inviato',
+    oss_sent: 'Inviato',
+    oss_confirm_sent: 'Hai inviato a {sup}?',
+    oss_marked_sent: '✓ Segnato come inviato',
+    oss_unmark: 'Annulla',
+    oss_progress: 'Inviati {n}/{total} fornitori',
     order_confirmed: '✅ Ordine confermato',
     settings_saved_reload: '✅ Impostazioni salvate, ricarico la pagina...',
     modify_fail_x: '❌ Modifica fallita',
@@ -2572,6 +2586,13 @@ const i18n = {
     received_ok: '✅ গ্রহণ নিশ্চিত, স্টক আপডেট',
     order_recalled: '✅ অর্ডার ফেরত, অর্ডার সিস্টেমে পুনরায় সম্পাদনা করুন',
     order_sent_wait: '✅ অর্ডার পাঠানো হয়েছে, গ্রহণের অপেক্ষায়',
+    // v2.7.39 সরবরাহকারীকে পাঠানোর অবস্থা
+    oss_unsent: 'পাঠানো হয়নি',
+    oss_sent: 'পাঠানো হয়েছে',
+    oss_confirm_sent: '{sup}-কে পাঠিয়েছেন?',
+    oss_marked_sent: '✓ পাঠানো হিসেবে চিহ্নিত',
+    oss_unmark: 'বাতিল',
+    oss_progress: '{n}/{total} সরবরাহকারীকে পাঠানো হয়েছে',
     order_confirmed: '✅ অর্ডার নিশ্চিত',
     settings_saved_reload: '✅ সেটিংস সংরক্ষিত, পেজ পুনরায় লোড হচ্ছে...',
     modify_fail_x: '❌ পরিবর্তন ব্যর্থ',
@@ -5983,9 +6004,11 @@ async function mergeSendOrders() {
 
   const merged = {};
   const mergedNotes = {};  // {supName: Set<"chef: note">} - 备注按供应商分组
+  const mergedPairs = {};  // v2.7.39: {supName_lower: [{orderId, supplier_original_case}]} - 用于精确标记 supplier_status
   selected.forEach(order=>{
     (order.items||[]).forEach(item=>{
       const sup = item.supplier||'未知';
+      const supKey = sup.toLowerCase().trim();  // 用于聚合的 key(和卡片显示的合并一致)
       const itemInfo = items.find(i=>i.item_code===item.item_code||i.name===item.name||i.italian===item.name);
       const cycle = itemInfo ? (itemInfo.cycle||[]) : [];
       if (!ignoreCycle && cycle.length > 0 && !cycle.includes(targetDay)) return;
@@ -6004,12 +6027,46 @@ async function mergeSendOrders() {
         if (!mergedNotes[sup]) mergedNotes[sup] = new Set();
         mergedNotes[sup].add(`${order.chef||''}: ${order.note.trim()}`);
       }
+      // v2.7.39: 记录这张卡片涉及的所有 (order_id, supplier 原值) 对(用于标 supplier_status)
+      if (!mergedPairs[sup]) mergedPairs[sup] = [];
+      const pairKey = order.id + '|' + sup;
+      if (!mergedPairs[sup].some(p => (p.orderId + '|' + p.supplier) === pairKey)) {
+        mergedPairs[sup].push({ orderId: order.id, supplier: sup });
+      }
     });
   });
 
   if (!Object.keys(merged).length) {
     toast(`${targetDay}没有可发送的物料`, 'err');
     return;
+  }
+
+  // v2.7.39: 批量拉取本次涉及订单的 supplier_status,用于渲染状态徽章
+  // 失败不致命:就当全部是 pending
+  const involvedOrderIds = [...new Set(selected.map(o => o.id))];
+  let statusMap = {};  // {order_id + '|' + supplier_lower: {status, sent_at, sent_by}}
+  try {
+    const r = await fetch(SB_URL + '/order-supplier-status/list-by-orders?orderIds=' + involvedOrderIds.join(','), {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY },
+      cache: 'no-store',
+    });
+    if (r.ok) {
+      const d = await r.json();
+      for (const item of (d.items || [])) {
+        const key = item.order_id + '|' + (item.supplier || '').toLowerCase().trim();
+        statusMap[key] = { status: item.status, sent_at: item.sent_at, sent_by: item.sent_by };
+      }
+    }
+  } catch(e) { console.warn('[oss] load failed:', e); }
+
+  // 计算每张卡片的聚合状态:全部 sent → 'sent';否则 'pending'
+  const cardStatus = {};  // {supName: 'sent' | 'pending'}
+  for (const [supName, pairs] of Object.entries(mergedPairs)) {
+    const allSent = pairs.every(p => {
+      const k = p.orderId + '|' + p.supplier.toLowerCase().trim();
+      return statusMap[k] && statusMap[k].status === 'sent';
+    });
+    cardStatus[supName] = allSent && pairs.length > 0 ? 'sent' : 'pending';
   }
 
   // 显示每个供应商的发送按钮
@@ -6044,13 +6101,44 @@ async function mergeSendOrders() {
     }))));
     const notesJson = escapeHtml(JSON.stringify(notesArr));
 
+    // v2.7.39: 该卡片的发送状态 + 它涉及的 (orderId, supplier) pairs
+    const oss = cardStatus[supName] || 'pending';
+    const pairsForCard = mergedPairs[supName] || [];
+    const pairsJson = escapeHtml(JSON.stringify(pairsForCard));
+    const isSent = (oss === 'sent');
+    // 已发送时:取最近一次 sent_at / sent_by 用于显示
+    let sentInfoHtml = '';
+    if (isSent && pairsForCard.length) {
+      let latest = null;
+      for (const p of pairsForCard) {
+        const k = p.orderId + '|' + p.supplier.toLowerCase().trim();
+        const s = statusMap[k];
+        if (s && s.sent_at) {
+          if (!latest || s.sent_at > latest.sent_at) latest = s;
+        }
+      }
+      if (latest) {
+        const dt = new Date(latest.sent_at);
+        const tStr = isNaN(dt) ? '' : (' @ ' + dt.toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
+        const byStr = latest.sent_by ? (' by ' + escapeHtml(latest.sent_by)) : '';
+        sentInfoHtml = `<span style="font-size:11px;color:#16a34a;margin-left:8px;">${byStr}${tStr}</span>`;
+      }
+    }
+    const badge = isSent
+      ? `<span style="font-size:11px;color:#fff;background:#16a34a;padding:2px 8px;border-radius:6px;margin-left:8px;font-weight:600;">✓ ${t('oss_sent')}</span>`
+      : `<span style="font-size:11px;color:var(--text3);background:#f3f4f6;padding:2px 8px;border-radius:6px;margin-left:8px;">${t('oss_unsent')}</span>`;
+    const cardBg = isSent ? 'background:#f0fdf4;border-color:#86efac;' : '';
+    // 可撤销:仅 admin/buyer/supervisor
+    const canUnmark = isAdmin || currentUserRole==='admin' || currentUserRole==='buyer' || currentUserRole==='supervisor';
+
     html += `
-    <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div data-oss-card="${escapeAttr(supName)}" style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;${cardBg}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px;">
         <div>
           <span style="font-weight:600;font-size:14px;">📦 ${supName.toUpperCase()}</span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px;">${supItems.length}种食材</span>
           <span style="font-size:11px;color:var(--text3);margin-left:8px;background:#f5ecd0;padding:2px 8px;border-radius:6px;">📤 ${getWaLangFor(supName)==="zh"?"中文":"IT"}</span>
+          ${badge}${sentInfoHtml}
         </div>
       </div>
       <div id="wa-preview-${supSafeId}" data-items="${itemsJson}"
@@ -6063,18 +6151,33 @@ async function mergeSendOrders() {
         return `<div style="background:#fff8e1;color:#e65100;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;line-height:1.5;border-left:3px solid #ffa726;">${list}</div>`;
       })()}
       ${hasWa
-        ? `<a id="wa-link-${supSafeId}" href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
-            data-date-str="${escapeAttr(today)}"
-            data-wa-num="${escapeAttr(waNum)}"
-            data-items="${itemsJson}"
-            data-notes="${notesJson}"
-            style="display:block;width:100%;background:#25D366;color:#fff;border:none;border-radius:10px;
-            padding:12px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box;">
-            📲 发送给 ${supName.toUpperCase()}
-          </a>`
+        ? (isSent
+            ? `${canUnmark ? `<button onclick="ossUnmarkCard(this)" data-pairs="${pairsJson}" data-sup="${escapeAttr(supName)}"
+                style="display:block;width:100%;background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;
+                padding:10px;font-size:13px;cursor:pointer;box-sizing:border-box;">↩ ${t('oss_unmark')}</button>` : ''}`
+            : `<a id="wa-link-${supSafeId}" href="https://wa.me/${waNum}?text=${encoded}" target="_blank"
+                data-date-str="${escapeAttr(today)}"
+                data-wa-num="${escapeAttr(waNum)}"
+                data-items="${itemsJson}"
+                data-notes="${notesJson}"
+                data-pairs="${pairsJson}"
+                data-sup="${escapeAttr(supName)}"
+                onclick="ossOnSendClick(event, this)"
+                style="display:block;width:100%;background:#25D366;color:#fff;border:none;border-radius:10px;
+                padding:12px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box;">
+                📲 发送给 ${supName.toUpperCase()}
+              </a>`)
         : `<div style="text-align:center;font-size:12px;color:var(--danger);padding:8px;">⚠️ 未设置WA号码，无法发送</div>`}
     </div>`;
   }
+
+  // v2.7.39: 进度条
+  const sentCount = Object.values(cardStatus).filter(s => s === 'sent').length;
+  const totalCount = Object.keys(cardStatus).length;
+  const progressText = t('oss_progress').replace('{n}', sentCount).replace('{total}', totalCount);
+  html = `<div style="font-size:12px;color:${sentCount===totalCount && totalCount>0 ? '#16a34a' : 'var(--text3)'};margin-bottom:10px;font-weight:600;text-align:center;padding:6px;background:#f9fafb;border-radius:6px;">
+    ${progressText}
+  </div>` + html;
 
   // 确认按钮（低调小按钮）
   html += `
@@ -6092,20 +6195,103 @@ async function mergeSendOrders() {
 }
 
 async function confirmMergedOrders() {
-  const ids = window._pendingConfirmOrders || [];
-  for (const id of ids) {
-    try {
-      await sb('cucina_orders?id=eq.'+id, {method:'PATCH', body:JSON.stringify({status:'已发送'})});
-      const local = orders.find(x=>String(x.id)===String(id));
-      if (local) local.status='已发送';
-    } catch(e) {}
-  }
+  // v2.7.39: 状态联动改由 supplier_status 后端驱动,这里不再强制改 orders.status='已发送'
+  // 关闭弹窗 + 刷新本地订单数据(后端 maybeUpdateOrderStatus 可能已联动了一些)
   _selectedOrderIds.clear();
   window._pendingConfirmOrders = [];
   closeModal('modal-submit-confirm');
+  // 重新拉一遍订单(吃后端的最新 status)
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/cucina_orders?restaurant_id=eq.' + REST_ID + '&select=*&order=created_at.desc', {
+      cache: 'no-store',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (r.ok) {
+      const fresh = await r.json();
+      if (Array.isArray(fresh)) orders = fresh;
+    }
+  } catch(e) { /* 失败就用本地数据 */ }
   renderOrders();
   updatePendingBadge();
-  toast(t('order_sent_wait'));
+}
+
+// v2.7.39: "发送给 X" 按钮点击 - 拦截、打开 WhatsApp、然后弹确认框
+async function ossOnSendClick(event, el) {
+  // 不阻止默认行为:让 wa.me 链接正常打开(target=_blank,新 tab/app 切换)
+  // 但用 setTimeout 让浏览器先处理 navigation,等用户切回再弹 confirm
+  const sup = el.dataset.sup || '';
+  let pairs = [];
+  try { pairs = JSON.parse(el.dataset.pairs || '[]'); } catch(e) {}
+  if (!pairs.length) return;  // 没数据就只走默认行为,不弹确认
+
+  // 等用户从 WhatsApp 切回(他们看到 confirm 时一定已经发完了)
+  setTimeout(async () => {
+    const msg = t('oss_confirm_sent').replace('{sup}', sup.toUpperCase());
+    if (!confirm(msg)) return;
+    // 调批量 mark-sent
+    try {
+      const r = await fetch(SB_URL + '/order-supplier-status/mark-sent', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pairs }),
+      });
+      if (!r.ok) {
+        toast(t('save_fail_retry'), 'err');
+        return;
+      }
+      toast(t('oss_marked_sent'));
+      // 同步刷新本地 orders.status(后端可能已联动)
+      const d = await r.json();
+      if (d.order_statuses) {
+        for (const [oid, st] of Object.entries(d.order_statuses)) {
+          if (!st) continue;
+          const local = orders.find(x => String(x.id) === String(oid));
+          if (local) local.status = st;
+        }
+      }
+      // 重新渲染整个弹窗以反映新状态
+      mergeSendOrders();
+    } catch(e) {
+      toast(t('save_fail_retry'), 'err');
+    }
+  }, 500);
+}
+
+// v2.7.39: 撤销某卡片的发送标记
+async function ossUnmarkCard(btn) {
+  let pairs = [];
+  try { pairs = JSON.parse(btn.dataset.pairs || '[]'); } catch(e) {}
+  if (!pairs.length) return;
+  if (!confirm(t('oss_unmark') + ' ?')) return;
+  try {
+    const r = await fetch(SB_URL + '/order-supplier-status/mark-pending', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pairs }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      toast(d.error || t('save_fail_retry'), 'err');
+      return;
+    }
+    const d = await r.json();
+    if (d.order_statuses) {
+      for (const [oid, st] of Object.entries(d.order_statuses)) {
+        if (!st) continue;
+        const local = orders.find(x => String(x.id) === String(oid));
+        if (local) local.status = st;
+      }
+    }
+    mergeSendOrders();
+  } catch(e) {
+    toast(t('save_fail_retry'), 'err');
+  }
 }
 
 
