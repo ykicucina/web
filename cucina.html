@@ -967,6 +967,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <div class="report-tab active" data-r="overview"  onclick="setReportTab(this,'overview')">概览</div>
       <div class="report-tab"        data-r="inventory" onclick="setReportTab(this,'inventory')">库存分析</div>
       <div class="report-tab"        data-r="consume"   onclick="setReportTab(this,'consume')">消耗分析</div>
+      <div class="report-tab"        data-r="supplier"  onclick="setReportTab(this,'supplier')" data-i18n="reportSupplier">供应商</div>
     </div>
 
     <div id="report-overview">
@@ -995,6 +996,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
     <div id="report-inventory" style="display:none"></div>
     <div id="report-consume"   style="display:none"></div>
+    <div id="report-supplier"  style="display:none"></div>
   </div>
 
   <!-- ── TAB: 我的 ── -->
@@ -1631,7 +1633,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.37';
+const APP_VERSION = 'v2.7.38';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2018,6 +2020,22 @@ const i18n = {
     // 报表
     reportTitle:'报表分析', overview:'概览',
     invAnalysis:'库存分析', consumeAnalysis:'消耗分析',
+    reportSupplier:'供应商',
+    // 供应商统计
+    sup_today:'今天', sup_thisWeek:'本周', sup_thisMonth:'本月',
+    sup_lastMonth:'上月', sup_thisQuarter:'本季度', sup_custom:'自定义',
+    sup_apply:'应用', sup_back:'返回',
+    sup_totalAmount:'总金额', sup_suppliers:'供应商数', sup_orders:'订单数',
+    sup_breakdownTitle:'按供应商分布', sup_itemBreakdown:'食材明细',
+    sup_kinds:'种', sup_ordersUnit:'单', sup_qtyUnit:'件',
+    sup_avgUnit:'/件均价',
+    sup_empty:'此时间段内没有订单数据',
+    sup_pickRange:'请选择起止日期', sup_invalidRange:'起始日期不能晚于结束日期',
+    sup_exportExcel:'📥 导出 Excel',
+    sup_supplier:'供应商', sup_orderCount:'订单数',
+    sup_totalQty:'总数量', sup_totalAmountCol:'总金额(€)',
+    sup_code:'货号', sup_nameZh:'中文名', sup_nameIt:'意大利文名',
+    sup_spec:'规格', sup_avgPrice:'均价(€)',
     // 我的
     profileTitle:'我的', role:'角色',
     admin:'管理员 · Admin', staff:'员工',
@@ -2218,6 +2236,22 @@ const i18n = {
     filterSelected:'✓ Solo selezionati', filterUnselected:'⚪ Solo non selezionati',
     exportBtn:'Esporta lista acquisti',
     reportTitle:'Report', overview:'Panoramica',
+    invAnalysis:'Inventario', consumeAnalysis:'Consumo',
+    reportSupplier:'Fornitori',
+    sup_today:'Oggi', sup_thisWeek:'Questa settimana', sup_thisMonth:'Questo mese',
+    sup_lastMonth:'Mese scorso', sup_thisQuarter:'Questo trimestre', sup_custom:'Personalizzato',
+    sup_apply:'Applica', sup_back:'Indietro',
+    sup_totalAmount:'Totale', sup_suppliers:'Fornitori', sup_orders:'Ordini',
+    sup_breakdownTitle:'Per fornitore', sup_itemBreakdown:'Dettaglio articoli',
+    sup_kinds:'tipi', sup_ordersUnit:'ordini', sup_qtyUnit:'pz',
+    sup_avgUnit:'/medio',
+    sup_empty:'Nessun ordine in questo periodo',
+    sup_pickRange:'Seleziona le date', sup_invalidRange:'La data inizio deve essere prima della data fine',
+    sup_exportExcel:'📥 Esporta Excel',
+    sup_supplier:'Fornitore', sup_orderCount:'N. ordini',
+    sup_totalQty:'Quantità totale', sup_totalAmountCol:'Importo totale (€)',
+    sup_code:'Codice', sup_nameZh:'Nome cinese', sup_nameIt:'Nome italiano',
+    sup_spec:'Formato', sup_avgPrice:'Prezzo medio (€)',
     invAnalysis:'Analisi magazzino', consumeAnalysis:'Analisi consumi',
     profileTitle:'Profilo', role:'Ruolo',
     admin:'Amministratore', staff:'Dipendente',
@@ -2427,6 +2461,21 @@ const i18n = {
     exportBtn:'ক্রয় তালিকা রপ্তানি',
     reportTitle:'রিপোর্ট', overview:'সংক্ষিপ্ত',
     invAnalysis:'মজুদ বিশ্লেষণ', consumeAnalysis:'ব্যবহার বিশ্লেষণ',
+    reportSupplier:'সরবরাহকারী',
+    sup_today:'আজ', sup_thisWeek:'এই সপ্তাহ', sup_thisMonth:'এই মাস',
+    sup_lastMonth:'গত মাস', sup_thisQuarter:'এই ত্রৈমাসিক', sup_custom:'কাস্টম',
+    sup_apply:'প্রয়োগ', sup_back:'ফিরে যান',
+    sup_totalAmount:'মোট পরিমাণ', sup_suppliers:'সরবরাহকারী', sup_orders:'অর্ডার',
+    sup_breakdownTitle:'সরবরাহকারী অনুসারে', sup_itemBreakdown:'উপাদান বিশদ',
+    sup_kinds:'প্রকার', sup_ordersUnit:'অর্ডার', sup_qtyUnit:'টি',
+    sup_avgUnit:'/গড়',
+    sup_empty:'এই সময়কালে কোন অর্ডার নেই',
+    sup_pickRange:'তারিখ নির্বাচন করুন', sup_invalidRange:'শুরুর তারিখ শেষ তারিখের পরে হতে পারে না',
+    sup_exportExcel:'📥 Excel রপ্তানি',
+    sup_supplier:'সরবরাহকারী', sup_orderCount:'অর্ডার সংখ্যা',
+    sup_totalQty:'মোট পরিমাণ', sup_totalAmountCol:'মোট পরিমাণ (€)',
+    sup_code:'কোড', sup_nameZh:'চীনা নাম', sup_nameIt:'ইতালীয় নাম',
+    sup_spec:'স্পেক', sup_avgPrice:'গড় দাম (€)',
     profileTitle:'আমার', role:'ভূমিকা',
     admin:'প্রশাসক', staff:'কর্মী',
     roleWarehouse:'গুদামকর্মী', roleStaff:'কর্মী', roleSupervisor:'সুপারভাইজার', roleBuyer:'ক্রয়কর্তা', roleAdmin:'প্রশাসক',
@@ -5096,7 +5145,9 @@ async function submitOrder() {
         await new Promise(r=>setTimeout(r,1500));
         const orderItems = supItems.map(i=>({
           item_code:i.item_code, name:i.name||i.italian,
-          supplier:i.supplier, spec:i.spec, need:i.need
+          italian:i.italian||'',
+          supplier:i.supplier, spec:i.spec, need:i.need,
+          price: typeof i.price === 'number' ? i.price : (parseFloat(i.price)||0)
         }));
         const newOrder = {
           restaurant_id:REST_ID, chef:currentUser,
@@ -6805,11 +6856,432 @@ function setReportTab(el, tab) {
   reportTab = tab;
   document.querySelectorAll('.report-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['overview','inventory','consume'].forEach(r=>{
+  ['overview','inventory','consume','supplier'].forEach(r=>{
     document.getElementById('report-'+r).style.display = r===tab?'block':'none';
   });
   if(tab==='inventory') renderReportInventory();
   if(tab==='consume')   renderReportConsume();
+  if(tab==='supplier')  renderReportSupplier();
+}
+
+// ════════════════════════════════════════════════════════════════
+// 供应商订货统计（v2.7.38）
+// ════════════════════════════════════════════════════════════════
+const _supState = {
+  range: 'thisMonth',       // 'today' | 'thisWeek' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'custom'
+  fromDate: null,
+  toDate: null,
+  view: 'summary',          // 'summary' | 'detail'
+  currentSupplier: null,    // 详情页用
+};
+
+function _supGetRange() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let from, to;
+  switch (_supState.range) {
+    case 'today':
+      from = today;
+      to = new Date(today.getTime() + 86400000 - 1);
+      break;
+    case 'thisWeek': {
+      const d = today.getDay() || 7;  // Mon=1..Sun=7
+      from = new Date(today.getTime() - (d-1) * 86400000);
+      to = new Date(from.getTime() + 7 * 86400000 - 1);
+      break;
+    }
+    case 'thisMonth':
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59);
+      break;
+    case 'lastMonth':
+      from = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      break;
+    case 'thisQuarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      from = new Date(now.getFullYear(), q*3, 1);
+      to = new Date(now.getFullYear(), q*3+3, 0, 23, 59, 59);
+      break;
+    }
+    case 'custom':
+      if (_supState.fromDate && _supState.toDate) {
+        from = new Date(_supState.fromDate);
+        to = new Date(_supState.toDate);
+        to.setHours(23,59,59);
+      } else {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = now;
+      }
+      break;
+    default:
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = now;
+  }
+  return { from, to };
+}
+
+function _supDateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+// 计算 item 的单价：优先快照，回退到 items 表当前价
+function _supItemPrice(orderItem) {
+  if (typeof orderItem.price === 'number' && orderItem.price > 0) return orderItem.price;
+  if (orderItem.price && parseFloat(orderItem.price) > 0) return parseFloat(orderItem.price);
+  // 回退：从 items 表查当前价
+  const found = items.find(it =>
+    (orderItem.item_code && it.item_code === orderItem.item_code) ||
+    (orderItem.name && (it.name === orderItem.name || it.italian === orderItem.name))
+  );
+  return found && found.price ? parseFloat(found.price) || 0 : 0;
+}
+
+// 主入口：渲染供应商统计页（汇总或详情）
+function renderReportSupplier() {
+  if (_supState.view === 'detail' && _supState.currentSupplier) {
+    renderSupplierDetail();
+  } else {
+    renderSupplierSummary();
+  }
+}
+
+// ── 汇总页 ──────────────────────────────────────────────
+function renderSupplierSummary() {
+  const { from, to } = _supGetRange();
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'zh';
+
+  // 筛选：仅已发送 + 已收货
+  const validOrders = orders.filter(o => {
+    if (o.type === 'consume') return false;
+    if (!['已发送','已收货','已收貨'].includes(o.status)) return false;
+    const d = new Date(o.created_at || o.date);
+    return d >= from && d <= to;
+  });
+
+  // 按供应商汇总
+  const bySupplier = {};
+  validOrders.forEach(o => {
+    (o.items||[]).forEach(it => {
+      const sup = it.supplier || '其他';
+      if (!bySupplier[sup]) {
+        bySupplier[sup] = { itemCount: new Set(), qty: 0, amount: 0, orderIds: new Set() };
+      }
+      const price = _supItemPrice(it);
+      const need = parseFloat(it.need) || 0;
+      bySupplier[sup].itemCount.add(it.item_code || it.name);
+      bySupplier[sup].qty += need;
+      bySupplier[sup].amount += price * need;
+      bySupplier[sup].orderIds.add(o.id);
+    });
+  });
+
+  // 排序：按金额降序
+  const supList = Object.entries(bySupplier)
+    .map(([name, s]) => ({
+      name, itemCount: s.itemCount.size, qty: s.qty,
+      amount: s.amount, orderCount: s.orderIds.size
+    }))
+    .sort((a,b) => b.amount - a.amount);
+
+  const totalAmount = supList.reduce((a,b) => a + b.amount, 0);
+  const totalOrders = validOrders.length;
+
+  // 范围标签
+  const rangeLabel = (() => {
+    const m = {
+      today: t('sup_today'), thisWeek: t('sup_thisWeek'),
+      thisMonth: t('sup_thisMonth'), lastMonth: t('sup_lastMonth'),
+      thisQuarter: t('sup_thisQuarter'), custom: t('sup_custom')
+    };
+    return m[_supState.range] || _supState.range;
+  })();
+
+  const fromStr = _supDateStr(from);
+  const toStr = _supDateStr(to);
+
+  let html = '';
+  // 时间选择栏
+  html += `<div class="sup-filter" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">`;
+  ['today','thisWeek','thisMonth','lastMonth','thisQuarter'].forEach(k => {
+    const active = _supState.range === k;
+    html += `<button class="sup-range-btn" data-range="${k}" onclick="setSupRange('${k}')" style="padding:6px 12px;border:1px solid ${active?'var(--primary)':'var(--border)'};background:${active?'var(--primary)':'var(--surface-2)'};color:${active?'#fff':'var(--text)'};border-radius:8px;font-size:13px;cursor:pointer;" data-i18n="sup_${k}">${t('sup_'+k)}</button>`;
+  });
+  html += `<button class="sup-range-btn" data-range="custom" onclick="toggleSupCustom()" style="padding:6px 12px;border:1px solid ${_supState.range==='custom'?'var(--primary)':'var(--border)'};background:${_supState.range==='custom'?'var(--primary)':'var(--surface-2)'};color:${_supState.range==='custom'?'#fff':'var(--text)'};border-radius:8px;font-size:13px;cursor:pointer;" data-i18n="sup_custom">${t('sup_custom')}</button>`;
+  html += `</div>`;
+
+  if (_supState.range === 'custom') {
+    html += `<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+      <input type="date" id="sup-from-date" value="${_supState.fromDate||fromStr}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);color:var(--text);font-size:13px;">
+      <span style="color:var(--text3)">~</span>
+      <input type="date" id="sup-to-date" value="${_supState.toDate||toStr}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);color:var(--text);font-size:13px;">
+      <button onclick="applySupCustomDate()" style="padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;" data-i18n="sup_apply">${t('sup_apply')}</button>
+    </div>`;
+  }
+
+  // 汇总数据
+  html += `<div style="background:var(--surface-2);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">${rangeLabel} · ${fromStr} ~ ${toStr}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);" data-i18n="sup_totalAmount">${t('sup_totalAmount')}</div>
+        <div style="font-size:24px;font-weight:700;color:var(--primary);">€${totalAmount.toFixed(2)}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--text2);">
+        <div><span data-i18n="sup_suppliers">${t('sup_suppliers')}</span>: <strong>${supList.length}</strong></div>
+        <div><span data-i18n="sup_orders">${t('sup_orders')}</span>: <strong>${totalOrders}</strong></div>
+      </div>
+    </div>
+  </div>`;
+
+  // 供应商列表
+  if (!supList.length) {
+    html += `<div style="text-align:center;padding:40px 20px;color:var(--text3);" data-i18n="sup_empty">${t('sup_empty')}</div>`;
+  } else {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:600;" data-i18n="sup_breakdownTitle">${t('sup_breakdownTitle')}</div>
+      <button onclick="exportSupSummary()" style="padding:6px 12px;background:#1f7a3e;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;" data-i18n="sup_exportExcel">${t('sup_exportExcel')}</button>
+    </div>`;
+    supList.forEach(s => {
+      const pct = totalAmount > 0 ? (s.amount / totalAmount * 100).toFixed(1) : '0.0';
+      html += `<div class="sup-row" onclick="showSupplierDetail('${escapeAttr(s.name)}')" style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:600;font-size:15px;">📦 ${escapeHtml(s.name.toUpperCase())}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--primary);">€${s.amount.toFixed(2)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:6px;">
+          <div>${s.itemCount} <span data-i18n="sup_kinds">${t('sup_kinds')}</span> · ${s.orderCount} <span data-i18n="sup_ordersUnit">${t('sup_ordersUnit')}</span> · ${s.qty.toFixed(0)} <span data-i18n="sup_qtyUnit">${t('sup_qtyUnit')}</span></div>
+          <div>${pct}%</div>
+        </div>
+        <div style="background:var(--border);height:3px;border-radius:2px;margin-top:6px;overflow:hidden;">
+          <div style="background:var(--primary);height:100%;width:${pct}%;"></div>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('report-supplier').innerHTML = html;
+}
+
+function setSupRange(range) {
+  _supState.range = range;
+  _supState.view = 'summary';
+  renderReportSupplier();
+}
+
+function toggleSupCustom() {
+  _supState.range = 'custom';
+  if (!_supState.fromDate) {
+    const now = new Date();
+    _supState.fromDate = _supDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+    _supState.toDate = _supDateStr(now);
+  }
+  renderReportSupplier();
+}
+
+function applySupCustomDate() {
+  const f = document.getElementById('sup-from-date').value;
+  const tt = document.getElementById('sup-to-date').value;
+  if (!f || !tt) { toast(t('sup_pickRange'), 'err'); return; }
+  if (new Date(f) > new Date(tt)) { toast(t('sup_invalidRange'), 'err'); return; }
+  _supState.fromDate = f;
+  _supState.toDate = tt;
+  renderReportSupplier();
+}
+
+// ── 详情页：单个供应商明细 ────────────────────────────────
+function showSupplierDetail(supName) {
+  _supState.view = 'detail';
+  _supState.currentSupplier = supName;
+  renderReportSupplier();
+}
+
+function backToSupSummary() {
+  _supState.view = 'summary';
+  _supState.currentSupplier = null;
+  renderReportSupplier();
+}
+
+function renderSupplierDetail() {
+  const supName = _supState.currentSupplier;
+  const { from, to } = _supGetRange();
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'zh';
+
+  const validOrders = orders.filter(o => {
+    if (o.type === 'consume') return false;
+    if (!['已发送','已收货','已收貨'].includes(o.status)) return false;
+    const d = new Date(o.created_at || o.date);
+    return d >= from && d <= to;
+  });
+
+  // 该供应商所有食材聚合
+  const byItem = {};
+  validOrders.forEach(o => {
+    (o.items||[]).forEach(it => {
+      if ((it.supplier || '其他') !== supName) return;
+      const key = it.item_code || it.name;
+      if (!byItem[key]) {
+        byItem[key] = {
+          item_code: it.item_code || '',
+          name: it.name || '',
+          italian: it.italian || '',
+          spec: it.spec || '',
+          qty: 0,
+          amount: 0,
+          orders: 0,
+        };
+      }
+      const price = _supItemPrice(it);
+      const need = parseFloat(it.need) || 0;
+      byItem[key].qty += need;
+      byItem[key].amount += price * need;
+      byItem[key].orders += 1;
+    });
+  });
+
+  const itemList = Object.values(byItem).sort((a,b) => b.amount - a.amount);
+  const total = itemList.reduce((a,b) => a + b.amount, 0);
+  const totalQty = itemList.reduce((a,b) => a + b.qty, 0);
+
+  let html = `<div style="margin-bottom:12px;">
+    <button onclick="backToSupSummary()" style="padding:6px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;color:var(--text);">← <span data-i18n="sup_back">${t('sup_back')}</span></button>
+  </div>`;
+
+  html += `<div style="background:var(--surface-2);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px;">📦 ${escapeHtml(supName.toUpperCase())}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">${_supDateStr(from)} ~ ${_supDateStr(to)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);" data-i18n="sup_totalAmount">${t('sup_totalAmount')}</div>
+        <div style="font-size:22px;font-weight:700;color:var(--primary);">€${total.toFixed(2)}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--text2);">
+        <div>${itemList.length} <span data-i18n="sup_kinds">${t('sup_kinds')}</span></div>
+        <div>${totalQty.toFixed(0)} <span data-i18n="sup_qtyUnit">${t('sup_qtyUnit')}</span></div>
+      </div>
+    </div>
+  </div>`;
+
+  if (!itemList.length) {
+    html += `<div style="text-align:center;padding:40px 20px;color:var(--text3);" data-i18n="sup_empty">${t('sup_empty')}</div>`;
+  } else {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:600;" data-i18n="sup_itemBreakdown">${t('sup_itemBreakdown')}</div>
+      <button onclick="exportSupDetail()" style="padding:6px 12px;background:#1f7a3e;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;" data-i18n="sup_exportExcel">${t('sup_exportExcel')}</button>
+    </div>`;
+
+    itemList.forEach(it => {
+      const displayName = (lang === 'zh') ? (it.name || it.italian) : (it.italian || it.name);
+      const avgPrice = it.qty > 0 ? it.amount / it.qty : 0;
+      html += `<div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:14px;">${escapeHtml(displayName)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">
+              ${it.item_code ? '#'+escapeHtml(it.item_code)+' · ' : ''}${it.spec ? escapeHtml(it.spec)+' · ' : ''}€${avgPrice.toFixed(2)}<span data-i18n="sup_avgUnit">${t('sup_avgUnit')}</span>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px;">
+            <div style="font-size:14px;font-weight:700;color:var(--primary);">€${it.amount.toFixed(2)}</div>
+            <div style="font-size:11px;color:var(--text3);">×${it.qty.toFixed(0)}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('report-supplier').innerHTML = html;
+}
+
+// ── 导出 Excel ────────────────────────────────────────
+function _supBuildXlsxBlob(rows, sheetName) {
+  // 用最小化的方法：导出 .xls 格式（HTML table 形式，Excel 兼容）
+  const head = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:x="urn:schemas-microsoft-com:office:excel"
+    xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8">
+    <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+    <x:ExcelWorksheet><x:Name>${sheetName||'Sheet1'}</x:Name>
+    <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+    </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+    </head><body><table border="1">`;
+  const body = rows.map(r =>
+    '<tr>' + r.map(c => `<td>${String(c==null?'':c).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('') + '</tr>'
+  ).join('');
+  const tail = '</table></body></html>';
+  return new Blob(['\uFEFF', head + body + tail], { type: 'application/vnd.ms-excel' });
+}
+
+function _supDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportSupSummary() {
+  const { from, to } = _supGetRange();
+  const validOrders = orders.filter(o => {
+    if (o.type === 'consume') return false;
+    if (!['已发送','已收货','已收貨'].includes(o.status)) return false;
+    const d = new Date(o.created_at || o.date);
+    return d >= from && d <= to;
+  });
+  const bySupplier = {};
+  validOrders.forEach(o => {
+    (o.items||[]).forEach(it => {
+      const sup = it.supplier || '其他';
+      if (!bySupplier[sup]) bySupplier[sup] = { items:new Set(), qty:0, amount:0, ord:new Set() };
+      const p = _supItemPrice(it);
+      const n = parseFloat(it.need)||0;
+      bySupplier[sup].items.add(it.item_code||it.name);
+      bySupplier[sup].qty += n;
+      bySupplier[sup].amount += p*n;
+      bySupplier[sup].ord.add(o.id);
+    });
+  });
+  const rows = [[t('sup_supplier'), t('sup_orderCount'), t('sup_kinds'), t('sup_totalQty'), t('sup_totalAmountCol')]];
+  Object.entries(bySupplier)
+    .map(([n,s])=>({n, oc:s.ord.size, ic:s.items.size, q:s.qty, a:s.amount}))
+    .sort((a,b)=>b.a-a.a)
+    .forEach(s => rows.push([s.n, s.oc, s.ic, s.q.toFixed(2), s.a.toFixed(2)]));
+  const fn = `YKI_${_supDateStr(from)}_${_supDateStr(to)}.xls`;
+  _supDownload(_supBuildXlsxBlob(rows, 'Suppliers'), fn);
+}
+
+function exportSupDetail() {
+  const supName = _supState.currentSupplier;
+  const { from, to } = _supGetRange();
+  const validOrders = orders.filter(o => {
+    if (o.type === 'consume') return false;
+    if (!['已发送','已收货','已收貨'].includes(o.status)) return false;
+    const d = new Date(o.created_at || o.date);
+    return d >= from && d <= to;
+  });
+  const byItem = {};
+  validOrders.forEach(o => {
+    (o.items||[]).forEach(it => {
+      if ((it.supplier||'其他') !== supName) return;
+      const k = it.item_code || it.name;
+      if (!byItem[k]) byItem[k] = { code:it.item_code||'', name:it.name||'', italian:it.italian||'', spec:it.spec||'', qty:0, amount:0, ord:0 };
+      const p = _supItemPrice(it);
+      const n = parseFloat(it.need)||0;
+      byItem[k].qty += n;
+      byItem[k].amount += p*n;
+      byItem[k].ord += 1;
+    });
+  });
+  const rows = [[t('sup_code'), t('sup_nameZh'), t('sup_nameIt'), t('sup_spec'), t('sup_totalQty'), t('sup_avgPrice'), t('sup_totalAmountCol'), t('sup_orderCount')]];
+  Object.values(byItem).sort((a,b)=>b.amount-a.amount).forEach(it => {
+    const avg = it.qty>0 ? it.amount/it.qty : 0;
+    rows.push([it.code, it.name, it.italian, it.spec, it.qty.toFixed(2), avg.toFixed(2), it.amount.toFixed(2), it.ord]);
+  });
+  const fn = `YKI_${supName}_${_supDateStr(from)}_${_supDateStr(to)}.xls`;
+  _supDownload(_supBuildXlsxBlob(rows, supName), fn);
 }
 
 function renderReport() {
