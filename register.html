@@ -123,7 +123,7 @@
 
     <div class="field">
       <label for="f-pass">管理员密码 <span style="color:#c9a961">*</span></label>
-      <input type="password" id="f-pass" placeholder="至少 4 位" maxlength="50">
+      <input type="password" id="f-pass" placeholder="至少 8 位" maxlength="50">
       <div class="field-hint" id="hint-pass">用于登录管理员后台</div>
     </div>
 
@@ -173,7 +173,7 @@
 
     <div class="field">
       <label for="sup-pass">管理员密码 <span style="color:#c9a961">*</span></label>
-      <input type="password" id="sup-pass" placeholder="至少 4 位" maxlength="50">
+      <input type="password" id="sup-pass" placeholder="至少 8 位" maxlength="50">
       <div class="field-hint" id="sup-hint-pass">&nbsp;</div>
     </div>
 
@@ -299,7 +299,7 @@ async function doRegister() {
   if (!id || id.length < 2) { showError('请填写餐厅代号(至少 2 位)'); return; }
   if (!name) { showError('请填写餐厅名称'); return; }
   if (!contact) { showError('请填写联系方式'); return; }
-  if (!pass || pass.length < 4) { showError('管理员密码至少 4 位'); return; }
+  if (!pass || pass.length < 8) { showError('管理员密码至少 8 位'); return; }
   if (pass !== pass2) { showError('两次密码不一致'); return; }
 
   const btn = document.getElementById('btn-submit');
@@ -347,7 +347,7 @@ async function doSupplierRegister() {
   if (!displayName) { showError('请填写公司完整名称', 'sup-form-err'); return; }
   if (!contact) { showError('请填写联系方式', 'sup-form-err'); return; }
   if (!username) { showError('请填写管理员用户名', 'sup-form-err'); return; }
-  if (!pass || pass.length < 4) { showError('管理员密码至少 4 位', 'sup-form-err'); return; }
+  if (!pass || pass.length < 8) { showError('管理员密码至少 8 位', 'sup-form-err'); return; }
   if (pass !== pass2) { showError('两次密码不一致', 'sup-form-err'); return; }
 
   const btn = document.getElementById('sup-btn-submit');
