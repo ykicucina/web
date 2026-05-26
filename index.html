@@ -85,6 +85,24 @@
   .entry-btn.primary .entry-desc { color: rgba(255,255,255,0.85); }
   .entry-btn.primary .entry-arrow { color: #fff; }
 
+  /* 了解更多 - 次级 CTA(显眼但不抢主按钮) */
+  .learn-more {
+    display: block; text-align: center; margin-top: 22px;
+    color: #b3924c; font-size: 16px; font-weight: 600;
+    text-decoration: none; padding: 10px;
+    transition: color 0.15s;
+  }
+  .learn-more:hover { color: #8a6f3a; text-decoration: underline; }
+
+  /* 底部链接(低调) */
+  .foot {
+    text-align: center; margin-top: 32px;
+    font-size: 12px; color: #a89878;
+  }
+  .foot a { color: #a89878; text-decoration: none; }
+  .foot a:hover { color: #8a7858; text-decoration: underline; }
+  .foot-sep { margin: 0 8px; color: #d8c9a4; }
+
   /* 分隔器 */
   .divider {
     display: flex; align-items: center; gap: 10px; margin: 18px 0 10px;
@@ -93,14 +111,6 @@
   .divider::before, .divider::after {
     content: ''; flex: 1; height: 1px; background: #e8dec5;
   }
-
-  /* 底部链接 */
-  .foot {
-    text-align: center; margin-top: 28px;
-    font-size: 13px; color: #8a7858;
-  }
-  .foot a { color: #c9a961; text-decoration: none; font-weight: 500; margin: 0 8px; }
-  .foot a:hover { text-decoration: underline; }
 
   /* i18n 切换 */
   .lang-zh { display: inline; }
@@ -128,6 +138,22 @@
 
   <div class="entry-list">
 
+    <!-- 主 CTA: 开始使用 -->
+    <a class="entry-btn primary" href="/register.html">
+      <div class="entry-icon">➕</div>
+      <div class="entry-text">
+        <div class="entry-title">
+          <span class="lang-zh">开始使用</span>
+          <span class="lang-it">Inizia ora</span>
+        </div>
+        <div class="entry-desc">
+          <span class="lang-zh">免费注册新餐厅</span>
+          <span class="lang-it">Registra il tuo ristorante — gratis</span>
+        </div>
+      </div>
+      <div class="entry-arrow">›</div>
+    </a>
+
     <!-- 餐厅登录 -->
     <a class="entry-btn" href="/cucina.html">
       <div class="entry-icon">🍽️</div>
@@ -138,44 +164,7 @@
         </div>
         <div class="entry-desc">
           <span class="lang-zh">已注册餐厅,登录订货系统</span>
-          <span class="lang-it">Ristorante registrato — accedi al sistema</span>
-        </div>
-      </div>
-      <div class="entry-arrow">›</div>
-    </a>
-
-    <!-- 供应商登录 -->
-    <a class="entry-btn" href="/supplier.html">
-      <div class="entry-icon">📦</div>
-      <div class="entry-text">
-        <div class="entry-title">
-          <span class="lang-zh">我是供应商</span>
-          <span class="lang-it">Sono un fornitore</span>
-        </div>
-        <div class="entry-desc">
-          <span class="lang-zh">已注册供应商,登录供应商端</span>
-          <span class="lang-it">Fornitore registrato — accedi al portale</span>
-        </div>
-      </div>
-      <div class="entry-arrow">›</div>
-    </a>
-
-    <div class="divider">
-      <span class="lang-zh">还没有账号?</span>
-      <span class="lang-it">Non hai un account?</span>
-    </div>
-
-    <!-- 注册 -->
-    <a class="entry-btn primary" href="/register.html">
-      <div class="entry-icon">➕</div>
-      <div class="entry-text">
-        <div class="entry-title">
-          <span class="lang-zh">立即注册</span>
-          <span class="lang-it">Registrati ora</span>
-        </div>
-        <div class="entry-desc">
-          <span class="lang-zh">餐厅 / 供应商免费注册</span>
-          <span class="lang-it">Ristorante / Fornitore — gratis</span>
+          <span class="lang-it">Ristorante registrato — accedi</span>
         </div>
       </div>
       <div class="entry-arrow">›</div>
@@ -183,12 +172,24 @@
 
   </div>
 
+  <!-- 了解更多(显眼的次级 CTA) -->
+  <a class="learn-more" href="/join.html">
+    <span class="lang-zh">了解 YKI 能为您做什么 ›</span>
+    <span class="lang-it">Scopri cosa può fare YKI per te ›</span>
+  </a>
+
+  <!-- 底部小字:供应商 + 联系(低调) -->
   <div class="foot">
-    <a href="/join.html">
-      <span class="lang-zh">了解更多</span>
-      <span class="lang-it">Scopri di più</span>
+    <a href="/supplier.html">
+      <span class="lang-zh">我是供应商</span>
+      <span class="lang-it">Sono un fornitore</span>
     </a>
-    ·
+    <span class="foot-sep">·</span>
+    <a href="/register.html?kind=supplier">
+      <span class="lang-zh">供应商注册</span>
+      <span class="lang-it">Registra fornitore</span>
+    </a>
+    <span class="foot-sep">·</span>
     <a href="mailto:ykicucina@gmail.com">
       <span class="lang-zh">联系我们</span>
       <span class="lang-it">Contattaci</span>
