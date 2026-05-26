@@ -1633,7 +1633,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.40';
+const APP_VERSION = 'v2.7.41';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -5975,10 +5975,17 @@ async function mergeSendOrders() {
   // v2.7.39: 弹窗"会话快照"——首次进入时记录勾选的订单 id,后续渲染都用这个快照,
   // 这样发完一个供应商后(订单状态变'已发送'),卡片还能留在弹窗里显示"✓ 已发送"
   // 而不是直接消失。关闭弹窗时清除快照(在 confirmMergedOrders 里)。
+  // v2.7.40: 同时缓存周期决策(ignoreCycle / 跳过/取消),避免每次重新渲染都弹周期警告
   if (!window._mergeSendSnapshot || !window._mergeSendSnapshot.size) {
     window._mergeSendSnapshot = new Set(_selectedOrderIds);
+    window._mergeSendCycleDecided = false;  // 周期决策是否已做出
+    window._mergeSendIgnoreCycle = ignoreCycle;
   }
   const snapshotIds = window._mergeSendSnapshot;
+  // 复用上次的周期决策
+  if (window._mergeSendCycleDecided) {
+    ignoreCycle = window._mergeSendIgnoreCycle;
+  }
 
   const selected = orders.filter(o =>
     snapshotIds.has(String(o.id))
@@ -5988,7 +5995,8 @@ async function mergeSendOrders() {
   if (!selected.length) { toast(t('select_pending_first'),'err'); return; }
 
   // 🔍 第一遍扫描：先收集"被周期过滤掉的食材"，让采购员决定怎么处理
-  if (!ignoreCycle) {
+  // v2.7.40: 加 _mergeSendCycleDecided 守卫,同一次弹窗会话只问一次
+  if (!ignoreCycle && !window._mergeSendCycleDecided) {
     const filtered = [];  // [{name, cycle, supplier}]
     selected.forEach(order => {
       (order.items||[]).forEach(item => {
@@ -6009,10 +6017,19 @@ async function mergeSendOrders() {
     // 如果有被过滤掉的，弹警告让采购员决定
     if (filtered.length > 0) {
       const choice = await showCycleWarningModal(targetDay, filtered);
-      if (choice === 'cancel') { toast(t('send_cancelled')); return; }
+      if (choice === 'cancel') {
+        // 取消整个弹窗 + 清快照
+        window._mergeSendSnapshot = null;
+        window._mergeSendCycleDecided = false;
+        toast(t('send_cancelled'));
+        return;
+      }
       if (choice === 'all') ignoreCycle = true;  // "全部发送" → 不过滤
       // 'skip' → 保持 ignoreCycle = false，按原逻辑跳过
     }
+    // v2.7.40: 记录周期决策,本次弹窗会话内不再问
+    window._mergeSendCycleDecided = true;
+    window._mergeSendIgnoreCycle = ignoreCycle;
   }
 
   const merged = {};
@@ -6213,6 +6230,8 @@ async function confirmMergedOrders() {
   _selectedOrderIds.clear();
   window._pendingConfirmOrders = [];
   window._mergeSendSnapshot = null;  // v2.7.39: 清快照
+  window._mergeSendCycleDecided = false;  // v2.7.40: 清周期决策
+  window._mergeSendIgnoreCycle = false;
   closeModal('modal-submit-confirm');
   // 重新拉一遍订单(吃后端的最新 status)
   try {
