@@ -1708,7 +1708,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.47';
+const APP_VERSION = 'v2.7.48';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -7838,6 +7838,13 @@ function renderProfile() {
   document.getElementById('profile-name').textContent = currentUser;
   document.getElementById('profile-role').textContent = isAdmin ? '管理员 · Admin' : '员工';
   updatePendingBadge();
+  // 管理员视图:把"修改管理员密码"放到底部"系统"组(代替"修改密码");员工视图反之
+  const topAdminPass = document.getElementById('menu-change-admin-pass-top');
+  const bottomAdminPass = document.getElementById('menu-change-admin-pass-bottom');
+  const myPass = document.getElementById('menu-change-pass');
+  if (topAdminPass) topAdminPass.style.display = isAdmin ? 'none' : '';
+  if (bottomAdminPass) bottomAdminPass.style.display = isAdmin ? '' : 'none';
+  if (myPass) myPass.style.display = isAdmin ? 'none' : '';
 }
 
 function showChangePwd() {
