@@ -287,7 +287,9 @@
 <!-- ============ 主界面 ============ -->
 <div id="main-screen">
   <header>
-    <div class="header-title">YKI <span class="dot">·</span> 平台管理后台</div>
+    <div class="header-title">YKI <span class="dot">·</span> 平台管理后台
+      <span id="admin-version" style="font-size:11px;color:var(--text-dim);font-weight:normal;margin-left:8px;"></span>
+    </div>
     <div class="header-actions">
       <button class="btn btn-ghost btn-sm" onclick="openNotify()">📢 发通知</button>
       <button class="btn btn-ghost btn-sm" onclick="openItemsCopy()">🔄 食材复制</button>
@@ -555,6 +557,7 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
+const ADMIN_VERSION = 'v1.1.0';   // 2026-05-26: 加供应商管理(+ items 复制 + 协助登录)
 let TOKEN = '';
 let RESTAURANTS = [];
 
@@ -626,6 +629,7 @@ async function doLogin() {
     TOKEN = data.token;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
+    document.getElementById('admin-version').textContent = ADMIN_VERSION;
     await loadRestaurants();
   } catch (e) {
     toast(e.message || '登录失败', 'err');
