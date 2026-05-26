@@ -96,45 +96,8 @@
     <div class="brand-sub">SUPPLY HUB</div>
   </div>
 
-  <!-- ===== 身份选择卡片 ===== -->
-  <div class="card" id="choose-card">
-    <div class="card-title">选择注册类型</div>
-    <div class="card-sub">请选择您的身份</div>
-
-    <button type="button" onclick="chooseKind('restaurant')" style="
-      width:100%;display:flex;align-items:center;gap:14px;
-      background:#fff;border:1.5px solid #e8dec5;border-radius:14px;
-      padding:18px 16px;cursor:pointer;transition:all 0.18s;
-      margin-bottom:12px;font-family:inherit;text-align:left;">
-      <div style="font-size:28px;width:48px;height:48px;background:#faf6ed;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🍽️</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:600;color:#2c2418;margin-bottom:2px;">我是餐厅</div>
-        <div style="font-size:13px;color:#8a7858;">注册新餐厅,管理订货和库存</div>
-      </div>
-      <div style="color:#c9a961;font-size:18px;">›</div>
-    </button>
-
-    <button type="button" onclick="chooseKind('supplier')" style="
-      width:100%;display:flex;align-items:center;gap:14px;
-      background:#fff;border:1.5px solid #e8dec5;border-radius:14px;
-      padding:18px 16px;cursor:pointer;transition:all 0.18s;
-      font-family:inherit;text-align:left;">
-      <div style="font-size:28px;width:48px;height:48px;background:#faf6ed;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📦</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:600;color:#2c2418;margin-bottom:2px;">我是供应商</div>
-        <div style="font-size:13px;color:#8a7858;">注册新供应商,接收餐厅订单</div>
-      </div>
-      <div style="color:#c9a961;font-size:18px;">›</div>
-    </button>
-
-    <div class="foot" style="margin-top:24px;">
-      已有账号? <a href="/">返回首页登录</a>
-    </div>
-  </div>
-
-  <!-- ===== 餐厅注册卡片 ===== -->
-  <div class="card" id="form-card" style="display:none;">
-    <button type="button" onclick="backToChoose()" style="background:transparent;border:none;color:#8a7858;font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;font-family:inherit;">← 返回</button>
+  <!-- ===== 餐厅注册卡片(默认显示) ===== -->
+  <div class="card" id="form-card">
     <div class="card-title">注册新餐厅</div>
     <div class="card-sub">填写以下信息,我们会尽快审核您的申请</div>
 
@@ -177,9 +140,8 @@
     </div>
   </div>
 
-  <!-- ===== 供应商注册卡片 ===== -->
+  <!-- ===== 供应商注册卡片(仅 ?kind=supplier 时显示) ===== -->
   <div class="card" id="supplier-form-card" style="display:none;">
-    <button type="button" onclick="backToChoose()" style="background:transparent;border:none;color:#8a7858;font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;font-family:inherit;">← 返回</button>
     <div class="card-title">注册新供应商</div>
     <div class="card-sub">填写以下信息,我们会尽快审核您的申请</div>
 
@@ -258,33 +220,16 @@
 <script>
 const WORKER_URL = 'https://api.yki.it';
 
-function chooseKind(kind) {
-  document.getElementById('choose-card').style.display = 'none';
-  if (kind === 'restaurant') {
-    document.getElementById('form-card').style.display = '';
-  } else {
-    document.getElementById('supplier-form-card').style.display = '';
-  }
-  window.scrollTo(0, 0);
-}
-
-// URL 带 ?kind=supplier 直接跳供应商表单
+// 默认显示餐厅注册;URL 带 ?kind=supplier 切到供应商表单
 (function() {
   try {
     const params = new URLSearchParams(location.search);
-    const kind = params.get('kind');
-    if (kind === 'supplier' || kind === 'restaurant') {
-      chooseKind(kind);
+    if (params.get('kind') === 'supplier') {
+      document.getElementById('form-card').style.display = 'none';
+      document.getElementById('supplier-form-card').style.display = '';
     }
   } catch (e) {}
 })();
-
-function backToChoose() {
-  document.getElementById('form-card').style.display = 'none';
-  document.getElementById('supplier-form-card').style.display = 'none';
-  document.getElementById('choose-card').style.display = '';
-  window.scrollTo(0, 0);
-}
 
 document.getElementById('f-id').addEventListener('input', e => {
   const v = e.target.value.toLowerCase();
