@@ -1703,7 +1703,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.44';
+const APP_VERSION = 'v2.7.45';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2830,6 +2830,11 @@ function showTrialBanner(expiresAt, restaurantName) {
 }
 
 async function init() {
+  // 没有 ?r= 参数时,picker 页面会显示并要求输入,init 不继续
+  if (!REST_ID) {
+    return;
+  }
+
   // ── 验证餐厅是否存在且有效（走 Worker 公开端点）──
   try {
     const rRes = await fetch(SB_URL+'/restaurant-info?restaurantId='+encodeURIComponent(REST_ID));
