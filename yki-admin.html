@@ -291,6 +291,7 @@
     <div class="header-actions">
       <button class="btn btn-ghost btn-sm" onclick="openNotify()">📢 发通知</button>
       <button class="btn btn-ghost btn-sm" onclick="openItemsCopy()">🔄 食材复制</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSuppliers()">👥 供应商</button>
       <button class="btn btn-gold btn-sm" onclick="openCreate()">+ 新增餐厅</button>
       <button class="btn btn-ghost btn-sm" onclick="location.reload()">退出</button>
     </div>
@@ -440,6 +441,109 @@
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('modal-items-copy')">取消</button>
       <button class="btn btn-gold" id="ic-copy-btn" onclick="doItemsCopy()" disabled>🚀 开始复制</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：供应商管理 ============ -->
+<div class="modal-overlay" id="modal-suppliers">
+  <div class="modal" style="max-width: 820px;">
+    <div class="modal-title" id="sup-modal-title">👥 供应商管理</div>
+    <div class="modal-sub" id="sup-modal-sub">管理供应商公司和他们的登录账号</div>
+
+    <!-- 视图 1: 公司列表 -->
+    <div id="sup-view-list">
+      <div style="display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap;">
+        <input id="sup-search" type="text" placeholder="搜索供应商…" oninput="renderSupList()"
+          style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);font-size:14px;">
+        <button class="btn btn-gold btn-sm" onclick="openSupCreate()">+ 新增供应商</button>
+      </div>
+      <div id="sup-list" style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);"></div>
+    </div>
+
+    <!-- 视图 2: 某公司的账号管理 -->
+    <div id="sup-view-users" style="display:none;">
+      <button class="btn btn-ghost btn-sm" onclick="supBackToList()" style="margin:8px 0;">← 返回供应商列表</button>
+      <div id="sup-users-info" style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"></div>
+      <div style="margin:10px 0;">
+        <button class="btn btn-gold btn-sm" onclick="openSupUserCreate()">+ 新增账号</button>
+      </div>
+      <div id="sup-users-list" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-suppliers')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 子弹窗：新增 / 编辑供应商 ============ -->
+<div class="modal-overlay" id="modal-sup-edit" style="z-index:200;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title" id="sup-edit-title">+ 新增供应商</div>
+    <input type="hidden" id="sup-edit-id">
+
+    <label class="field-label">短名 *
+      <span style="font-weight:normal;color:var(--text-dim);font-size:12px;">(跟食材里的 supplier 一致,比如 HD)</span>
+    </label>
+    <input id="sup-edit-name" type="text" placeholder="HD" maxlength="50">
+
+    <label class="field-label" style="margin-top:10px;">完整名 (展示用)</label>
+    <input id="sup-edit-display" type="text" placeholder="HD Foods SRL">
+
+    <label class="field-label" style="margin-top:10px;">联系方式</label>
+    <input id="sup-edit-contact" type="text" placeholder="电话 / WhatsApp / 邮箱">
+
+    <label class="field-label" style="margin-top:10px;">状态</label>
+    <select id="sup-edit-status">
+      <option value="active">正常</option>
+      <option value="pending">待审核</option>
+      <option value="suspended">暂停</option>
+    </select>
+
+    <label class="field-label" style="margin-top:10px;">后台备注</label>
+    <textarea id="sup-edit-notes" rows="2" style="resize:vertical;"></textarea>
+
+    <!-- 新增模式独有:初始账号 -->
+    <div id="sup-edit-owner-block">
+      <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);">
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:6px;">⬇ 同时创建初始管理员账号</div>
+      <label class="field-label">用户名 *</label>
+      <input id="sup-edit-owner-user" type="text" placeholder="比如 boss">
+      <label class="field-label" style="margin-top:10px;">初始密码 * (≥4 位)</label>
+      <input id="sup-edit-owner-pass" type="text">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sup-edit')">取消</button>
+      <button class="btn btn-gold" id="sup-edit-save-btn" onclick="saveSupEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 子弹窗:新增 / 编辑账号 ============ -->
+<div class="modal-overlay" id="modal-sup-user-edit" style="z-index:200;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title" id="sup-user-edit-title">+ 新增账号</div>
+    <input type="hidden" id="sup-user-edit-id">
+
+    <label class="field-label">用户名 *</label>
+    <input id="sup-user-edit-username" type="text" placeholder="staff1">
+
+    <label class="field-label" style="margin-top:10px;">密码
+      <span id="sup-user-edit-pass-hint" style="font-weight:normal;color:var(--text-dim);font-size:12px;">(留空 = 不改密码)</span>
+    </label>
+    <input id="sup-user-edit-password" type="text" placeholder="≥4 位">
+
+    <label class="field-label" style="margin-top:10px;">角色</label>
+    <select id="sup-user-edit-role">
+      <option value="owner">管理员 (能改产品目录)</option>
+      <option value="staff">员工 (只看订单)</option>
+    </select>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sup-user-edit')">取消</button>
+      <button class="btn btn-gold" onclick="saveSupUserEdit()">保存</button>
     </div>
   </div>
 </div>
@@ -1185,6 +1289,277 @@ function escapeHtml(s) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
+
+// ============================================================
+// 供应商管理 (Suppliers) - v1.0
+// ============================================================
+let SUPPLIERS = [];        // 供应商列表
+let _supCurrent = null;    // 当前查看的供应商对象
+let _supUsers = [];        // 当前供应商的账号列表
+
+async function openSuppliers() {
+  document.getElementById('sup-search').value = '';
+  document.getElementById('sup-view-list').style.display = '';
+  document.getElementById('sup-view-users').style.display = 'none';
+  document.getElementById('sup-modal-title').textContent = '👥 供应商管理';
+  document.getElementById('sup-modal-sub').textContent = '管理供应商公司和他们的登录账号';
+  openModal('modal-suppliers');
+  await refreshSuppliers();
+}
+
+async function refreshSuppliers() {
+  const listEl = document.getElementById('sup-list');
+  listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);">加载中…</div>';
+  try {
+    const d = await api('/platform/suppliers/list');
+    SUPPLIERS = d.suppliers || [];
+    renderSupList();
+  } catch (e) {
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger);">加载失败:' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderSupList() {
+  const q = (document.getElementById('sup-search').value || '').toLowerCase().trim();
+  const listEl = document.getElementById('sup-list');
+  const filtered = SUPPLIERS.filter(s => {
+    if (!q) return true;
+    return (s.name || '').toLowerCase().includes(q)
+      || (s.display_name || '').toLowerCase().includes(q)
+      || (s.contact || '').toLowerCase().includes(q);
+  });
+  if (!filtered.length) {
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);">' + (q ? '没找到匹配的' : '还没有供应商,点击右上"新增供应商"创建') + '</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map(s => {
+    const statusColor = s.status === 'active' ? '#16a34a'
+                     : s.status === 'suspended' ? '#dc2626'
+                     : 'var(--text-dim)';
+    const statusLabel = s.status === 'active' ? '正常' : s.status === 'suspended' ? '暂停' : '待审核';
+    const sJsonAttr = escapeHtml(JSON.stringify(s));
+    return `
+      <div style="padding:12px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:600;font-size:15px;">${escapeHtml(s.name)}
+              <span style="font-size:11px;color:${statusColor};margin-left:6px;">● ${statusLabel}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">
+              ${s.display_name ? escapeHtml(s.display_name) + ' · ' : ''}
+              👤 ${s.user_count} 账号 · 📦 ${s.catalog_count} 产品
+              ${s.contact ? ' · 📞 ' + escapeHtml(s.contact) : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="openSupUsers(${s.id})">👤 账号</button>
+            <button class="btn btn-ghost btn-sm" onclick='openSupEdit(JSON.parse(this.dataset.s))' data-s="${sJsonAttr}">编辑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSupplier(${s.id},'${escapeHtml(s.name)}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openSupCreate() {
+  document.getElementById('sup-edit-title').textContent = '+ 新增供应商';
+  document.getElementById('sup-edit-id').value = '';
+  document.getElementById('sup-edit-name').value = '';
+  document.getElementById('sup-edit-display').value = '';
+  document.getElementById('sup-edit-contact').value = '';
+  document.getElementById('sup-edit-status').value = 'active';
+  document.getElementById('sup-edit-notes').value = '';
+  document.getElementById('sup-edit-owner-user').value = '';
+  document.getElementById('sup-edit-owner-pass').value = '';
+  document.getElementById('sup-edit-owner-block').style.display = '';
+  openModal('modal-sup-edit');
+}
+
+function openSupEdit(s) {
+  document.getElementById('sup-edit-title').textContent = '编辑供应商';
+  document.getElementById('sup-edit-id').value = s.id;
+  document.getElementById('sup-edit-name').value = s.name || '';
+  document.getElementById('sup-edit-display').value = s.display_name || '';
+  document.getElementById('sup-edit-contact').value = s.contact || '';
+  document.getElementById('sup-edit-status').value = s.status || 'active';
+  document.getElementById('sup-edit-notes').value = s.notes || '';
+  document.getElementById('sup-edit-owner-block').style.display = 'none';
+  openModal('modal-sup-edit');
+}
+
+async function saveSupEdit() {
+  const btn = document.getElementById('sup-edit-save-btn');
+  const id = document.getElementById('sup-edit-id').value;
+  const payload = {
+    name: document.getElementById('sup-edit-name').value.trim(),
+    display_name: document.getElementById('sup-edit-display').value.trim(),
+    contact: document.getElementById('sup-edit-contact').value.trim(),
+    status: document.getElementById('sup-edit-status').value,
+    notes: document.getElementById('sup-edit-notes').value.trim(),
+  };
+  if (!payload.name) { toast('请填写供应商短名', 'err'); return; }
+
+  btn.disabled = true;
+  try {
+    if (id) {
+      payload.id = parseInt(id);
+      await api('/platform/suppliers/update', { method: 'POST', body: JSON.stringify(payload) });
+      toast('已保存');
+    } else {
+      payload.owner_username = document.getElementById('sup-edit-owner-user').value.trim();
+      payload.owner_password = document.getElementById('sup-edit-owner-pass').value;
+      if (!payload.owner_username) { toast('请填写初始账号用户名', 'err'); btn.disabled = false; return; }
+      if (!payload.owner_password || payload.owner_password.length < 4) { toast('初始密码至少 4 位', 'err'); btn.disabled = false; return; }
+      await api('/platform/suppliers/create', { method: 'POST', body: JSON.stringify(payload) });
+      toast('已创建供应商 + 初始账号');
+    }
+    closeModal('modal-sup-edit');
+    await refreshSuppliers();
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteSupplier(id, name) {
+  if (!confirm(`确定要删除供应商「${name}」吗?\n所有账号和产品目录都会一起删除,无法恢复!`)) return;
+  if (!confirm('再次确认:真的删除?')) return;
+  try {
+    await api('/platform/suppliers/delete', { method: 'POST', body: JSON.stringify({ id }) });
+    toast('已删除');
+    await refreshSuppliers();
+  } catch (e) {
+    toast('删除失败:' + e.message, 'err');
+  }
+}
+
+async function openSupUsers(supplierId) {
+  _supCurrent = SUPPLIERS.find(s => s.id === supplierId);
+  if (!_supCurrent) return;
+  document.getElementById('sup-view-list').style.display = 'none';
+  document.getElementById('sup-view-users').style.display = '';
+  document.getElementById('sup-modal-title').textContent = `👤 ${_supCurrent.name} - 账号管理`;
+  document.getElementById('sup-modal-sub').textContent = `这家供应商共 ${_supCurrent.user_count} 个账号`;
+  document.getElementById('sup-users-info').textContent = `供应商: ${_supCurrent.display_name || _supCurrent.name}`;
+  await refreshSupUsers();
+}
+
+function supBackToList() {
+  _supCurrent = null;
+  document.getElementById('sup-view-list').style.display = '';
+  document.getElementById('sup-view-users').style.display = 'none';
+  document.getElementById('sup-modal-title').textContent = '👥 供应商管理';
+  document.getElementById('sup-modal-sub').textContent = '管理供应商公司和他们的登录账号';
+  refreshSuppliers();
+}
+
+async function refreshSupUsers() {
+  if (!_supCurrent) return;
+  const listEl = document.getElementById('sup-users-list');
+  listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);">加载中…</div>';
+  try {
+    const d = await api('/platform/suppliers/users?supplierId=' + _supCurrent.id);
+    _supUsers = d.users || [];
+    renderSupUsersList();
+  } catch (e) {
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger);">加载失败:' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderSupUsersList() {
+  const listEl = document.getElementById('sup-users-list');
+  if (!_supUsers.length) {
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);">还没有账号,点上面"新增账号"创建</div>';
+    return;
+  }
+  listEl.innerHTML = _supUsers.map(u => {
+    const roleLabel = u.role === 'owner' ? '管理员' : '员工';
+    const roleColor = u.role === 'owner' ? '#d4af37' : 'var(--text-dim)';
+    const lastLogin = u.last_login_at ? new Date(u.last_login_at).toLocaleString('zh-CN', { dateStyle:'short', timeStyle:'short' }) : '从未登录';
+    const uJsonAttr = escapeHtml(JSON.stringify(u));
+    return `
+      <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <div style="font-weight:600;">${escapeHtml(u.username)}
+            <span style="font-size:11px;color:${roleColor};margin-left:6px;">${roleLabel}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">最近登录: ${escapeHtml(lastLogin)}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick='openSupUserEdit(JSON.parse(this.dataset.u))' data-u="${uJsonAttr}">改/重置</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSupUser(${u.id},'${escapeHtml(u.username)}')">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openSupUserCreate() {
+  document.getElementById('sup-user-edit-title').textContent = '+ 新增账号';
+  document.getElementById('sup-user-edit-id').value = '';
+  document.getElementById('sup-user-edit-username').value = '';
+  document.getElementById('sup-user-edit-password').value = '';
+  document.getElementById('sup-user-edit-role').value = 'staff';
+  document.getElementById('sup-user-edit-pass-hint').textContent = '(≥4 位)';
+  document.getElementById('sup-user-edit-username').disabled = false;
+  openModal('modal-sup-user-edit');
+}
+
+function openSupUserEdit(u) {
+  document.getElementById('sup-user-edit-title').textContent = '编辑账号 / 重置密码';
+  document.getElementById('sup-user-edit-id').value = u.id;
+  document.getElementById('sup-user-edit-username').value = u.username;
+  document.getElementById('sup-user-edit-username').disabled = true;
+  document.getElementById('sup-user-edit-password').value = '';
+  document.getElementById('sup-user-edit-role').value = u.role || 'staff';
+  document.getElementById('sup-user-edit-pass-hint').textContent = '(留空 = 不改密码)';
+  openModal('modal-sup-user-edit');
+}
+
+async function saveSupUserEdit() {
+  if (!_supCurrent) return;
+  const id = document.getElementById('sup-user-edit-id').value;
+  const username = document.getElementById('sup-user-edit-username').value.trim();
+  const password = document.getElementById('sup-user-edit-password').value;
+  const role = document.getElementById('sup-user-edit-role').value;
+
+  if (!id && !username) { toast('请填写用户名', 'err'); return; }
+  if (!id && (!password || password.length < 4)) { toast('密码至少 4 位', 'err'); return; }
+  if (id && password && password.length < 4) { toast('密码至少 4 位', 'err'); return; }
+
+  const payload = { role };
+  if (id) {
+    payload.id = parseInt(id);
+    if (password) payload.password = password;
+  } else {
+    payload.supplier_id = _supCurrent.id;
+    payload.username = username;
+    payload.password = password;
+  }
+
+  try {
+    await api('/platform/suppliers/users/upsert', { method: 'POST', body: JSON.stringify(payload) });
+    toast('已保存');
+    closeModal('modal-sup-user-edit');
+    await refreshSupUsers();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function deleteSupUser(id, username) {
+  if (!confirm(`确定删除账号「${username}」?`)) return;
+  try {
+    await api('/platform/suppliers/users/delete', { method: 'POST', body: JSON.stringify({ id }) });
+    toast('已删除');
+    await refreshSupUsers();
+  } catch (e) {
+    toast('删除失败:' + e.message, 'err');
+  }
+}
+
 </script>
 </body>
 </html>
