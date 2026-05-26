@@ -87,6 +87,8 @@
     font-size: 14px; margin: 8px 0;
   }
 </style>
+<!-- Cloudflare Turnstile -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -132,6 +134,15 @@
       <input type="password" id="f-pass2" placeholder="再输入一次" maxlength="50">
       <div class="field-hint" id="hint-pass2">&nbsp;</div>
     </div>
+
+    <!-- Cloudflare Turnstile -->
+    <div class="cf-turnstile"
+         data-sitekey="0x4AAAAAADWyrbouD3cO9Rpo"
+         data-callback="onTurnstileR"
+         data-error-callback="onTurnstileRErr"
+         data-expired-callback="onTurnstileRErr"
+         data-theme="light"
+         style="margin: 14px 0;"></div>
 
     <button class="btn" id="btn-submit" onclick="doRegister()">提交注册</button>
 
@@ -183,6 +194,15 @@
       <div class="field-hint" id="sup-hint-pass2">&nbsp;</div>
     </div>
 
+    <!-- Cloudflare Turnstile -->
+    <div class="cf-turnstile"
+         data-sitekey="0x4AAAAAADWyrbouD3cO9Rpo"
+         data-callback="onTurnstileS"
+         data-error-callback="onTurnstileSErr"
+         data-expired-callback="onTurnstileSErr"
+         data-theme="light"
+         style="margin: 14px 0;"></div>
+
     <button class="btn" id="sup-btn-submit" onclick="doSupplierRegister()">提交注册</button>
 
     <div class="foot">
@@ -219,6 +239,14 @@
 
 <script>
 const WORKER_URL = 'https://api.yki.it';
+
+// Cloudflare Turnstile token(每次验证通过后由回调写入)
+let _turnstileTokenR = '';   // 餐厅注册表单的 token
+let _turnstileTokenS = '';   // 供应商注册表单的 token
+function onTurnstileR(token) { _turnstileTokenR = token; }
+function onTurnstileRErr() { _turnstileTokenR = ''; }
+function onTurnstileS(token) { _turnstileTokenS = token; }
+function onTurnstileSErr() { _turnstileTokenS = ''; }
 
 // 默认显示餐厅注册;URL 带 ?kind=supplier 切到供应商表单
 (function() {
@@ -301,6 +329,7 @@ async function doRegister() {
   if (!contact) { showError('请填写联系方式'); return; }
   if (!pass || pass.length < 8) { showError('管理员密码至少 8 位'); return; }
   if (pass !== pass2) { showError('两次密码不一致'); return; }
+  if (!_turnstileTokenR) { showError('请等待人机验证完成'); return; }
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
@@ -310,7 +339,7 @@ async function doRegister() {
     const res = await fetch(WORKER_URL + '/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name, contact, adminPassword: pass })
+      body: JSON.stringify({ id, name, contact, adminPassword: pass, turnstile_token: _turnstileTokenR })
     });
     const data = await res.json();
 
@@ -318,6 +347,9 @@ async function doRegister() {
       showError(data.error || '注册失败,请稍后重试');
       btn.disabled = false;
       btn.textContent = '提交注册';
+      // 重置 Turnstile(token 一次性)
+      try { window.turnstile && turnstile.reset(); } catch(e) {}
+      _turnstileTokenR = '';
       return;
     }
 
@@ -330,6 +362,8 @@ async function doRegister() {
     showError('网络错误,请检查网络连接');
     btn.disabled = false;
     btn.textContent = '提交注册';
+    try { window.turnstile && turnstile.reset(); } catch(e) {}
+    _turnstileTokenR = '';
   }
 }
 
@@ -349,6 +383,7 @@ async function doSupplierRegister() {
   if (!username) { showError('请填写管理员用户名', 'sup-form-err'); return; }
   if (!pass || pass.length < 8) { showError('管理员密码至少 8 位', 'sup-form-err'); return; }
   if (pass !== pass2) { showError('两次密码不一致', 'sup-form-err'); return; }
+  if (!_turnstileTokenS) { showError('请等待人机验证完成', 'sup-form-err'); return; }
 
   const btn = document.getElementById('sup-btn-submit');
   btn.disabled = true;
@@ -364,6 +399,7 @@ async function doSupplierRegister() {
         contact,
         owner_username: username,
         owner_password: pass,
+        turnstile_token: _turnstileTokenS,
       })
     });
     const data = await res.json();
@@ -372,6 +408,8 @@ async function doSupplierRegister() {
       showError(data.error || '注册失败,请稍后重试', 'sup-form-err');
       btn.disabled = false;
       btn.textContent = '提交注册';
+      try { window.turnstile && turnstile.reset(); } catch(e) {}
+      _turnstileTokenS = '';
       return;
     }
 
