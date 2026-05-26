@@ -3,16 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <title>YKI Supply Hub</title>
-<meta http-equiv="refresh" content="0; url=/join.html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="canonical" href="https://yki.it/join.html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="YKI Supply Hub — 餐厅订货数字化系统">
+<link rel="icon" href="/logo.png" type="image/png">
 <style>
-  body { margin: 0; font-family: -apple-system, sans-serif; background: #faf6ed; display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #8a7858; }
-  a { color: #c9a961; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #faf6ed 0%, #f0e8d4 100%);
+    min-height: 100vh; color: #2c2418; line-height: 1.5;
+    display: flex; flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 顶部语言切换 */
+  .lang-toggle {
+    position: absolute; top: 16px; right: 16px; z-index: 10;
+    display: flex; background: rgba(255,255,255,0.7); border-radius: 8px;
+    border: 1px solid #e8dec5; padding: 2px; backdrop-filter: blur(4px);
+  }
+  .lang-btn {
+    background: transparent; border: none; padding: 6px 12px;
+    font-size: 13px; cursor: pointer; color: #8a7858; border-radius: 6px;
+    font-family: inherit;
+  }
+  .lang-btn.active { background: #c9a961; color: #fff; font-weight: 600; }
+
+  /* 主容器 */
+  .wrap {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 40px 20px;
+    max-width: 480px; margin: 0 auto; width: 100%;
+  }
+
+  /* 品牌 */
+  .brand { text-align: center; margin-bottom: 36px; }
+  .brand-logo { height: 72px; width: auto; margin-bottom: 10px; }
+  .brand-sub { color: #8a7858; font-size: 13px; letter-spacing: 3px; font-weight: 500; }
+  .brand-tagline {
+    color: #5a4f3a; font-size: 14px; margin-top: 14px;
+  }
+
+  /* 入口按钮 */
+  .entry-list { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .entry-btn {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 1.5px solid #e8dec5; border-radius: 14px;
+    padding: 18px 20px; cursor: pointer; transition: all 0.18s;
+    text-decoration: none; color: inherit;
+    font-family: inherit;
+  }
+  .entry-btn:hover {
+    border-color: #c9a961;
+    box-shadow: 0 4px 16px rgba(201, 169, 97, 0.15);
+    transform: translateY(-1px);
+  }
+  .entry-btn:active { transform: translateY(0); }
+  .entry-icon {
+    font-size: 28px; flex-shrink: 0;
+    width: 48px; height: 48px;
+    background: #faf6ed; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .entry-text { flex: 1; }
+  .entry-title {
+    font-size: 16px; font-weight: 600; color: #2c2418;
+    margin-bottom: 2px;
+  }
+  .entry-desc { font-size: 13px; color: #8a7858; }
+  .entry-arrow { color: #c9a961; font-size: 18px; }
+
+  /* 主要入口(注册)用金色突出 */
+  .entry-btn.primary {
+    background: linear-gradient(135deg, #c9a961 0%, #b3924c 100%);
+    border-color: #b3924c;
+    color: #fff;
+  }
+  .entry-btn.primary .entry-icon { background: rgba(255,255,255,0.18); }
+  .entry-btn.primary .entry-title { color: #fff; }
+  .entry-btn.primary .entry-desc { color: rgba(255,255,255,0.85); }
+  .entry-btn.primary .entry-arrow { color: #fff; }
+
+  /* 分隔器 */
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin: 18px 0 10px;
+    color: #a89878; font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: #e8dec5;
+  }
+
+  /* 底部链接 */
+  .foot {
+    text-align: center; margin-top: 28px;
+    font-size: 13px; color: #8a7858;
+  }
+  .foot a { color: #c9a961; text-decoration: none; font-weight: 500; margin: 0 8px; }
+  .foot a:hover { text-decoration: underline; }
+
+  /* i18n 切换 */
+  .lang-zh { display: inline; }
+  .lang-it { display: none; }
+  body.lang-it .lang-zh { display: none; }
+  body.lang-it .lang-it { display: inline; }
 </style>
 </head>
 <body>
-  <p>正在跳转… 如未自动跳转，请<a href="/join.html">点击这里</a></p>
-  <script>location.replace('/join.html');</script>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中文</button>
+  <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+</div>
+
+<div class="wrap">
+  <div class="brand">
+    <img class="brand-logo" src="/logo.png" alt="YKI">
+    <div class="brand-sub">SUPPLY HUB</div>
+    <div class="brand-tagline">
+      <span class="lang-zh">餐厅订货管理 · 供应商协同</span>
+      <span class="lang-it">Gestione ordini · Portale fornitori</span>
+    </div>
+  </div>
+
+  <div class="entry-list">
+
+    <!-- 餐厅登录 -->
+    <a class="entry-btn" href="/cucina.html">
+      <div class="entry-icon">🍽️</div>
+      <div class="entry-text">
+        <div class="entry-title">
+          <span class="lang-zh">我是餐厅</span>
+          <span class="lang-it">Sono un ristorante</span>
+        </div>
+        <div class="entry-desc">
+          <span class="lang-zh">已注册餐厅,登录订货系统</span>
+          <span class="lang-it">Ristorante registrato — accedi al sistema</span>
+        </div>
+      </div>
+      <div class="entry-arrow">›</div>
+    </a>
+
+    <!-- 供应商登录 -->
+    <a class="entry-btn" href="/supplier.html">
+      <div class="entry-icon">📦</div>
+      <div class="entry-text">
+        <div class="entry-title">
+          <span class="lang-zh">我是供应商</span>
+          <span class="lang-it">Sono un fornitore</span>
+        </div>
+        <div class="entry-desc">
+          <span class="lang-zh">已注册供应商,登录供应商端</span>
+          <span class="lang-it">Fornitore registrato — accedi al portale</span>
+        </div>
+      </div>
+      <div class="entry-arrow">›</div>
+    </a>
+
+    <div class="divider">
+      <span class="lang-zh">还没有账号?</span>
+      <span class="lang-it">Non hai un account?</span>
+    </div>
+
+    <!-- 注册 -->
+    <a class="entry-btn primary" href="/register.html">
+      <div class="entry-icon">➕</div>
+      <div class="entry-text">
+        <div class="entry-title">
+          <span class="lang-zh">立即注册</span>
+          <span class="lang-it">Registrati ora</span>
+        </div>
+        <div class="entry-desc">
+          <span class="lang-zh">餐厅 / 供应商免费注册</span>
+          <span class="lang-it">Ristorante / Fornitore — gratis</span>
+        </div>
+      </div>
+      <div class="entry-arrow">›</div>
+    </a>
+
+  </div>
+
+  <div class="foot">
+    <a href="/join.html">
+      <span class="lang-zh">了解更多</span>
+      <span class="lang-it">Scopri di più</span>
+    </a>
+    ·
+    <a href="mailto:ykicucina@gmail.com">
+      <span class="lang-zh">联系我们</span>
+      <span class="lang-it">Contattaci</span>
+    </a>
+  </div>
+</div>
+
+<script>
+const LANG_KEY = 'yki_lang';
+function setLang(lang) {
+  document.body.classList.toggle('lang-it', lang === 'it');
+  document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('btn-it').classList.toggle('active', lang === 'it');
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  document.documentElement.lang = lang === 'it' ? 'it' : 'zh-CN';
+}
+// 初始化:本地记住的语言 > 浏览器语言 > 默认中文
+(function() {
+  let lang = 'zh';
+  try { lang = localStorage.getItem(LANG_KEY) || ''; } catch(e) {}
+  if (!lang) {
+    const nav = (navigator.language || '').toLowerCase();
+    if (nav.startsWith('it')) lang = 'it';
+    else lang = 'zh';
+  }
+  setLang(lang);
+})();
+</script>
 </body>
 </html>

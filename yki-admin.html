@@ -560,7 +560,7 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
-const ADMIN_VERSION = 'v1.1.1';   // 2026-05-26: 加供应商管理 + modal 超长可滚动
+const ADMIN_VERSION = 'v1.2.0';   // 2026-05-26: 供应商管理 + 一键审批 + modal 滚动
 // 立即把版本号显示到登录界面
 (function() {
   const el = document.getElementById('login-version');
@@ -1364,6 +1364,7 @@ function renderSupList() {
             </div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${s.status === 'pending' ? `<button class="btn btn-sm" style="background:#16a34a;color:#fff;border:none;" onclick="approveSupplier(${s.id},'${escapeHtml(s.name)}')">✅ 审批</button>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="openSupUsers(${s.id})">👤 账号</button>
             <button class="btn btn-ghost btn-sm" onclick='openSupEdit(JSON.parse(this.dataset.s))' data-s="${sJsonAttr}">编辑</button>
             <button class="btn btn-danger btn-sm" onclick="deleteSupplier(${s.id},'${escapeHtml(s.name)}')">🗑️</button>
@@ -1432,6 +1433,20 @@ async function saveSupEdit() {
     toast(e.message, 'err');
   } finally {
     btn.disabled = false;
+  }
+}
+
+async function approveSupplier(id, name) {
+  if (!confirm(`审批通过「${name}」?\n该供应商将能立即登录系统。`)) return;
+  try {
+    await api('/platform/suppliers/update', {
+      method: 'POST',
+      body: JSON.stringify({ id, status: 'active' }),
+    });
+    toast('✓ 已审批通过');
+    await refreshSuppliers();
+  } catch (e) {
+    toast('审批失败:' + e.message, 'err');
   }
 }
 

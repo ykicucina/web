@@ -96,21 +96,59 @@
     <div class="brand-sub">SUPPLY HUB</div>
   </div>
 
-  <div class="card" id="form-card">
+  <!-- ===== 身份选择卡片 ===== -->
+  <div class="card" id="choose-card">
+    <div class="card-title">选择注册类型</div>
+    <div class="card-sub">请选择您的身份</div>
+
+    <button type="button" onclick="chooseKind('restaurant')" style="
+      width:100%;display:flex;align-items:center;gap:14px;
+      background:#fff;border:1.5px solid #e8dec5;border-radius:14px;
+      padding:18px 16px;cursor:pointer;transition:all 0.18s;
+      margin-bottom:12px;font-family:inherit;text-align:left;">
+      <div style="font-size:28px;width:48px;height:48px;background:#faf6ed;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🍽️</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:600;color:#2c2418;margin-bottom:2px;">我是餐厅</div>
+        <div style="font-size:13px;color:#8a7858;">注册新餐厅,管理订货和库存</div>
+      </div>
+      <div style="color:#c9a961;font-size:18px;">›</div>
+    </button>
+
+    <button type="button" onclick="chooseKind('supplier')" style="
+      width:100%;display:flex;align-items:center;gap:14px;
+      background:#fff;border:1.5px solid #e8dec5;border-radius:14px;
+      padding:18px 16px;cursor:pointer;transition:all 0.18s;
+      font-family:inherit;text-align:left;">
+      <div style="font-size:28px;width:48px;height:48px;background:#faf6ed;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📦</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:600;color:#2c2418;margin-bottom:2px;">我是供应商</div>
+        <div style="font-size:13px;color:#8a7858;">注册新供应商,接收餐厅订单</div>
+      </div>
+      <div style="color:#c9a961;font-size:18px;">›</div>
+    </button>
+
+    <div class="foot" style="margin-top:24px;">
+      已有账号? <a href="/">返回首页登录</a>
+    </div>
+  </div>
+
+  <!-- ===== 餐厅注册卡片 ===== -->
+  <div class="card" id="form-card" style="display:none;">
+    <button type="button" onclick="backToChoose()" style="background:transparent;border:none;color:#8a7858;font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;font-family:inherit;">← 返回</button>
     <div class="card-title">注册新餐厅</div>
-    <div class="card-sub">填写以下信息，我们会尽快审核您的申请</div>
+    <div class="card-sub">填写以下信息,我们会尽快审核您的申请</div>
 
     <div class="form-err" id="form-err"></div>
 
     <div class="field">
       <label for="f-id">餐厅代号 <span style="color:#c9a961">*</span></label>
-      <input type="text" id="f-id" placeholder="例如：carpi、my_pizza" maxlength="30" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div class="field-hint" id="hint-id">小写字母、数字、下划线，2-30 位（登录 URL 会用到）</div>
+      <input type="text" id="f-id" placeholder="例如:carpi、my_pizza" maxlength="30" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="field-hint" id="hint-id">小写字母、数字、下划线,2-30 位(登录 URL 会用到)</div>
     </div>
 
     <div class="field">
       <label for="f-name">餐厅名称 <span style="color:#c9a961">*</span></label>
-      <input type="text" id="f-name" placeholder="例如：Pizzeria Da Mario" maxlength="60">
+      <input type="text" id="f-name" placeholder="例如:Pizzeria Da Mario" maxlength="60">
       <div class="field-hint">展示给员工看的名字</div>
     </div>
 
@@ -135,19 +173,84 @@
     <button class="btn" id="btn-submit" onclick="doRegister()">提交注册</button>
 
     <div class="foot">
-      已有账号？<a href="https://yki.it/">返回首页登录</a>
+      已有账号? <a href="/">返回首页登录</a>
     </div>
   </div>
 
+  <!-- ===== 供应商注册卡片 ===== -->
+  <div class="card" id="supplier-form-card" style="display:none;">
+    <button type="button" onclick="backToChoose()" style="background:transparent;border:none;color:#8a7858;font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;font-family:inherit;">← 返回</button>
+    <div class="card-title">注册新供应商</div>
+    <div class="card-sub">填写以下信息,我们会尽快审核您的申请</div>
+
+    <div class="form-err" id="sup-form-err"></div>
+
+    <div class="field">
+      <label for="sup-name">供应商代号 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="sup-name" placeholder="例如:HD、METRO" maxlength="50" autocomplete="off">
+      <div class="field-hint">您公司的短代号(登录会用到,跟餐厅食材里的供应商名一致)</div>
+    </div>
+
+    <div class="field">
+      <label for="sup-display">公司完整名称 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="sup-display" placeholder="例如:HD Foods SRL" maxlength="100">
+      <div class="field-hint">展示给餐厅看的完整名字</div>
+    </div>
+
+    <div class="field">
+      <label for="sup-contact">联系方式 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="sup-contact" placeholder="电话 / WhatsApp / 邮箱" maxlength="100">
+      <div class="field-hint">审核通过后通知您用</div>
+    </div>
+
+    <div class="field">
+      <label for="sup-username">管理员用户名 <span style="color:#c9a961">*</span></label>
+      <input type="text" id="sup-username" placeholder="例如:boss" maxlength="30" autocomplete="off">
+      <div class="field-hint">登录供应商系统用</div>
+    </div>
+
+    <div class="field">
+      <label for="sup-pass">管理员密码 <span style="color:#c9a961">*</span></label>
+      <input type="password" id="sup-pass" placeholder="至少 4 位" maxlength="50">
+      <div class="field-hint" id="sup-hint-pass">&nbsp;</div>
+    </div>
+
+    <div class="field">
+      <label for="sup-pass2">确认密码 <span style="color:#c9a961">*</span></label>
+      <input type="password" id="sup-pass2" placeholder="再输入一次" maxlength="50">
+      <div class="field-hint" id="sup-hint-pass2">&nbsp;</div>
+    </div>
+
+    <button class="btn" id="sup-btn-submit" onclick="doSupplierRegister()">提交注册</button>
+
+    <div class="foot">
+      已有账号? <a href="/">返回首页登录</a>
+    </div>
+  </div>
+
+  <!-- ===== 餐厅注册成功 ===== -->
   <div class="card success" id="success-card" style="display:none">
     <div class="success-icon">✉️</div>
     <h2>注册申请已提交</h2>
-    <p>您的餐厅代号：</p>
+    <p>您的餐厅代号:</p>
     <div class="id-tag" id="success-id"></div>
     <p style="margin-top:16px;">管理员会在 24 小时内审核您的申请<br>审核通过后会通过<span id="success-contact" style="color:#8a6f3a"></span>通知您</p>
-    <p style="color:#a89878;font-size:13px;margin-top:18px;">⏰ 试用期 60 天，从审核通过当天开始计算</p>
+    <p style="color:#a89878;font-size:13px;margin-top:18px;">⏰ 试用期 60 天,从审核通过当天开始计算</p>
     <div class="foot" style="margin-top:24px;">
-      <a href="https://yki.it/">返回首页</a>
+      <a href="/">返回首页</a>
+    </div>
+  </div>
+
+  <!-- ===== 供应商注册成功 ===== -->
+  <div class="card success" id="sup-success-card" style="display:none">
+    <div class="success-icon">✉️</div>
+    <h2>注册申请已提交</h2>
+    <p>您的供应商代号:</p>
+    <div class="id-tag" id="sup-success-name"></div>
+    <p style="margin-top:16px;">管理员会在 24 小时内审核您的申请<br>审核通过后会通过<span id="sup-success-contact" style="color:#8a6f3a"></span>通知您</p>
+    <p style="color:#a89878;font-size:13px;margin-top:18px;">🎁 现阶段完全免费使用</p>
+    <div class="foot" style="margin-top:24px;">
+      <a href="/">返回首页</a>
     </div>
   </div>
 </div>
@@ -155,13 +258,30 @@
 <script>
 const WORKER_URL = 'https://api.yki.it';
 
+function chooseKind(kind) {
+  document.getElementById('choose-card').style.display = 'none';
+  if (kind === 'restaurant') {
+    document.getElementById('form-card').style.display = '';
+  } else {
+    document.getElementById('supplier-form-card').style.display = '';
+  }
+  window.scrollTo(0, 0);
+}
+
+function backToChoose() {
+  document.getElementById('form-card').style.display = 'none';
+  document.getElementById('supplier-form-card').style.display = 'none';
+  document.getElementById('choose-card').style.display = '';
+  window.scrollTo(0, 0);
+}
+
 document.getElementById('f-id').addEventListener('input', e => {
   const v = e.target.value.toLowerCase();
   e.target.value = v.replace(/[^a-z0-9_]/g, '');
   const hint = document.getElementById('hint-id');
   const val = e.target.value;
   if (val.length === 0) {
-    hint.textContent = '小写字母、数字、下划线，2-30 位（登录 URL 会用到）';
+    hint.textContent = '小写字母、数字、下划线,2-30 位(登录 URL 会用到)';
     hint.className = 'field-hint';
   } else if (val.length < 2) {
     hint.textContent = '至少 2 位';
@@ -188,8 +308,25 @@ function checkPasswords() {
 document.getElementById('f-pass').addEventListener('input', checkPasswords);
 document.getElementById('f-pass2').addEventListener('input', checkPasswords);
 
-function showError(msg) {
-  const el = document.getElementById('form-err');
+// === 供应商表单 password 检查 ===
+function checkSupPasswords() {
+  const p = document.getElementById('sup-pass').value;
+  const p2 = document.getElementById('sup-pass2').value;
+  const hint = document.getElementById('sup-hint-pass2');
+  if (!p2) { hint.innerHTML = '&nbsp;'; hint.className = 'field-hint'; return; }
+  if (p === p2) {
+    hint.textContent = '✓ 两次密码一致';
+    hint.className = 'field-hint ok';
+  } else {
+    hint.textContent = '两次密码不一致';
+    hint.className = 'field-hint err';
+  }
+}
+document.getElementById('sup-pass').addEventListener('input', checkSupPasswords);
+document.getElementById('sup-pass2').addEventListener('input', checkSupPasswords);
+
+function showError(msg, target) {
+  const el = document.getElementById(target || 'form-err');
   el.textContent = msg;
   el.style.display = 'block';
   el.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -203,7 +340,7 @@ async function doRegister() {
   const pass = document.getElementById('f-pass').value;
   const pass2 = document.getElementById('f-pass2').value;
 
-  if (!id || id.length < 2) { showError('请填写餐厅代号（至少 2 位）'); return; }
+  if (!id || id.length < 2) { showError('请填写餐厅代号(至少 2 位)'); return; }
   if (!name) { showError('请填写餐厅名称'); return; }
   if (!contact) { showError('请填写联系方式'); return; }
   if (!pass || pass.length < 4) { showError('管理员密码至少 4 位'); return; }
@@ -222,7 +359,7 @@ async function doRegister() {
     const data = await res.json();
 
     if (!res.ok) {
-      showError(data.error || '注册失败，请稍后重试');
+      showError(data.error || '注册失败,请稍后重试');
       btn.disabled = false;
       btn.textContent = '提交注册';
       return;
@@ -234,7 +371,61 @@ async function doRegister() {
     document.getElementById('success-contact').textContent = ' ' + contact + ' ';
     window.scrollTo(0, 0);
   } catch (e) {
-    showError('网络错误，请检查网络连接');
+    showError('网络错误,请检查网络连接');
+    btn.disabled = false;
+    btn.textContent = '提交注册';
+  }
+}
+
+// === 供应商注册 ===
+async function doSupplierRegister() {
+  document.getElementById('sup-form-err').style.display = 'none';
+  const supName = document.getElementById('sup-name').value.trim();
+  const displayName = document.getElementById('sup-display').value.trim();
+  const contact = document.getElementById('sup-contact').value.trim();
+  const username = document.getElementById('sup-username').value.trim();
+  const pass = document.getElementById('sup-pass').value;
+  const pass2 = document.getElementById('sup-pass2').value;
+
+  if (!supName) { showError('请填写供应商代号', 'sup-form-err'); return; }
+  if (!displayName) { showError('请填写公司完整名称', 'sup-form-err'); return; }
+  if (!contact) { showError('请填写联系方式', 'sup-form-err'); return; }
+  if (!username) { showError('请填写管理员用户名', 'sup-form-err'); return; }
+  if (!pass || pass.length < 4) { showError('管理员密码至少 4 位', 'sup-form-err'); return; }
+  if (pass !== pass2) { showError('两次密码不一致', 'sup-form-err'); return; }
+
+  const btn = document.getElementById('sup-btn-submit');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  try {
+    const res = await fetch(WORKER_URL + '/supplier/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: supName,
+        display_name: displayName,
+        contact,
+        owner_username: username,
+        owner_password: pass,
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || '注册失败,请稍后重试', 'sup-form-err');
+      btn.disabled = false;
+      btn.textContent = '提交注册';
+      return;
+    }
+
+    document.getElementById('supplier-form-card').style.display = 'none';
+    document.getElementById('sup-success-card').style.display = 'block';
+    document.getElementById('sup-success-name').textContent = supName;
+    document.getElementById('sup-success-contact').textContent = ' ' + contact + ' ';
+    window.scrollTo(0, 0);
+  } catch (e) {
+    showError('网络错误,请检查网络连接', 'sup-form-err');
     btn.disabled = false;
     btn.textContent = '提交注册';
   }
@@ -242,7 +433,11 @@ async function doRegister() {
 
 document.querySelectorAll('input').forEach(inp => {
   inp.addEventListener('keypress', e => {
-    if (e.key === 'Enter') doRegister();
+    if (e.key === 'Enter') {
+      // 看当前显示哪个表单
+      if (document.getElementById('form-card').style.display !== 'none') doRegister();
+      else if (document.getElementById('supplier-form-card').style.display !== 'none') doSupplierRegister();
+    }
   });
 });
 </script>
