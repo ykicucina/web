@@ -1235,7 +1235,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     <div class="modal-handle"></div>
     <div class="modal-title">📋 确认并发送订单</div>
     <div id="submit-confirm-content"></div>
-    <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="closeModal('modal-submit-confirm')">取消</button>
+    <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="confirmMergedOrders()">取消</button>
   </div>
 </div>
 
@@ -1633,7 +1633,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.39';
+const APP_VERSION = 'v2.7.40';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -5971,7 +5971,20 @@ async function mergeSendOrders() {
 
   const targetDay = _weekdayFilter || getTodayWeekday();
   let ignoreCycle = document.getElementById('ignore-cycle')?.checked || false;
-  const selected = orders.filter(o=>_selectedOrderIds.has(String(o.id)) && (o.status==='待处理'||o.status==='待處理') && o.type!=='consume');
+
+  // v2.7.39: 弹窗"会话快照"——首次进入时记录勾选的订单 id,后续渲染都用这个快照,
+  // 这样发完一个供应商后(订单状态变'已发送'),卡片还能留在弹窗里显示"✓ 已发送"
+  // 而不是直接消失。关闭弹窗时清除快照(在 confirmMergedOrders 里)。
+  if (!window._mergeSendSnapshot || !window._mergeSendSnapshot.size) {
+    window._mergeSendSnapshot = new Set(_selectedOrderIds);
+  }
+  const snapshotIds = window._mergeSendSnapshot;
+
+  const selected = orders.filter(o =>
+    snapshotIds.has(String(o.id))
+    && (o.status==='待处理' || o.status==='待處理' || o.status==='已发送')
+    && o.type!=='consume'
+  );
   if (!selected.length) { toast(t('select_pending_first'),'err'); return; }
 
   // 🔍 第一遍扫描：先收集"被周期过滤掉的食材"，让采购员决定怎么处理
@@ -6199,6 +6212,7 @@ async function confirmMergedOrders() {
   // 关闭弹窗 + 刷新本地订单数据(后端 maybeUpdateOrderStatus 可能已联动了一些)
   _selectedOrderIds.clear();
   window._pendingConfirmOrders = [];
+  window._mergeSendSnapshot = null;  // v2.7.39: 清快照
   closeModal('modal-submit-confirm');
   // 重新拉一遍订单(吃后端的最新 status)
   try {
