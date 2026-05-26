@@ -1633,7 +1633,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.41';
+const APP_VERSION = 'v2.7.42';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -6251,17 +6251,23 @@ async function confirmMergedOrders() {
 // v2.7.39: "发送给 X" 按钮点击 - 拦截、打开 WhatsApp、然后弹确认框
 async function ossOnSendClick(event, el) {
   // 不阻止默认行为:让 wa.me 链接正常打开(target=_blank,新 tab/app 切换)
-  // 但用 setTimeout 让浏览器先处理 navigation,等用户切回再弹 confirm
+  // v2.7.42: 用 visibilitychange 监听用户从 WhatsApp 切回(手机端 PWA 后台 setTimeout 不可靠)
   const sup = el.dataset.sup || '';
   let pairs = [];
   try { pairs = JSON.parse(el.dataset.pairs || '[]'); } catch(e) {}
   if (!pairs.length) return;  // 没数据就只走默认行为,不弹确认
 
-  // 等用户从 WhatsApp 切回(他们看到 confirm 时一定已经发完了)
-  setTimeout(async () => {
+  // 防御:同时多个按钮,只让一个监听器生效
+  if (window._ossWaitingForReturn) return;
+  window._ossWaitingForReturn = true;
+
+  const doConfirm = async () => {
+    if (!window._ossWaitingForReturn) return;  // 已被别的路径触发
+    window._ossWaitingForReturn = false;
+    cleanup();
+
     const msg = t('oss_confirm_sent').replace('{sup}', sup.toUpperCase());
     if (!confirm(msg)) return;
-    // 调批量 mark-sent
     try {
       const r = await fetch(SB_URL + '/order-supplier-status/mark-sent', {
         method: 'POST',
@@ -6276,7 +6282,6 @@ async function ossOnSendClick(event, el) {
         return;
       }
       toast(t('oss_marked_sent'));
-      // 同步刷新本地 orders.status(后端可能已联动)
       const d = await r.json();
       if (d.order_statuses) {
         for (const [oid, st] of Object.entries(d.order_statuses)) {
@@ -6285,12 +6290,41 @@ async function ossOnSendClick(event, el) {
           if (local) local.status = st;
         }
       }
-      // 重新渲染整个弹窗以反映新状态
       mergeSendOrders();
     } catch(e) {
       toast(t('save_fail_retry'), 'err');
     }
-  }, 500);
+  };
+
+  // 监听三个事件,任一触发都算"用户切回来了"
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') {
+      // 切回后等一小会再弹(给 PWA 一点恢复时间)
+      setTimeout(doConfirm, 300);
+    }
+  };
+  const onFocus = () => {
+    setTimeout(doConfirm, 300);
+  };
+  const onPageShow = () => {
+    setTimeout(doConfirm, 300);
+  };
+  const cleanup = () => {
+    document.removeEventListener('visibilitychange', onVisible);
+    window.removeEventListener('focus', onFocus);
+    window.removeEventListener('pageshow', onPageShow);
+    clearTimeout(fallbackTimer);
+  };
+
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('focus', onFocus);
+  window.addEventListener('pageshow', onPageShow);
+
+  // Fallback:60 秒内还没切回来就放弃监听(防止泄漏)
+  const fallbackTimer = setTimeout(() => {
+    window._ossWaitingForReturn = false;
+    cleanup();
+  }, 60000);
 }
 
 // v2.7.39: 撤销某卡片的发送标记
