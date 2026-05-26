@@ -320,8 +320,8 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 <div id="login-screen">
   <div class="login-card">
     <div class="login-brand">
-      <div class="login-brand-name">YKI</div>
-      <div class="login-brand-sub">SUPPLIER PORTAL</div>
+      <img src="/logo.png" alt="YKI" style="height:64px;width:auto;display:inline-block;margin-bottom:6px;">
+      <div class="login-brand-sub">YKI SUPPLIER PORTAL</div>
     </div>
     <label class="field-label" data-i18n="login_supplier">供应商代号</label>
     <input id="login-supplier" type="text" placeholder="HD / METRO / ..." autocomplete="username">
@@ -343,7 +343,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 <div id="main-screen" style="display:none;" class="layout-desktop">
   <div class="nav-top">
     <div class="nav-title">
-      <span>YKI</span>
+      <img src="/logo.png" alt="YKI" style="height:24px;width:auto;">
       <span class="badge" id="nav-sup-name">—</span>
       <span id="nav-page-title" style="font-weight:normal;color:var(--text2);font-size:14px;"></span>
     </div>
@@ -598,7 +598,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.1.0';   // 2026-05-26: 加桌面端响应式布局(Gmail 式两栏 + 表格视图)
+const APP_VERSION = 'v1.1.2';   // 2026-05-26: 顶部金色 YKI 文字换 logo 图
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
