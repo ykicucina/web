@@ -1239,6 +1239,21 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   </div>
 </div>
 
+<!-- v2.7.43: 自制 confirm Modal(供 ossOnSendClick 使用,替代浏览器原生 confirm,手机 PWA 切换 app 兼容性更好) -->
+<div class="modal-overlay" id="modal-oss-confirm" style="z-index:300;">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="oss-confirm-title">已发送了吗?</div>
+    <div id="oss-confirm-body" style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+      点"是,已发送"标记为已发送;点"还没"留着稍后再发。
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="ossConfirmAnswer(false)">还没</button>
+      <button class="btn btn-primary" style="flex:1;background:#16a34a;border-color:#16a34a;" onclick="ossConfirmAnswer(true)">是,已发送</button>
+    </div>
+  </div>
+</div>
+
 <!-- 食材详情 Modal -->
 <div class="modal-overlay" id="modal-item-detail">
   <div class="modal">
@@ -1633,7 +1648,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.42';
+const APP_VERSION = 'v2.7.43';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -6250,81 +6265,56 @@ async function confirmMergedOrders() {
 
 // v2.7.39: "发送给 X" 按钮点击 - 拦截、打开 WhatsApp、然后弹确认框
 async function ossOnSendClick(event, el) {
-  // 不阻止默认行为:让 wa.me 链接正常打开(target=_blank,新 tab/app 切换)
-  // v2.7.42: 用 visibilitychange 监听用户从 WhatsApp 切回(手机端 PWA 后台 setTimeout 不可靠)
+  // v2.7.43: 不阻止默认行为(让 wa.me 在新 tab/app 打开),立即弹自制 modal
+  // 自制 modal 是 cucina 内的 DOM 元素,不依赖任何切回事件,手机 PWA 兼容性 100%
   const sup = el.dataset.sup || '';
   let pairs = [];
   try { pairs = JSON.parse(el.dataset.pairs || '[]'); } catch(e) {}
-  if (!pairs.length) return;  // 没数据就只走默认行为,不弹确认
+  if (!pairs.length) return;
 
-  // 防御:同时多个按钮,只让一个监听器生效
-  if (window._ossWaitingForReturn) return;
-  window._ossWaitingForReturn = true;
+  // 把待确认信息存到全局,供 ossConfirmAnswer 用
+  window._ossPendingConfirm = { sup, pairs };
 
-  const doConfirm = async () => {
-    if (!window._ossWaitingForReturn) return;  // 已被别的路径触发
-    window._ossWaitingForReturn = false;
-    cleanup();
+  // 显示自制 confirm modal(立即弹出,无延迟)
+  const msg = t('oss_confirm_sent').replace('{sup}', sup.toUpperCase());
+  document.getElementById('oss-confirm-title').textContent = msg;
+  openModal('modal-oss-confirm');
+}
 
-    const msg = t('oss_confirm_sent').replace('{sup}', sup.toUpperCase());
-    if (!confirm(msg)) return;
-    try {
-      const r = await fetch(SB_URL + '/order-supplier-status/mark-sent', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + SB_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ pairs }),
-      });
-      if (!r.ok) {
-        toast(t('save_fail_retry'), 'err');
-        return;
-      }
-      toast(t('oss_marked_sent'));
-      const d = await r.json();
-      if (d.order_statuses) {
-        for (const [oid, st] of Object.entries(d.order_statuses)) {
-          if (!st) continue;
-          const local = orders.find(x => String(x.id) === String(oid));
-          if (local) local.status = st;
-        }
-      }
-      mergeSendOrders();
-    } catch(e) {
+// v2.7.43: 自制 confirm modal 的回调
+async function ossConfirmAnswer(yes) {
+  closeModal('modal-oss-confirm');
+  const ctx = window._ossPendingConfirm;
+  window._ossPendingConfirm = null;
+  if (!yes || !ctx) return;
+
+  const { pairs } = ctx;
+  try {
+    const r = await fetch(SB_URL + '/order-supplier-status/mark-sent', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pairs }),
+    });
+    if (!r.ok) {
       toast(t('save_fail_retry'), 'err');
+      return;
     }
-  };
-
-  // 监听三个事件,任一触发都算"用户切回来了"
-  const onVisible = () => {
-    if (document.visibilityState === 'visible') {
-      // 切回后等一小会再弹(给 PWA 一点恢复时间)
-      setTimeout(doConfirm, 300);
+    toast(t('oss_marked_sent'));
+    const d = await r.json();
+    if (d.order_statuses) {
+      for (const [oid, st] of Object.entries(d.order_statuses)) {
+        if (!st) continue;
+        const local = orders.find(x => String(x.id) === String(oid));
+        if (local) local.status = st;
+      }
     }
-  };
-  const onFocus = () => {
-    setTimeout(doConfirm, 300);
-  };
-  const onPageShow = () => {
-    setTimeout(doConfirm, 300);
-  };
-  const cleanup = () => {
-    document.removeEventListener('visibilitychange', onVisible);
-    window.removeEventListener('focus', onFocus);
-    window.removeEventListener('pageshow', onPageShow);
-    clearTimeout(fallbackTimer);
-  };
-
-  document.addEventListener('visibilitychange', onVisible);
-  window.addEventListener('focus', onFocus);
-  window.addEventListener('pageshow', onPageShow);
-
-  // Fallback:60 秒内还没切回来就放弃监听(防止泄漏)
-  const fallbackTimer = setTimeout(() => {
-    window._ossWaitingForReturn = false;
-    cleanup();
-  }, 60000);
+    mergeSendOrders();
+  } catch(e) {
+    toast(t('save_fail_retry'), 'err');
+  }
 }
 
 // v2.7.39: 撤销某卡片的发送标记
