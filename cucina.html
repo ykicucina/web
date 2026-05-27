@@ -1115,6 +1115,11 @@ function ridPickerGo() {
         <div class="menu-item-text"><div class="title">从公共库导入食材</div><div class="sub">浏览所有餐厅共享的食材，批量导入</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
+      <div class="menu-item" onclick="showSupCatalogModal()">
+        <div class="menu-item-icon" style="background:#FEF3C7">🔍</div>
+        <div class="menu-item-text"><div class="title">浏览供应商目录</div><div class="sub">从供应商产品目录一键导入到我的食材库</div></div>
+        <span class="menu-item-arrow">›</span>
+      </div>
       <div class="menu-item" onclick="showSupplierModal()">
         <div class="menu-item-icon" style="background:#E6F4FF">📱</div>
         <div class="menu-item-text"><div class="title" id="lbl-supplier">供应商 WhatsApp</div><div class="sub" id="lbl-supplier-sub">设置各供应商联系方式</div></div>
@@ -1244,6 +1249,34 @@ function ridPickerGo() {
     <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-items-public')" style="flex:1;">取消</button>
       <button class="btn btn-primary" id="ip-import-btn" onclick="importPublicSelected()" style="flex:2;" disabled>导入选中 (0)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔍 浏览供应商目录 Modal -->
+<div class="modal-overlay" id="modal-sup-catalog">
+  <div class="modal" style="max-height:92vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div style="padding:0 4px;flex-shrink:0;">
+      <div class="modal-title" style="margin-bottom:8px;">🔍 浏览供应商目录</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+        选择供应商,勾选要的产品,一键添加到我的食材库(连价格一起带过来)
+      </div>
+      <select id="sc-supplier-select" onchange="onSupCatalogSupplierChange()"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;margin-bottom:8px;">
+        <option value="">— 请选择供应商 —</option>
+      </select>
+      <input id="sc-search-input" type="search" placeholder="搜索产品(中文 / 意语 / 编码)"
+             oninput="onSupCatalogSearchInput()"
+             style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:8px;display:none;">
+      <div id="sc-info" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
+    </div>
+    <div id="sc-list" style="flex:1;overflow-y:auto;min-height:200px;border:1px solid var(--border);border-radius:8px;background:#fafafa;padding:4px;">
+      <div style="text-align:center;color:#aaa;padding:40px 20px;">请先选择供应商</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sup-catalog')" style="flex:1;">取消</button>
+      <button class="btn btn-primary" id="sc-import-btn" onclick="importSupCatalogSelected()" style="flex:2;" disabled>导入选中 (0)</button>
     </div>
   </div>
 </div>
@@ -1722,7 +1755,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.49';
+const APP_VERSION = 'v2.7.50';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8395,6 +8428,170 @@ async function importPublicSelected() {
     toast('导入失败：' + e.message, 'err');
     btn.disabled = false;
     updateIpImportBtn();
+  }
+}
+
+// ============================================================
+// v2.7.50: 浏览供应商目录 + 一键导入
+// ============================================================
+let _scCatalog = [];      // 当前供应商的目录
+let _scMyKeys = new Set();// 餐厅已有 items 的 name+italian 索引
+let _scSelected = new Set();// 用户勾选的目录 id
+let _scSearchTimer = null;
+let _scCurrentSupplierId = 0;
+
+async function showSupCatalogModal() {
+  _scCatalog = [];
+  _scSelected.clear();
+  _scCurrentSupplierId = 0;
+  document.getElementById('sc-search-input').value = '';
+  document.getElementById('sc-search-input').style.display = 'none';
+  document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">加载供应商列表...</div>';
+  document.getElementById('sc-info').textContent = '';
+  updateScImportBtn();
+  openModal('modal-sup-catalog');
+
+  // 拉供应商列表
+  try {
+    const r = await fetch(SB_URL + '/supplier-catalog/suppliers', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '加载失败');
+    const sel = document.getElementById('sc-supplier-select');
+    sel.innerHTML = '<option value="">— 请选择供应商 —</option>' +
+      (d.suppliers || []).map(s => `<option value="${s.id}">${escapeHtml(s.display_name || s.name)}</option>`).join('');
+    document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">请先选择供应商</div>';
+    if (!(d.suppliers || []).length) {
+      document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">目前没有公开目录的供应商</div>';
+    }
+  } catch (e) {
+    document.getElementById('sc-list').innerHTML = `<div style="text-align:center;color:#d05050;padding:40px 20px;">加载失败:${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function onSupCatalogSupplierChange() {
+  const supplierId = parseInt(document.getElementById('sc-supplier-select').value || 0);
+  _scCurrentSupplierId = supplierId;
+  _scSelected.clear();
+  updateScImportBtn();
+  if (!supplierId) {
+    document.getElementById('sc-search-input').style.display = 'none';
+    document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">请先选择供应商</div>';
+    document.getElementById('sc-info').textContent = '';
+    return;
+  }
+  document.getElementById('sc-search-input').style.display = '';
+  document.getElementById('sc-search-input').value = '';
+  await loadSupCatalogItems(supplierId, '');
+}
+
+function onSupCatalogSearchInput() {
+  clearTimeout(_scSearchTimer);
+  _scSearchTimer = setTimeout(() => {
+    const q = document.getElementById('sc-search-input').value.trim();
+    if (_scCurrentSupplierId) loadSupCatalogItems(_scCurrentSupplierId, q);
+  }, 300);
+}
+
+async function loadSupCatalogItems(supplierId, q) {
+  document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">加载中...</div>';
+  document.getElementById('sc-info').textContent = '';
+  try {
+    const params = new URLSearchParams({ supplier_id: supplierId, limit: 500 });
+    if (q) params.append('q', q);
+    const r = await fetch(SB_URL + '/supplier-catalog/items?' + params, {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '加载失败');
+    _scCatalog = d.items || [];
+    _scMyKeys = new Set(d.myKeys || []);
+    renderSupCatalogList();
+    document.getElementById('sc-info').textContent =
+      `${escapeHtml(d.supplier.name)} · ${_scCatalog.length} 件产品${q ? `(搜索: ${escapeHtml(q)})` : ''}`;
+  } catch (e) {
+    document.getElementById('sc-list').innerHTML = `<div style="text-align:center;color:#d05050;padding:40px 20px;">加载失败:${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderSupCatalogList() {
+  const list = document.getElementById('sc-list');
+  if (!_scCatalog.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">没有产品</div>';
+    return;
+  }
+  list.innerHTML = _scCatalog.map(c => {
+    const key = (c.name || '').toLowerCase().trim() + '|' + (c.italian || '').toLowerCase().trim();
+    const alreadyHave = _scMyKeys.has(key);
+    const selected = _scSelected.has(c.id);
+    const imgHtml = c.image_url
+      ? `<img src="${escapeHtml(c.image_url)}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;" onerror="this.style.display='none'">`
+      : `<div style="width:42px;height:42px;background:#eee;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`;
+    return `
+      <label style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;cursor:${alreadyHave ? 'not-allowed' : 'pointer'};opacity:${alreadyHave ? 0.5 : 1};">
+        <input type="checkbox" ${selected ? 'checked' : ''} ${alreadyHave ? 'disabled' : ''}
+               onchange="toggleScItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">
+            ${escapeHtml(c.name || c.italian || '?')}
+            ${alreadyHave ? '<span style="font-size:11px;color:#16a34a;font-weight:normal;">· 已在库</span>' : ''}
+          </div>
+          <div style="font-size:11px;color:#888;">
+            ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
+            ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
+            ${c.category ? escapeHtml(c.category) : ''}
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#c9a961;flex-shrink:0;">
+          ${c.price ? '€' + parseFloat(c.price).toFixed(2) : ''}
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+function toggleScItem(id) {
+  if (_scSelected.has(id)) _scSelected.delete(id);
+  else _scSelected.add(id);
+  updateScImportBtn();
+}
+
+function updateScImportBtn() {
+  const btn = document.getElementById('sc-import-btn');
+  if (!btn) return;
+  const n = _scSelected.size;
+  btn.disabled = n === 0;
+  btn.textContent = `导入选中 (${n})`;
+}
+
+async function importSupCatalogSelected() {
+  const ids = Array.from(_scSelected);
+  if (!ids.length || !_scCurrentSupplierId) return;
+  const btn = document.getElementById('sc-import-btn');
+  btn.disabled = true;
+  btn.textContent = '导入中...';
+  try {
+    const r = await fetch(SB_URL + '/supplier-catalog/import', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supplier_id: _scCurrentSupplierId, catalog_ids: ids }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '导入失败');
+    let msg = `✓ 导入 ${d.imported} 件`;
+    if (d.skipped) msg += `,跳过 ${d.skipped} 件(已存在)`;
+    toast(msg);
+    closeModal('modal-sup-catalog');
+    // 刷新本地 items 数据
+    await loadAllData();
+    if (currentTab === 'inventory') renderInventory();
+  } catch (e) {
+    toast('导入失败:' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    updateScImportBtn();
   }
 }
 
