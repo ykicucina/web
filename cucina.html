@@ -1755,7 +1755,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.51';
+const APP_VERSION = 'v2.7.52';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8498,7 +8498,7 @@ async function loadSupCatalogItems(supplierId, q) {
   document.getElementById('sc-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">加载中...</div>';
   document.getElementById('sc-info').textContent = '';
   try {
-    const params = new URLSearchParams({ supplier_id: supplierId, limit: 500 });
+    const params = new URLSearchParams({ supplier_id: supplierId, limit: 2000 });
     if (q) params.append('q', q);
     const r = await fetch(SB_URL + '/supplier-catalog/items?' + params, {
       headers: { 'Authorization': 'Bearer ' + SB_KEY }
