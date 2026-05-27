@@ -479,6 +479,32 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
         <div id="me-user-name" style="font-size:15px;font-weight:600;margin-top:4px;"></div>
         <div id="me-user-role" style="font-size:12px;color:var(--text3);margin-top:2px;"></div>
       </div>
+
+      <!-- 目录设置(仅 owner 可见) -->
+      <div class="card" id="me-catalog-settings" style="display:none;">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:8px;">目录设置</div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:500;">📖 目录公开</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">餐厅是否能浏览/导入我们的产品目录</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
+            <input type="checkbox" id="me-cs-public" onchange="onMeCatalogPublicChange()" style="width:18px;height:18px;">
+          </label>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;" id="me-cs-price-row">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:500;">💰 显示价格</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">餐厅能否看到具体价格(关闭则只看产品)</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
+            <input type="checkbox" id="me-cs-price" onchange="onMeCatalogPriceChange()" style="width:18px;height:18px;">
+          </label>
+        </div>
+      </div>
+
       <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="doLogout()">
         <span data-i18n="logout">退出登录</span>
       </button>
@@ -640,7 +666,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.3.1';   // 2026-05-27: 合并视图 90 天限制 + 数据完整性警告
+const APP_VERSION = 'v1.4.0';   // 2026-05-27: 我的页加目录设置(自助开关公开/价格)
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -1574,6 +1600,67 @@ function renderMe() {
   document.getElementById('me-user-role').textContent = CURRENT_USER.role === 'owner' ? t('role_owner') : t('role_staff');
   // 仅 owner 能改公司信息
   document.getElementById('me-edit-btn').style.display = CURRENT_USER.role === 'owner' ? '' : 'none';
+
+  // 目录设置(仅 owner 可见,默认 true)
+  const isOwner = CURRENT_USER.role === 'owner';
+  const settingsCard = document.getElementById('me-catalog-settings');
+  if (settingsCard) {
+    settingsCard.style.display = isOwner ? '' : 'none';
+    if (isOwner) {
+      const cbPublic = document.getElementById('me-cs-public');
+      const cbPrice = document.getElementById('me-cs-price');
+      cbPublic.checked = CURRENT_PROFILE.catalog_public !== false;
+      cbPrice.checked = CURRENT_PROFILE.catalog_show_price !== false;
+      // 公开关了的话,价格开关无意义
+      document.getElementById('me-cs-price-row').style.opacity = cbPublic.checked ? '1' : '0.4';
+      cbPrice.disabled = !cbPublic.checked;
+    }
+  }
+}
+
+async function onMeCatalogPublicChange() {
+  const cb = document.getElementById('me-cs-public');
+  const newVal = cb.checked;
+  if (!confirm(newVal
+    ? '公开目录后,所有餐厅都能在 cucina 里浏览/导入我们的产品。继续吗?'
+    : '设为私有后,餐厅将不能再浏览或导入新产品(已经导入的不影响)。继续吗?')) {
+    cb.checked = !newVal;
+    return;
+  }
+  try {
+    await api('/supplier/profile/catalog-public', {
+      method: 'POST',
+      body: JSON.stringify({ value: newVal }),
+    });
+    CURRENT_PROFILE.catalog_public = newVal;
+    toast('✓ 已' + (newVal ? '公开' : '设为私有'), 'ok');
+    renderMe();
+  } catch (e) {
+    cb.checked = !newVal;
+    toast('操作失败:' + e.message, 'err');
+  }
+}
+
+async function onMeCatalogPriceChange() {
+  const cb = document.getElementById('me-cs-price');
+  const newVal = cb.checked;
+  if (!confirm(newVal
+    ? '显示价格后,餐厅在浏览目录时能看到具体价格。继续吗?'
+    : '隐藏价格后,餐厅看不到具体价格(显示 "—")。已经导入的食材价格不动。继续吗?')) {
+    cb.checked = !newVal;
+    return;
+  }
+  try {
+    await api('/supplier/profile/catalog-show-price', {
+      method: 'POST',
+      body: JSON.stringify({ value: newVal }),
+    });
+    CURRENT_PROFILE.catalog_show_price = newVal;
+    toast('✓ 已' + (newVal ? '显示价格' : '隐藏价格'), 'ok');
+  } catch (e) {
+    cb.checked = !newVal;
+    toast('操作失败:' + e.message, 'err');
+  }
 }
 
 function openProfileEdit() {

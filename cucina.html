@@ -1819,7 +1819,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.59';
+const APP_VERSION = 'v2.7.60';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8501,6 +8501,7 @@ async function importPublicSelected() {
 let _scCatalog = [];      // 当前供应商的目录
 let _scMyKeys = new Set();// 餐厅已有 items 的 name+italian 索引
 let _scSelected = new Set();// 用户勾选的目录 id
+let _scShowPrice = true;  // 当前供应商是否显示价格
 let _scSearchTimer = null;
 let _scCurrentSupplierId = 0;
 
@@ -8571,9 +8572,11 @@ async function loadSupCatalogItems(supplierId, q) {
     if (!r.ok) throw new Error(d.error || '加载失败');
     _scCatalog = d.items || [];
     _scMyKeys = new Set(d.myKeys || []);
+    _scShowPrice = d.show_price !== false;
     renderSupCatalogList();
-    document.getElementById('sc-info').textContent =
-      `${escapeHtml(d.supplier.name)} · ${_scCatalog.length} 件产品${q ? `(搜索: ${escapeHtml(q)})` : ''}`;
+    let info = `${escapeHtml(d.supplier.name)} · ${_scCatalog.length} 件产品${q ? `(搜索: ${escapeHtml(q)})` : ''}`;
+    if (!_scShowPrice) info += ` · <span style="color:#d97706;">🙈 价格已隐藏</span>`;
+    document.getElementById('sc-info').innerHTML = info;
     // 有任何状态产品时显示图例
     const hasStatus = _scCatalog.some(c => c.carpi_status);
     document.getElementById('sc-legend').style.display = hasStatus ? '' : 'none';
@@ -8679,7 +8682,7 @@ function openScDetail(catalogId) {
     ['规格', c.spec],
     ['编码', c.item_code],
     ['分类', c.category],
-    ['价格', c.price ? '€' + parseFloat(c.price).toFixed(2) : ''],
+    ['价格', c.price ? '€' + parseFloat(c.price).toFixed(2) : (_scShowPrice ? '' : '🙈 供应商已隐藏')],
   ].filter(([, v]) => v);
   const fieldsHtml = fields.map(([k, v]) => `
     <div style="display:flex;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">
