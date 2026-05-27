@@ -370,6 +370,20 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
   <div class="wrap">
     <!-- 订单页 -->
     <div id="page-orders" class="page">
+      <!-- 模式切换:按订单看 / 合并视图 -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;padding:4px;background:var(--surface2);border-radius:8px;">
+        <button class="btn" id="om-orders" onclick="setOrderMode('orders')"
+                style="flex:1;border:none;background:var(--primary);color:#fff;font-size:13px;padding:8px;border-radius:6px;">
+          📋 按订单看
+        </button>
+        <button class="btn btn-ghost" id="om-merged" onclick="setOrderMode('merged')"
+                style="flex:1;border:none;font-size:13px;padding:8px;border-radius:6px;">
+          📑 合并视图
+        </button>
+      </div>
+
+      <!-- 按订单模式(原来的内容) -->
+      <div id="order-mode-orders">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <div class="subtab" style="flex:1;margin-bottom:0;min-width:240px;">
           <div class="subtab-item active" data-status="" onclick="setOrderStatusFilter('')">
@@ -399,6 +413,34 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
             <div class="big-icon">👈</div>
             <div data-i18n="select_order_to_view">选择左边一条订单查看详情</div>
           </div>
+        </div>
+      </div>
+      </div><!-- /order-mode-orders -->
+
+      <!-- 合并视图(默认隐藏) -->
+      <div id="order-mode-merged" style="display:none;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+          <select id="mg-status" onchange="loadMergedOrders()"
+                  style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;">
+            <option value="已发送">已发送</option>
+            <option value="已收货">已收货</option>
+          </select>
+          <input type="date" id="mg-from" onchange="loadMergedOrders()"
+                 style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <span style="font-size:12px;color:var(--text-dim);">至</span>
+          <input type="date" id="mg-to" onchange="loadMergedOrders()"
+                 style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <select id="mg-restaurant" onchange="loadMergedOrders()"
+                  style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;">
+            <option value="">所有餐厅</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="setMgDateQuick('today')">今天</button>
+          <button class="btn btn-ghost btn-sm" onclick="setMgDateQuick('week')">本周</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportMergedExcel()" style="margin-left:auto;">📥 导出 Excel</button>
+        </div>
+        <div id="mg-summary" style="font-size:13px;color:var(--text-dim);margin-bottom:8px;"></div>
+        <div id="mg-list">
+          <div class="empty"><div class="big-icon">⏳</div>加载中…</div>
         </div>
       </div>
     </div>
@@ -598,7 +640,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.2.2';   // 2026-05-27: 修复"清空"按钮 ReferenceError
+const APP_VERSION = 'v1.3.0';   // 2026-05-27: 订单合并视图 + Excel 导出
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -930,6 +972,188 @@ function switchPage(page) {
   if (page === 'orders') loadOrders();
   else if (page === 'catalog') loadCatalog();
   else if (page === 'me') loadProfile();
+}
+
+// ============================================================
+// ============================================================
+// v1.3.0: 订单合并视图(供应商按日期+餐厅聚合)
+// ============================================================
+let _orderMode = 'orders';
+let _mergedRows = [];
+
+function setOrderMode(mode) {
+  _orderMode = mode;
+  const btnO = document.getElementById('om-orders');
+  const btnM = document.getElementById('om-merged');
+  const paneO = document.getElementById('order-mode-orders');
+  const paneM = document.getElementById('order-mode-merged');
+  if (mode === 'merged') {
+    btnO.className = 'btn btn-ghost';
+    btnO.style.cssText = 'flex:1;border:none;font-size:13px;padding:8px;border-radius:6px;';
+    btnM.className = 'btn';
+    btnM.style.cssText = 'flex:1;border:none;background:var(--primary);color:#fff;font-size:13px;padding:8px;border-radius:6px;';
+    paneO.style.display = 'none';
+    paneM.style.display = '';
+    // 默认填今天 + 加载
+    const today = new Date().toISOString().slice(0, 10);
+    if (!document.getElementById('mg-from').value) document.getElementById('mg-from').value = today;
+    if (!document.getElementById('mg-to').value) document.getElementById('mg-to').value = today;
+    loadMergedOrders();
+  } else {
+    btnO.className = 'btn';
+    btnO.style.cssText = 'flex:1;border:none;background:var(--primary);color:#fff;font-size:13px;padding:8px;border-radius:6px;';
+    btnM.className = 'btn btn-ghost';
+    btnM.style.cssText = 'flex:1;border:none;font-size:13px;padding:8px;border-radius:6px;';
+    paneO.style.display = '';
+    paneM.style.display = 'none';
+  }
+}
+
+function setMgDateQuick(type) {
+  const today = new Date();
+  const isoToday = today.toISOString().slice(0, 10);
+  if (type === 'today') {
+    document.getElementById('mg-from').value = isoToday;
+    document.getElementById('mg-to').value = isoToday;
+  } else if (type === 'week') {
+    const dow = today.getDay() || 7;   // 周一=1, 周日=7
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - (dow - 1));
+    document.getElementById('mg-from').value = mon.toISOString().slice(0, 10);
+    document.getElementById('mg-to').value = isoToday;
+  }
+  loadMergedOrders();
+}
+
+async function loadMergedOrders() {
+  const status = document.getElementById('mg-status').value;
+  const from = document.getElementById('mg-from').value;
+  const to = document.getElementById('mg-to').value;
+  const rid = document.getElementById('mg-restaurant').value;
+  if (!from || !to) {
+    document.getElementById('mg-list').innerHTML = '<div class="empty">请先选时间范围</div>';
+    return;
+  }
+  const listEl = document.getElementById('mg-list');
+  listEl.innerHTML = '<div class="empty"><div class="big-icon">⏳</div>加载中…</div>';
+  document.getElementById('mg-summary').textContent = '';
+  try {
+    const params = new URLSearchParams({ status, from, to });
+    if (rid) params.set('restaurant_id', rid);
+    const d = await api('/supplier/orders/merged?' + params);
+    _mergedRows = d.rows || [];
+
+    // 填充餐厅下拉(基于本次结果 + 已有)
+    const sel = document.getElementById('mg-restaurant');
+    const existed = new Set(Array.from(sel.options).map(o => o.value));
+    for (const r of (d.restaurants || [])) {
+      if (!existed.has(r)) {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        sel.appendChild(opt);
+      }
+    }
+
+    document.getElementById('mg-summary').innerHTML =
+      `<b>${d.total_products}</b> 种产品 · ${d.total_orders} 条订单 · ${d.restaurants.length} 家餐厅 · ${from}${from !== to ? ' 至 ' + to : ''}`;
+
+    renderMergedList();
+  } catch (e) {
+    listEl.innerHTML = `<div class="empty" style="color:var(--danger);">加载失败:${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderMergedList() {
+  const listEl = document.getElementById('mg-list');
+  if (!_mergedRows.length) {
+    listEl.innerHTML = '<div class="empty"><div class="big-icon">📭</div>这段时间没有订单</div>';
+    return;
+  }
+  // 按餐厅分组渲染
+  const groups = {};
+  for (const r of _mergedRows) {
+    if (!groups[r.restaurant_id]) groups[r.restaurant_id] = [];
+    groups[r.restaurant_id].push(r);
+  }
+  let html = '';
+  for (const [rid, rows] of Object.entries(groups)) {
+    html += `<div style="margin-bottom:16px;">
+      <div style="font-weight:600;font-size:14px;padding:8px;background:var(--primary);color:#fff;border-radius:6px 6px 0 0;">
+        🏪 ${escapeHtml(rid)} · ${rows.length} 种产品
+      </div>
+      <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:var(--surface2);">
+              <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">产品</th>
+              <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">规格</th>
+              <th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;">数量</th>
+              <th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;">订单数</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid #f0f0f0;">
+                  <div style="font-weight:600;">${escapeHtml(r.name || r.italian || '?')}</div>
+                  ${r.italian && r.name ? `<div style="font-size:11px;color:var(--text-dim);">${escapeHtml(r.italian)}</div>` : ''}
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #f0f0f0;color:var(--text-dim);">${escapeHtml(r.spec || '')}</td>
+                <td style="padding:8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:15px;color:var(--primary);white-space:nowrap;">${r.total}</td>
+                <td style="padding:8px;border-bottom:1px solid #f0f0f0;text-align:right;color:var(--text-dim);">${r.order_count}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+  listEl.innerHTML = html;
+}
+
+function exportMergedExcel() {
+  if (!_mergedRows.length) {
+    toast('没有数据可导出', 'err');
+    return;
+  }
+  if (typeof XLSX === 'undefined') {
+    toast('Excel 库未加载,请刷新页面', 'err');
+    return;
+  }
+  const status = document.getElementById('mg-status').value;
+  const from = document.getElementById('mg-from').value;
+  const to = document.getElementById('mg-to').value;
+
+  const wb = XLSX.utils.book_new();
+  // 按餐厅分组,每个餐厅一个 sheet
+  const groups = {};
+  for (const r of _mergedRows) {
+    if (!groups[r.restaurant_id]) groups[r.restaurant_id] = [];
+    groups[r.restaurant_id].push(r);
+  }
+  for (const [rid, rows] of Object.entries(groups)) {
+    const data = [
+      ['产品(中文)', '意语', '规格', '编码', '分类', '总数量', '订单数'],
+      ...rows.map(r => [
+        r.name || '',
+        r.italian || '',
+        r.spec || '',
+        r.item_code || '',
+        r.category || '',
+        r.total,
+        r.order_count,
+      ]),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    // 列宽
+    ws['!cols'] = [{ wch: 22 }, { wch: 30 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 8 }];
+    XLSX.utils.book_append_sheet(wb, ws, rid.substring(0, 30));
+  }
+
+  const fname = `${CURRENT_SUPPLIER ? CURRENT_SUPPLIER.name : 'supplier'}-${status}-${from}${from !== to ? '_to_' + to : ''}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  toast('✓ 已导出', 'ok');
 }
 
 // ============================================================
