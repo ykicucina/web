@@ -1755,7 +1755,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.50';
+const APP_VERSION = 'v2.7.51';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8241,7 +8241,7 @@ async function saveNewItem() {
     stock:document.getElementById('ni-stock').value||'0',
     safety:document.getElementById('ni-safety').value||'1',
     chef:document.getElementById('ni-chef').value,
-    departments:['厨房'], cycle:['星期一']
+    departments:['厨房'], cycle:['星期日']
   };
   try {
     const r=await sb('cucina_items',{method:'POST',prefer:'return=representation',body:JSON.stringify(newItem)});
@@ -9836,10 +9836,10 @@ async function handleImport(input) {
       // 解析订货周期：1,2,3 → ['星期一','星期二','星期三']
       const dayNames=['','星期一','星期二','星期三','星期四','星期五','星期六','星期日'];
       const cycleRaw=r[12]!==undefined?String(r[12]).trim():'';
-      let cycle=['星期一'];
+      let cycle=['星期日'];
       if(cycleRaw){
         cycle=cycleRaw.split(/[,，\s]+/).map(n=>parseInt(n.trim())).filter(n=>n>=1&&n<=7).map(n=>dayNames[n]);
-        if(!cycle.length) cycle=['星期一'];
+        if(!cycle.length) cycle=['星期日'];
       }
       const maxOrder = r[9]!==undefined&&r[9]!==''?parseFloat(r[9])||null:null;
       pendingImport.push({
