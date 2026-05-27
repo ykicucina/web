@@ -1335,41 +1335,13 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- ⚠️ 浏览供应商目录:已有对应,引导绑定 -->
-<div class="modal-overlay" id="modal-sc-existing" style="z-index:2000;">
-  <div class="modal">
+<!-- 浏览供应商目录:产品详情(点卡片打开) -->
+<div class="modal-overlay" id="modal-sc-detail" style="z-index:2000;">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:8px;">⚠️ 食材库里似乎已经有了</div>
-
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-bottom:10px;">
-      <div style="font-size:11px;color:#888;margin-bottom:2px;">供应商目录</div>
-      <div style="font-size:14px;font-weight:600;" id="sce-supplier-name">—</div>
-      <div style="font-size:11px;color:#666;" id="sce-supplier-sub">—</div>
-    </div>
-
-    <div style="text-align:center;color:#888;font-size:14px;margin:6px 0;">↕</div>
-
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:10px;">
-      <div style="font-size:11px;color:#888;margin-bottom:2px;">
-        我的食材库 <span id="sce-status-label" style="color:#d97706;font-weight:600;"></span>
-      </div>
-      <div style="font-size:14px;font-weight:600;" id="sce-my-name">—</div>
-    </div>
-
-    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;text-align:center;line-height:1.5;">
-      推荐<b>"绑定到现有"</b>:同步价格 + 以后用同一条记录管理。<br>
-      或者你确实需要新增一条,选"导入为新食材"。
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-primary" onclick="bindExistingItem()">
-        🔗 绑定到现有(并同步价格)
-      </button>
-      <button class="btn btn-ghost" onclick="forceImportNew()">
-        ➕ 导入为新食材(重复记录)
-      </button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-sc-existing')">取消</button>
-    </div>
+    <div class="modal-title" style="margin-bottom:8px;flex-shrink:0;">📦 产品详情</div>
+    <div id="scd-body" style="flex:1;overflow-y:auto;padding:0 4px;"></div>
+    <div id="scd-actions" style="display:flex;gap:8px;margin-top:12px;flex-shrink:0;"></div>
   </div>
 </div>
 
@@ -1847,7 +1819,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.57';
+const APP_VERSION = 'v2.7.58';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8648,45 +8620,110 @@ function renderSupCatalogList() {
     return `
       <div data-sc-id="${c.id}" style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;background:${bgColor};opacity:${isBound ? 0.7 : 1};">
         <input type="checkbox" ${selected ? 'checked' : ''} ${isBound ? 'disabled' : ''}
-               onchange="toggleScItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
-        ${imgHtml}
-        <div style="flex:1;min-width:0;cursor:${hasExisting && !isBound ? 'pointer' : 'default'};"
-             ${hasExisting && !isBound ? `onclick="onScExistingClick(${c.id})"` : ''}>
-          <div style="font-size:13px;font-weight:600;display:flex;align-items:center;flex-wrap:wrap;">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">
-              ${escapeHtml(c.name || c.italian || '?')}
-            </span>
-            ${badge}
+               onchange="event.stopPropagation();toggleScItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
+        <div style="flex:1;min-width:0;display:flex;gap:10px;align-items:center;cursor:pointer;"
+             onclick="openScDetail(${c.id})">
+          ${imgHtml}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;display:flex;align-items:center;flex-wrap:wrap;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">
+                ${escapeHtml(c.name || c.italian || '?')}
+              </span>
+              ${badge}
+            </div>
+            <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              ${c.italian ? escapeHtml(c.italian) : ''}${c.spec ? (c.italian ? ' · ' : '') + escapeHtml(c.spec) : ''}
+            </div>
+            ${carpiInfo}
           </div>
-          <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-            ${c.italian ? escapeHtml(c.italian) : ''}${c.spec ? (c.italian ? ' · ' : '') + escapeHtml(c.spec) : ''}
+          <div style="font-size:13px;font-weight:600;color:#c9a961;flex-shrink:0;white-space:nowrap;">
+            ${c.price ? '€' + parseFloat(c.price).toFixed(2) : ''}
           </div>
-          ${carpiInfo}
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#c9a961;flex-shrink:0;">
-          ${c.price ? '€' + parseFloat(c.price).toFixed(2) : ''}
         </div>
       </div>
     `;
   }).join('');
 }
 
-// 点击"已有对应"产品 → 弹对话框
-function onScExistingClick(catalogId) {
+// 点击详情按钮 → 打开详情弹窗
+function openScDetail(catalogId) {
   const c = _scCatalog.find(x => x.id === catalogId);
   if (!c) return;
-  if (c.carpi_status === 'bound') return;  // 已绑定,无需操作
+  _scExistingTarget = c;  // 复用同一个变量,用于"绑定/导入"按钮
 
-  _scExistingTarget = c;
-  document.getElementById('sce-supplier-name').textContent = c.name || c.italian || '?';
-  document.getElementById('sce-supplier-sub').textContent =
-    `${c.italian || ''} · ${c.spec || ''} · €${(parseFloat(c.price) || 0).toFixed(2)}`;
-  document.getElementById('sce-my-name').textContent = c.carpi_item_name || '?';
-  document.getElementById('sce-status-label').textContent =
-    c.carpi_status === 'same_name' ? '📝 同名(完全匹配)'
-    : c.carpi_status === 'fuzzy' ? `🔍 可能是同一个(评分 ${c.carpi_fuzzy_score})`
+  // 状态文字
+  let statusHtml = '';
+  if (c.carpi_status === 'bound') {
+    statusHtml = `<div style="background:#dcfce7;color:#16a34a;padding:8px;border-radius:6px;font-size:12px;margin-bottom:10px;">
+      🔗 <b>已绑定</b> · 对应:${escapeHtml(c.carpi_item_name || '?')}
+    </div>`;
+  } else if (c.carpi_status === 'same_name') {
+    statusHtml = `<div style="background:#fef3c7;color:#d97706;padding:8px;border-radius:6px;font-size:12px;margin-bottom:10px;">
+      📝 <b>同名已存在</b> · 对应:${escapeHtml(c.carpi_item_name || '?')}
+    </div>`;
+  } else if (c.carpi_status === 'fuzzy') {
+    statusHtml = `<div style="background:#e0e7ff;color:#4f46e5;padding:8px;border-radius:6px;font-size:12px;margin-bottom:10px;">
+      🔍 <b>可能已存在</b>(评分 ${c.carpi_fuzzy_score}) · 对应:${escapeHtml(c.carpi_item_name || '?')}
+    </div>`;
+  }
+
+  // 图片
+  const imgBlock = c.image_url
+    ? `<img src="${escapeHtml(c.image_url)}" style="width:100%;max-height:240px;object-fit:contain;background:#f5f5f5;border-radius:8px;margin-bottom:12px;" onerror="this.style.display='none'">`
     : '';
-  openModal('modal-sc-existing');
+
+  // 字段表
+  const fields = [
+    ['中文名', c.name],
+    ['意语名', c.italian],
+    ['规格', c.spec],
+    ['编码', c.item_code],
+    ['分类', c.category],
+    ['价格', c.price ? '€' + parseFloat(c.price).toFixed(2) : ''],
+  ].filter(([, v]) => v);
+  const fieldsHtml = fields.map(([k, v]) => `
+    <div style="display:flex;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">
+      <div style="width:80px;color:#888;flex-shrink:0;">${k}</div>
+      <div style="flex:1;color:#333;font-weight:500;word-break:break-word;">${escapeHtml(String(v))}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('scd-body').innerHTML = statusHtml + imgBlock + fieldsHtml;
+
+  // 操作按钮区:根据状态变化
+  let actionsHtml = '';
+  if (c.carpi_status === 'bound') {
+    actionsHtml = `<button class="btn btn-ghost" onclick="closeModal('modal-sc-detail')" style="flex:1;">关闭</button>`;
+  } else if (c.carpi_status === 'same_name' || c.carpi_status === 'fuzzy') {
+    actionsHtml = `
+      <button class="btn btn-primary" onclick="bindExistingItem()" style="flex:1;">🔗 绑定到现有</button>
+      <button class="btn btn-ghost" onclick="forceImportNew()" style="flex:1;">➕ 仍要新建</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-sc-detail')" style="flex:1;">关闭</button>
+    `;
+  } else {
+    // 全新产品 → 加入选中
+    const selected = _scSelected.has(c.id);
+    actionsHtml = `
+      <button class="btn btn-primary" onclick="toggleScSelectFromDetail(${c.id});closeModal('modal-sc-detail');" style="flex:2;">
+        ${selected ? '☑ 取消选中' : '☐ 选中导入'}
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-sc-detail')" style="flex:1;">关闭</button>
+    `;
+  }
+  document.getElementById('scd-actions').innerHTML = actionsHtml;
+
+  openModal('modal-sc-detail');
+}
+
+function toggleScSelectFromDetail(id) {
+  toggleScItem(id);
+  // 重新渲染列表反映勾选状态
+  renderSupCatalogList();
+}
+
+// 已废弃:旧的"点击已有产品 → 简化弹窗",现在统一走 openScDetail
+function onScExistingClick(catalogId) {
+  openScDetail(catalogId);
 }
 
 let _scExistingTarget = null;
@@ -8706,10 +8743,10 @@ async function bindExistingItem() {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || '绑定失败');
     toast(`✓ 已绑定到「${c.carpi_item_name}」(并同步价格)`);
-    closeModal('modal-sc-existing');
+    closeModal('modal-sc-detail');
     // 重新加载列表反映状态
     if (_scCurrentSupplierId) await loadSupCatalogItems(_scCurrentSupplierId,
-      document.getElementById('sc-search') ? document.getElementById('sc-search').value : '');
+      document.getElementById('sc-search-input') ? document.getElementById('sc-search-input').value : '');
   } catch (e) {
     toast('绑定失败:' + e.message, 'err');
   }
@@ -8720,7 +8757,7 @@ function forceImportNew() {
   // 强行导入:加入选中集合,关闭对话框,提醒用户去点"导入选中"
   _scSelected.add(_scExistingTarget.id);
   updateScImportBtn();
-  closeModal('modal-sc-existing');
+  closeModal('modal-sc-detail');
   toast('已加入选中,记得点底部"导入选中"按钮');
   renderSupCatalogList();
 }
