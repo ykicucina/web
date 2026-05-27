@@ -1307,6 +1307,28 @@ function ridPickerGo() {
   </div>
 </div>
 
+<!-- 🔍 找对应(子 modal,叠在同步价格上) -->
+<div class="modal-overlay" id="modal-find-match" style="z-index:2000;">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div style="padding:0 4px;flex-shrink:0;">
+      <div class="modal-title" style="margin-bottom:4px;">🔍 找对应产品</div>
+      <div style="font-size:13px;color:var(--text2);">
+        我的食材:<b id="fm-item-title">—</b>
+      </div>
+      <div id="fm-item-sub" style="font-size:11px;color:var(--text-dim);margin-bottom:8px;"></div>
+      <input id="fm-search" type="search" placeholder="自定义关键词搜索(中文/意语/编码)"
+             oninput="onFmSearchInput()"
+             style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:8px;">
+    </div>
+    <div id="fm-list" style="flex:1;overflow-y:auto;min-height:200px;border:1px solid var(--border);border-radius:8px;background:#fafafa;">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-find-match')" style="flex:1;">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- 修改管理员密码Modal -->
 <div class="modal-overlay" id="modal-change-admin-pass">
   <div class="modal">
@@ -1781,7 +1803,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.53';
+const APP_VERSION = 'v2.7.54';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8625,10 +8647,14 @@ async function importSupCatalogSelected() {
 // v2.7.53: 同步供应商价格
 // ============================================================
 let _spChanged = [];      // 价格变了的列表
+let _spNotInCatalog = []; // v2.1.0: 未匹配的列表(可手动找)
+let _spManualMatches = new Map();  // v2.1.0: itemId -> {catalog_id, new_price, name}
 let _spSelected = new Set();// 用户勾选的 item id
 
 async function showSyncPricesModal() {
   _spChanged = [];
+  _spNotInCatalog = [];
+  _spManualMatches = new Map();  // item_id -> {catalog_id, new_price, name}
   _spSelected.clear();
   document.getElementById('sp-summary').textContent = '';
   document.getElementById('sp-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">⏳ 正在扫描差异...</div>';
@@ -8643,13 +8669,14 @@ async function showSyncPricesModal() {
     if (!r.ok) throw new Error(d.error || '查询失败');
 
     _spChanged = d.changed || [];
-    // 默认全选(用户可以反选不想更新的)
+    _spNotInCatalog = d.not_in_catalog || [];
+    // 默认全选已识别的变化
     for (const c of _spChanged) _spSelected.add(c.id);
 
     const summary = `共 ${d.total} 件食材 · ` +
       `<b style="color:#dc2626;">${_spChanged.length} 件价格变了</b> · ` +
       `<span style="color:#16a34a;">${(d.same || []).length} 件无变化</span> · ` +
-      `<span style="color:#888;">${(d.not_in_catalog || []).length} 件目录里没有</span>` +
+      `<b style="color:#d97706;">${_spNotInCatalog.length} 件未匹配(可手动找)</b>` +
       (d.no_supplier_match ? ` · <span style="color:#888;">${d.no_supplier_match} 件 supplier 未对应公司</span>` : '');
     document.getElementById('sp-summary').innerHTML = summary;
 
@@ -8662,61 +8689,125 @@ async function showSyncPricesModal() {
 
 function renderSpList() {
   const list = document.getElementById('sp-list');
-  if (!_spChanged.length) {
+  const totalChanges = _spChanged.length + _spManualMatches.size;
+  if (!totalChanges && !_spNotInCatalog.length) {
     list.innerHTML = '<div style="text-align:center;color:#16a34a;padding:40px 20px;font-size:14px;">✅ 所有食材价格都跟供应商目录一致,没什么要更新的</div>';
     return;
   }
 
-  list.innerHTML = `
-    <div style="padding:8px;border-bottom:1px solid #eee;background:#fff;">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="sp-select-all" onchange="toggleAllSp(this.checked)"
-               ${_spSelected.size === _spChanged.length ? 'checked' : ''} style="width:16px;height:16px;">
-        全选/全不选
-      </label>
-    </div>
-  ` + _spChanged.map(c => {
-    const selected = _spSelected.has(c.id);
-    const isUp = c.diff > 0;
-    const diffStr = (c.diff > 0 ? '+' : '') + c.diff.toFixed(2);
-    return `
-      <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;">
-        <input type="checkbox" ${selected ? 'checked' : ''}
-               onchange="toggleSpItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">
-            ${escapeHtml(c.name || c.italian || '?')}
-          </div>
-          <div style="font-size:11px;color:#888;">
-            ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
-            ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
-            供应商: ${escapeHtml(c.supplier)}
-          </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:11px;color:#888;text-decoration:line-through;">€${c.my_price.toFixed(2)}</div>
-          <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${c.new_price.toFixed(2)}</div>
-          <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diffStr})</div>
-        </div>
-      </label>
+  let html = '';
+
+  // 已识别价格变化部分
+  if (_spChanged.length) {
+    html += `
+      <div style="padding:10px 8px 6px;background:#fff5f5;border-bottom:1px solid #fecaca;">
+        <div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px;">📊 价格变化 (${_spChanged.length})</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+          <input type="checkbox" id="sp-select-all" onchange="toggleAllSp(this.checked)"
+                 ${_spChanged.every(c => _spSelected.has(c.id)) ? 'checked' : ''} style="width:14px;height:14px;">
+          全选这一组
+        </label>
+      </div>
     `;
-  }).join('');
+    html += _spChanged.map(c => {
+      const selected = _spSelected.has(c.id);
+      const isUp = c.diff > 0;
+      const diffStr = (c.diff > 0 ? '+' : '') + c.diff.toFixed(2);
+      const boundIcon = c.bound ? ' 🔗' : '';
+      return `
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;">
+          <input type="checkbox" ${selected ? 'checked' : ''}
+                 onchange="toggleSpItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">
+              ${escapeHtml(c.name || c.italian || '?')}${boundIcon}
+            </div>
+            <div style="font-size:11px;color:#888;">
+              ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
+              ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
+              供应商: ${escapeHtml(c.supplier)}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:11px;color:#888;text-decoration:line-through;">€${c.my_price.toFixed(2)}</div>
+            <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${c.new_price.toFixed(2)}</div>
+            <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diffStr})</div>
+          </div>
+        </label>
+      `;
+    }).join('');
+  }
+
+  // 未匹配部分(每行一个"找对应"按钮)
+  if (_spNotInCatalog.length) {
+    html += `
+      <div style="padding:10px 8px 6px;background:#fffbeb;border-bottom:1px solid #fde68a;margin-top:8px;">
+        <div style="font-size:12px;font-weight:600;color:#d97706;margin-bottom:4px;">🔍 未自动匹配 (${_spNotInCatalog.length})</div>
+        <div style="font-size:11px;color:#888;">这些食材在供应商目录里没找到同名产品,点"找对应"手动选择</div>
+      </div>
+    `;
+    html += _spNotInCatalog.map(n => {
+      const matched = _spManualMatches.get(n.id);
+      if (matched) {
+        const isUp = (matched.new_price - n.my_price) > 0;
+        const diff = (matched.new_price - n.my_price).toFixed(2);
+        const selected = _spSelected.has(n.id);
+        return `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#f0fdf4;">
+            <input type="checkbox" ${selected ? 'checked' : ''}
+                   onchange="toggleSpItem(${n.id})" style="flex-shrink:0;width:18px;height:18px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;">
+                ${escapeHtml(n.name || n.italian || '?')}
+              </div>
+              <div style="font-size:11px;color:#888;">
+                ↓ 已对应到: <b style="color:#16a34a;">${escapeHtml(matched.name)}</b>
+                <a href="#" onclick="event.preventDefault();_spManualMatches.delete(${n.id});_spSelected.delete(${n.id});renderSpList();updateSpApplyBtn();" style="margin-left:6px;color:#dc2626;font-size:11px;">[取消]</a>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:11px;color:#888;text-decoration:line-through;">€${n.my_price.toFixed(2)}</div>
+              <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${matched.new_price.toFixed(2)}</div>
+              <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diff > 0 ? '+' : ''}${diff})</div>
+            </div>
+          </label>
+        `;
+      }
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;background:#fff;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">
+              ${escapeHtml(n.name || n.italian || '?')}
+            </div>
+            <div style="font-size:11px;color:#888;">
+              ${n.italian ? escapeHtml(n.italian) + ' · ' : ''}
+              ${n.spec ? escapeHtml(n.spec) + ' · ' : ''}
+              供应商: ${escapeHtml(n.supplier)} · 当前 €${n.my_price.toFixed(2)}
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;flex-shrink:0;"
+                  onclick="openFindMatch(${n.id})">🔍 找对应</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  list.innerHTML = html;
 }
 
 function toggleSpItem(id) {
   if (_spSelected.has(id)) _spSelected.delete(id);
   else _spSelected.add(id);
   updateSpApplyBtn();
-  // 同步全选 checkbox
   const sa = document.getElementById('sp-select-all');
-  if (sa) sa.checked = _spSelected.size === _spChanged.length;
+  if (sa) sa.checked = _spChanged.every(c => _spSelected.has(c.id));
 }
 
 function toggleAllSp(checked) {
   if (checked) {
     for (const c of _spChanged) _spSelected.add(c.id);
   } else {
-    _spSelected.clear();
+    for (const c of _spChanged) _spSelected.delete(c.id);
   }
   renderSpList();
   updateSpApplyBtn();
@@ -8730,13 +8821,108 @@ function updateSpApplyBtn() {
   btn.textContent = `更新选中 (${n})`;
 }
 
+// 手动找对应 — 弹个子 modal
+async function openFindMatch(itemId) {
+  const item = _spNotInCatalog.find(n => n.id === itemId);
+  if (!item) return;
+  _fmCurrentItem = item;
+  document.getElementById('fm-item-title').textContent = item.name || item.italian || '?';
+  document.getElementById('fm-item-sub').textContent =
+    `${item.italian || ''} · ${item.spec || ''} · 当前 €${item.my_price.toFixed(2)}`;
+  document.getElementById('fm-search').value = '';
+  document.getElementById('fm-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">⏳ 加载候选...</div>';
+  openModal('modal-find-match');
+  await loadFindMatchCandidates();
+}
+
+let _fmCurrentItem = null;
+let _fmSearchTimer = null;
+
+function onFmSearchInput() {
+  clearTimeout(_fmSearchTimer);
+  _fmSearchTimer = setTimeout(loadFindMatchCandidates, 300);
+}
+
+async function loadFindMatchCandidates() {
+  if (!_fmCurrentItem) return;
+  const q = document.getElementById('fm-search').value.trim();
+  document.getElementById('fm-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">⏳ 搜索中...</div>';
+  try {
+    const params = new URLSearchParams({
+      supplier_id: _fmCurrentItem.supplier_id,
+      name: _fmCurrentItem.name || '',
+      italian: _fmCurrentItem.italian || '',
+    });
+    if (q) params.set('q', q);
+    const r = await fetch(SB_URL + '/supplier-catalog/find-match?' + params, {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '搜索失败');
+    renderFmCandidates(d.candidates || []);
+  } catch (e) {
+    document.getElementById('fm-list').innerHTML = `<div style="text-align:center;color:#d05050;padding:30px;">搜索失败:${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderFmCandidates(list) {
+  if (!list.length) {
+    document.getElementById('fm-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">没有候选,试试在上面输入关键词搜索</div>';
+    return;
+  }
+  document.getElementById('fm-list').innerHTML = list.map(c => `
+    <div style="padding:10px 8px;border-bottom:1px solid #eee;background:#fff;display:flex;gap:10px;align-items:center;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">
+          ${escapeHtml(c.name || c.italian || '?')}
+          <span style="font-size:10px;color:#888;font-weight:normal;">(匹配度 ${c._score})</span>
+        </div>
+        <div style="font-size:11px;color:#888;">
+          ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
+          ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
+          ${c.item_code ? '#' + escapeHtml(c.item_code) : ''}
+        </div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:#c9a961;flex-shrink:0;">
+        €${(parseFloat(c.price) || 0).toFixed(2)}
+      </div>
+      <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;flex-shrink:0;"
+              onclick="confirmFmMatch(${c.id}, ${parseFloat(c.price) || 0}, '${escapeHtml((c.name || c.italian || '').replace(/'/g, "\\'"))}')">
+        选这个
+      </button>
+    </div>
+  `).join('');
+}
+
+function confirmFmMatch(catalogId, price, name) {
+  if (!_fmCurrentItem) return;
+  _spManualMatches.set(_fmCurrentItem.id, {
+    catalog_id: catalogId,
+    new_price: price,
+    name: name,
+  });
+  _spSelected.add(_fmCurrentItem.id);
+  closeModal('modal-find-match');
+  renderSpList();
+  updateSpApplyBtn();
+}
+
 async function applySyncPrices() {
-  const updates = _spChanged
-    .filter(c => _spSelected.has(c.id))
-    .map(c => ({ id: c.id, price: c.new_price }));
+  // 合并两个来源:已识别的变化 + 手动匹配的
+  const updates = [];
+  for (const c of _spChanged) {
+    if (_spSelected.has(c.id)) {
+      updates.push({ id: c.id, price: c.new_price, catalog_id: c.catalog_id });
+    }
+  }
+  for (const [itemId, m] of _spManualMatches.entries()) {
+    if (_spSelected.has(itemId)) {
+      updates.push({ id: itemId, price: m.new_price, catalog_id: m.catalog_id });
+    }
+  }
   if (!updates.length) return;
 
-  if (!confirm(`确定要更新 ${updates.length} 件食材的价格吗?\n\n更新后,之后下单生成的订单都会用新价格(已有订单不变)。`)) return;
+  if (!confirm(`确定要更新 ${updates.length} 件食材的价格吗?\n\n手动匹配的会同时建立绑定,以后同步更准确。`)) return;
 
   const btn = document.getElementById('sp-apply-btn');
   btn.disabled = true;
