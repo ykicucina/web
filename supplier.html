@@ -450,6 +450,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
       <div class="catalog-search">
         <input id="catalog-search-input" type="text" placeholder="搜索产品名…" oninput="renderCatalog()">
         <button class="btn btn-ghost btn-sm" onclick="openImportDialog()" data-i18n="import_excel">📥 导入</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBatchImageModal()" data-i18n="batch_image">📷 图片</button>
         <button class="btn btn-ghost btn-sm" id="catalog-clear-all-btn" onclick="confirmClearCatalog()" style="color:#dc2626;" data-i18n="clear_all">🗑️ 清空</button>
       </div>
       <div id="catalog-list">
@@ -583,9 +584,19 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
     <label class="field-label" data-i18n="prod_code">货号 (可选)</label>
     <input id="ce-item-code" type="text">
 
-    <label class="field-label" data-i18n="prod_image">图片 URL (可选)</label>
-    <input id="ce-image-url" type="text" placeholder="https://...">
-
+    <label class="field-label" data-i18n="prod_image">图片</label>
+    <div id="ce-img-preview" style="margin-bottom:8px;min-height:24px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <label class="btn btn-ghost btn-sm" style="flex:1;cursor:pointer;text-align:center;">
+        <span id="ce-img-btn-text">📷 <span data-i18n="upload_image">上传图片</span></span>
+        <input type="file" accept="image/*" id="ce-img-input" onchange="uploadCatalogImage(this)" style="display:none;">
+      </label>
+      <button type="button" class="btn btn-ghost btn-sm" id="ce-img-del-btn" onclick="deleteCatalogImage()" style="display:none;color:#dc2626;" data-i18n="delete_image">🗑️ 删图</button>
+    </div>
+    <details style="margin-bottom:8px;">
+      <summary style="font-size:11px;color:var(--text3);cursor:pointer;" data-i18n="or_use_url">或粘贴图片 URL</summary>
+      <input id="ce-image-url" type="text" placeholder="https://..." style="margin-top:6px;">
+    </details>
     <label style="display:flex;align-items:center;gap:6px;margin-top:12px;cursor:pointer;">
       <input type="checkbox" id="ce-available" checked style="width:auto;">
       <span data-i18n="prod_available">在售</span>
@@ -635,6 +646,53 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
   </div>
 </div>
 
+<!-- ============= 批量上传图片 Modal ============= -->
+<div class="modal-overlay" id="modal-batch-image">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-i18n="batch_image_title">📷 批量上传图片</div>
+
+    <!-- Step 1: 选文件 -->
+    <div id="batch-img-step1">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px;">
+        <span data-i18n="batch_img_help">选一堆图,系统自动按<strong>文件名</strong>匹配产品:</span><br>
+        <span style="font-size:12px;color:var(--text3);">
+          • <span data-i18n="batch_img_match">货号 / 中文名 / 意大利文名(精确)</span><br>
+          • <span data-i18n="batch_img_example">例如:<code>HD001.jpg</code>、<code>茄子.jpg</code>、<code>Melanzana.png</code></span>
+        </span>
+      </div>
+      <label class="btn btn-primary btn-block" style="cursor:pointer;text-align:center;">
+        📁 <span data-i18n="batch_img_pick">选择图片(可多选)</span>
+        <input type="file" id="batch-img-input" accept="image/*" multiple onchange="handleBatchImages(this)" style="display:none;">
+      </label>
+    </div>
+
+    <!-- Step 2: 预览 + 上传 -->
+    <div id="batch-img-step2" style="display:none;">
+      <div id="batch-img-summary" style="background:var(--bg2);padding:12px;border-radius:8px;font-size:13px;line-height:1.7;margin-bottom:10px;"></div>
+      <div id="batch-img-unmatched-wrap" style="display:none;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;" data-i18n="batch_img_unmatched">未匹配的文件:</div>
+        <div id="batch-img-unmatched-list" style="font-size:11px;color:var(--text2);background:#fff5f5;padding:8px;border-radius:6px;max-height:120px;overflow-y:auto;border:1px solid #fecaca;"></div>
+      </div>
+
+      <div id="batch-img-progress-wrap" style="display:none;margin:10px 0;">
+        <div style="height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;">
+          <div id="batch-img-progress-bar" style="height:100%;background:linear-gradient(90deg,#c9a961,#b3924c);transition:width 0.3s;width:0%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-top:4px;">
+          <span id="batch-img-progress-txt">—</span>
+          <span id="batch-img-progress-pct">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-batch-image')" data-i18n="close">关闭</button>
+      <button class="btn btn-primary" id="batch-img-upload-btn" onclick="performBatchImageUpload()" style="display:none;">✓ 开始上传</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============= 编辑公司信息 Modal ============= -->
 <div class="modal-overlay" id="modal-profile-edit">
   <div class="modal">
@@ -666,11 +724,13 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.4.1';   // 2026-05-27: 记住供应商代号 + 修登录框 autocomplete 误推 email
+const APP_VERSION = 'v1.5.0';   // 2026-05-27: 一键上传图片(单张+批量,owner/staff 均可)
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
 const LAST_SUPPLIER_KEY = 'yki_last_supplier_code';
+const IMG_MAX_SIZE = 250;        // 图片最大边长(像素)
+const IMG_QUALITY = 0.50;        // 压缩质量
 
 let TOKEN = '';
 let CURRENT_USER = null;       // {username, displayName, role}
@@ -719,8 +779,18 @@ const I18N = {
     prod_price: '单价 (EUR)',
     prod_category: '分类',
     prod_code: '货号 (可选)',
-    prod_image: '图片 URL (可选)',
+    prod_image: '图片',
     prod_available: '在售',
+    upload_image: '上传图片',
+    delete_image: '🗑️ 删图',
+    or_use_url: '或粘贴图片 URL',
+    batch_image: '📷 图片',
+    batch_image_title: '📷 批量上传图片',
+    batch_img_help: '选一堆图,系统自动按<strong>文件名</strong>匹配产品:',
+    batch_img_match: '货号 / 中文名 / 意大利文名(精确)',
+    batch_img_example: '例如:<code>HD001.jpg</code>、<code>茄子.jpg</code>、<code>Melanzana.png</code>',
+    batch_img_pick: '选择图片(可多选)',
+    batch_img_unmatched: '未匹配的文件:',
     save: '保存',
     cancel: '取消',
     delete: '删除',
@@ -788,8 +858,18 @@ const I18N = {
     prod_price: 'Prezzo (EUR)',
     prod_category: 'Categoria',
     prod_code: 'Codice (opz.)',
-    prod_image: 'URL immagine (opz.)',
+    prod_image: 'Immagine',
     prod_available: 'Disponibile',
+    upload_image: 'Carica',
+    delete_image: '🗑️ Cancella',
+    or_use_url: 'Oppure incolla URL immagine',
+    batch_image: '📷 Foto',
+    batch_image_title: '📷 Carica foto in blocco',
+    batch_img_help: 'Seleziona più foto, abbinate ai prodotti per <strong>nome file</strong>:',
+    batch_img_match: 'Codice / nome cinese / nome italiano (esatto)',
+    batch_img_example: 'Es.: <code>HD001.jpg</code>, <code>Melanzana.png</code>',
+    batch_img_pick: 'Seleziona foto (multiple)',
+    batch_img_unmatched: 'File non abbinati:',
     save: 'Salva',
     cancel: 'Annulla',
     delete: 'Elimina',
@@ -1383,8 +1463,12 @@ function renderCatalog() {
     for (const p of byCat[c]) {
       const nameStr = [p.name, p.italian].filter(Boolean).join(' / ');
       const isOwner = CURRENT_USER && CURRENT_USER.role === 'owner';
-      html += `<div class="catalog-item" ${isOwner ? `onclick="openCatalogEdit(${p.id})"` : ''}>
-        <div style="flex:1;">
+      const imgHtml = p.image_url
+        ? `<img src="${escapeHtml(p.image_url)}" loading="lazy" style="width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f5f5;" onerror="this.style.display='none'">`
+        : `<div style="width:42px;height:42px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--text3);">📦</div>`;
+      html += `<div class="catalog-item" ${isOwner ? `onclick="openCatalogEdit(${p.id})"` : ''} style="gap:10px;">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
           <div class="name">${escapeHtml(nameStr || '—')} ${!p.available ? '<span style="color:var(--danger);font-size:11px;">(缺货)</span>' : ''}</div>
           <div class="sub">${p.spec ? escapeHtml(p.spec) : ''} ${p.unit ? '· ' + escapeHtml(p.unit) : ''} ${p.item_code ? '· #' + escapeHtml(p.item_code) : ''}</div>
         </div>
@@ -1410,7 +1494,33 @@ function openCatalogEdit(id) {
   document.getElementById('ce-image-url').value = p?.image_url || '';
   document.getElementById('ce-available').checked = p ? !!p.available : true;
   document.getElementById('ce-delete-btn').style.display = p ? '' : 'none';
+  // 渲染图片预览
+  renderCatalogEditImgPreview(p?.image_url || '');
+  // 新增模式下:上传按钮要先保存条目才能用
+  const fileInput = document.getElementById('ce-img-input');
+  fileInput.value = '';
+  if (!id) {
+    fileInput.disabled = true;
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 ' + (CURRENT_LANG === 'zh' ? '先保存后上传图' : 'Salva prima');
+  } else {
+    fileInput.disabled = false;
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 <span data-i18n="upload_image">' + t('upload_image') + '</span>';
+  }
   openModal('modal-catalog-edit');
+}
+
+function renderCatalogEditImgPreview(url) {
+  const box = document.getElementById('ce-img-preview');
+  const delBtn = document.getElementById('ce-img-del-btn');
+  if (url) {
+    box.innerHTML = `<img src="${escapeHtml(url)}" style="max-width:140px;max-height:140px;object-fit:contain;border-radius:8px;background:#f5f5f5;" onerror="this.parentNode.innerHTML='<span style=\\'color:var(--text3);font-size:12px;\\'>图片加载失败</span>'">`;
+    delBtn.style.display = '';
+    document.getElementById('ce-img-btn-text').innerHTML = '🔄 ' + (CURRENT_LANG === 'zh' ? '更换图片' : 'Sostituisci');
+  } else {
+    box.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg2);border-radius:6px;text-align:center;">${CURRENT_LANG === 'zh' ? '暂无图片' : 'Nessuna immagine'}</div>`;
+    delBtn.style.display = 'none';
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 ' + (CURRENT_LANG === 'zh' ? '上传图片' : 'Carica');
+  }
 }
 
 async function saveCatalogItem() {
@@ -1458,6 +1568,260 @@ async function deleteCatalogItem() {
   } catch (e) {
     toast(e.message, 'err');
   }
+}
+
+// ════════════════════════════════════════
+// 图片压缩 + 上传(参考 cucina.html)
+// ════════════════════════════════════════
+function supportsWebP() {
+  try {
+    const c = document.createElement('canvas');
+    c.width = 1; c.height = 1;
+    return c.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  } catch(e) { return false; }
+}
+
+function compressImage(file, maxSize = IMG_MAX_SIZE, quality = IMG_QUALITY) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else       { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const useWebP = supportsWebP();
+        const mime = useWebP ? 'image/webp' : 'image/jpeg';
+        const ext  = useWebP ? 'webp' : 'jpg';
+        canvas.toBlob(
+          blob => {
+            if (!blob || blob.size === 0) {
+              if (useWebP) {
+                canvas.toBlob(
+                  b2 => b2 ? resolve({blob: b2, ext: 'jpg', mime: 'image/jpeg'}) : reject(new Error('压缩失败')),
+                  'image/jpeg', quality
+                );
+              } else reject(new Error('压缩失败'));
+              return;
+            }
+            resolve({blob, ext, mime});
+          },
+          mime, quality
+        );
+      };
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('读取文件失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 上传单张图片到指定目录条目(底层,供单条 + 批量复用)
+async function uploadImageForCatalog(catalogId, file) {
+  if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
+  if (file.size > 20 * 1024 * 1024) throw new Error('原图过大(>20MB)');
+
+  const result = await compressImage(file, IMG_MAX_SIZE, IMG_QUALITY);
+  const compressed = result.blob;
+
+  // 调 Worker 端点(POST + 二进制 body + query 带 id 和 ext)
+  const upUrl = `${API_URL}/supplier/catalog/upload-image?id=${catalogId}&ext=${result.ext}`;
+  const resp = await fetch(upUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + TOKEN,
+      'Content-Type': result.mime,
+    },
+    body: compressed,
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(data.error || `上传失败 (${resp.status})`);
+
+  // 同步更新本地缓存
+  const p = CATALOG.find(x => x.id === catalogId);
+  if (p) p.image_url = data.image_url;
+
+  return { image_url: data.image_url, sizeKB: (compressed.size / 1024).toFixed(0), ext: result.ext };
+}
+
+// 编辑表单里点"上传图片"按钮
+async function uploadCatalogImage(fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  const id = parseInt(document.getElementById('ce-id').value || 0);
+  if (!id) {
+    toast(CURRENT_LANG === 'zh' ? '请先保存这个产品' : 'Salva il prodotto prima', 'err');
+    fileInput.value = '';
+    return;
+  }
+
+  const btnText = document.getElementById('ce-img-btn-text');
+  const oldText = btnText.innerHTML;
+  btnText.innerHTML = '⏳ ' + (CURRENT_LANG === 'zh' ? '上传中...' : 'Caricamento...');
+  fileInput.disabled = true;
+
+  try {
+    const { image_url, sizeKB, ext } = await uploadImageForCatalog(id, file);
+    document.getElementById('ce-image-url').value = image_url;
+    renderCatalogEditImgPreview(image_url);
+    toast(`✅ ${CURRENT_LANG === 'zh' ? '上传成功' : 'Caricato'} (${sizeKB}KB ${ext.toUpperCase()})`, 'ok');
+  } catch (e) {
+    btnText.innerHTML = oldText;
+    toast(e.message, 'err');
+  } finally {
+    fileInput.disabled = false;
+    fileInput.value = '';
+  }
+}
+
+// 编辑表单里点"删图"
+async function deleteCatalogImage() {
+  const id = parseInt(document.getElementById('ce-id').value || 0);
+  if (!id) return;
+  if (!confirm(CURRENT_LANG === 'zh' ? '确定删除这张图片?' : 'Cancellare l\'immagine?')) return;
+  try {
+    await api('/supplier/catalog/delete-image', { method: 'POST', body: JSON.stringify({ id }) });
+    document.getElementById('ce-image-url').value = '';
+    renderCatalogEditImgPreview('');
+    const p = CATALOG.find(x => x.id === id);
+    if (p) p.image_url = '';
+    toast(t('deleted'), 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ════════════════════════════════════════
+// 批量上传图片(按文件名匹配 → 产品)
+// ════════════════════════════════════════
+let _batchImgMatched = [];     // [{file, item}]
+let _batchImgUnmatched = [];   // [filename]
+
+function matchFileToCatalog(fileName) {
+  const base = fileName.replace(/\.[^/.]+$/, '').trim();
+  if (!base) return null;
+  const baseLower = base.toLowerCase();
+  // 1. 货号精确
+  let m = CATALOG.find(p => (p.item_code || '').trim() === base);
+  if (m) return m;
+  m = CATALOG.find(p => (p.item_code || '').trim().toLowerCase() === baseLower);
+  if (m) return m;
+  // 2. 中文名精确
+  m = CATALOG.find(p => (p.name || '').trim() === base);
+  if (m) return m;
+  // 3. 意大利文名精确(忽略大小写)
+  m = CATALOG.find(p => (p.italian || '').trim() === base);
+  if (m) return m;
+  m = CATALOG.find(p => (p.italian || '').trim().toLowerCase() === baseLower);
+  if (m) return m;
+  return null;
+}
+
+function openBatchImageModal() {
+  _batchImgMatched = [];
+  _batchImgUnmatched = [];
+  document.getElementById('batch-img-step1').style.display = 'block';
+  document.getElementById('batch-img-step2').style.display = 'none';
+  document.getElementById('batch-img-summary').innerHTML = '';
+  document.getElementById('batch-img-unmatched-wrap').style.display = 'none';
+  document.getElementById('batch-img-progress-wrap').style.display = 'none';
+  document.getElementById('batch-img-upload-btn').style.display = 'none';
+  document.getElementById('batch-img-input').value = '';
+  openModal('modal-batch-image');
+}
+
+function handleBatchImages(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  _batchImgMatched = [];
+  _batchImgUnmatched = [];
+  files.forEach(file => {
+    const item = matchFileToCatalog(file.name);
+    if (item) _batchImgMatched.push({ file, item });
+    else _batchImgUnmatched.push(file.name);
+  });
+  const zh = CURRENT_LANG === 'zh';
+  document.getElementById('batch-img-summary').innerHTML = `
+    📊 ${zh ? '文件分析结果' : 'Analisi file'}:<br>
+    • ${zh ? '总文件数' : 'Totale'}: <strong>${files.length}</strong><br>
+    • ${zh ? '已匹配' : 'Abbinati'}: <strong style="color:#16a34a;">${_batchImgMatched.length}</strong><br>
+    • ${zh ? '未匹配' : 'Non abbinati'}: <strong style="color:${_batchImgUnmatched.length > 0 ? '#dc2626' : 'var(--text3)'};">${_batchImgUnmatched.length}</strong>
+  `;
+  if (_batchImgUnmatched.length > 0) {
+    document.getElementById('batch-img-unmatched-wrap').style.display = 'block';
+    document.getElementById('batch-img-unmatched-list').innerHTML =
+      _batchImgUnmatched.map(n => '• ' + escapeHtml(n)).join('<br>');
+  } else {
+    document.getElementById('batch-img-unmatched-wrap').style.display = 'none';
+  }
+  document.getElementById('batch-img-step1').style.display = 'none';
+  document.getElementById('batch-img-step2').style.display = 'block';
+  document.getElementById('batch-img-upload-btn').style.display = _batchImgMatched.length > 0 ? 'block' : 'none';
+  document.getElementById('batch-img-upload-btn').textContent =
+    `✓ ${zh ? '开始上传' : 'Carica'} ${_batchImgMatched.length} ${zh ? '张' : 'foto'}`;
+  if (_batchImgMatched.length === 0) {
+    toast(zh ? '没有可上传的图片(文件名都没匹配上)' : 'Nessun file abbinato', 'err');
+  }
+}
+
+async function performBatchImageUpload() {
+  if (_batchImgMatched.length === 0) return;
+  const zh = CURRENT_LANG === 'zh';
+  const total = _batchImgMatched.length;
+  const uploadBtn = document.getElementById('batch-img-upload-btn');
+  const progressWrap = document.getElementById('batch-img-progress-wrap');
+  const progressBar = document.getElementById('batch-img-progress-bar');
+  const progressTxt = document.getElementById('batch-img-progress-txt');
+  const progressPct = document.getElementById('batch-img-progress-pct');
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = zh ? '上传中...' : 'Caricamento...';
+  progressWrap.style.display = 'block';
+
+  let success = 0, failed = 0;
+  const failedList = [];
+
+  for (let i = 0; i < _batchImgMatched.length; i++) {
+    const { file, item } = _batchImgMatched[i];
+    const itemLabel = item.name || item.italian || item.item_code || '#' + item.id;
+    progressTxt.textContent = `${i + 1}/${total} · ${itemLabel}`;
+    try {
+      await uploadImageForCatalog(item.id, file);
+      success++;
+    } catch (e) {
+      console.error(`❌ ${file.name}:`, e);
+      failed++;
+      failedList.push(`${file.name}: ${e.message}`);
+    }
+    const pct = Math.round((i + 1) / total * 100);
+    progressBar.style.width = pct + '%';
+    progressPct.textContent = pct + '%';
+  }
+
+  uploadBtn.disabled = false;
+  uploadBtn.style.display = 'none';
+  progressTxt.textContent = `✅ ${zh ? '完成' : 'Fatto'}:${zh ? '成功' : 'OK'} ${success},${zh ? '失败' : 'errori'} ${failed}`;
+
+  if (failed > 0) {
+    console.log('失败列表:\n' + failedList.join('\n'));
+    toast(`${zh ? '完成' : 'Fatto'}:${success} ${zh ? '成功' : 'OK'}, ${failed} ${zh ? '失败' : 'errori'} (${zh ? '详情见控制台' : 'log console'})`, failed > success ? 'err' : '');
+  } else {
+    toast(`✅ ${zh ? '全部上传成功' : 'Tutti caricati'} (${success})`, 'ok');
+  }
+
+  // 刷列表(用本地已更新的 CATALOG.image_url)
+  renderCatalog();
+  setTimeout(() => closeModal('modal-batch-image'), 2500);
 }
 
 // === Excel Import ===
