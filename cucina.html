@@ -1803,7 +1803,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.54';
+const APP_VERSION = 'v2.7.55';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8715,23 +8715,21 @@ function renderSpList() {
       const diffStr = (c.diff > 0 ? '+' : '') + c.diff.toFixed(2);
       const boundIcon = c.bound ? ' 🔗' : '';
       return `
-        <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;">
           <input type="checkbox" ${selected ? 'checked' : ''}
                  onchange="toggleSpItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               ${escapeHtml(c.name || c.italian || '?')}${boundIcon}
             </div>
-            <div style="font-size:11px;color:#888;">
-              ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
-              ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
-              供应商: ${escapeHtml(c.supplier)}
+            <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              ${c.italian ? escapeHtml(c.italian) : ''}${c.spec ? (c.italian ? ' · ' : '') + escapeHtml(c.spec) : ''}
             </div>
           </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:#888;text-decoration:line-through;">€${c.my_price.toFixed(2)}</div>
+          <div style="text-align:right;flex-shrink:0;line-height:1.2;">
+            <div style="font-size:10px;color:#888;text-decoration:line-through;">€${c.my_price.toFixed(2)}</div>
             <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${c.new_price.toFixed(2)}</div>
-            <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diffStr})</div>
+            <div style="font-size:10px;color:${isUp ? '#dc2626' : '#16a34a'};">${diffStr}</div>
           </div>
         </label>
       `;
@@ -8753,40 +8751,42 @@ function renderSpList() {
         const diff = (matched.new_price - n.my_price).toFixed(2);
         const selected = _spSelected.has(n.id);
         return `
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#f0fdf4;">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;background:#f0fdf4;">
             <input type="checkbox" ${selected ? 'checked' : ''}
                    onchange="toggleSpItem(${n.id})" style="flex-shrink:0;width:18px;height:18px;">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;">
+              <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 ${escapeHtml(n.name || n.italian || '?')}
               </div>
-              <div style="font-size:11px;color:#888;">
-                ↓ 已对应到: <b style="color:#16a34a;">${escapeHtml(matched.name)}</b>
-                <a href="#" onclick="event.preventDefault();_spManualMatches.delete(${n.id});_spSelected.delete(${n.id});renderSpList();updateSpApplyBtn();" style="margin-left:6px;color:#dc2626;font-size:11px;">[取消]</a>
+              <div style="font-size:11px;color:#16a34a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ↓ ${escapeHtml(matched.name)}
+                <a href="#" onclick="event.preventDefault();event.stopPropagation();_spManualMatches.delete(${n.id});_spSelected.delete(${n.id});renderSpList();updateSpApplyBtn();" style="margin-left:4px;color:#dc2626;font-size:10px;">[取消]</a>
               </div>
             </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div style="font-size:11px;color:#888;text-decoration:line-through;">€${n.my_price.toFixed(2)}</div>
+            <div style="text-align:right;flex-shrink:0;line-height:1.2;">
+              <div style="font-size:10px;color:#888;text-decoration:line-through;">€${n.my_price.toFixed(2)}</div>
               <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${matched.new_price.toFixed(2)}</div>
-              <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diff > 0 ? '+' : ''}${diff})</div>
+              <div style="font-size:10px;color:${isUp ? '#dc2626' : '#16a34a'};">${diff > 0 ? '+' : ''}${diff}</div>
             </div>
           </label>
         `;
       }
       return `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;background:#fff;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;">
-              ${escapeHtml(n.name || n.italian || '?')}
-            </div>
-            <div style="font-size:11px;color:#888;">
-              ${n.italian ? escapeHtml(n.italian) + ' · ' : ''}
-              ${n.spec ? escapeHtml(n.spec) + ' · ' : ''}
-              供应商: ${escapeHtml(n.supplier)} · 当前 €${n.my_price.toFixed(2)}
-            </div>
+        <div style="padding:10px 12px;border-bottom:1px solid #eee;background:#fff;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${escapeHtml(n.name || n.italian || '?')}
           </div>
-          <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;flex-shrink:0;"
-                  onclick="openFindMatch(${n.id})">🔍 找对应</button>
+          <div style="font-size:11px;color:#888;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${n.italian ? escapeHtml(n.italian) : ''}
+            ${n.spec ? (n.italian ? ' · ' : '') + escapeHtml(n.spec) : ''}
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="font-size:11px;color:#888;white-space:nowrap;">
+              ${escapeHtml(n.supplier)} · €${n.my_price.toFixed(2)}
+            </div>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;flex-shrink:0;white-space:nowrap;"
+                    onclick="openFindMatch(${n.id})">🔍 找对应</button>
+          </div>
         </div>
       `;
     }).join('');
