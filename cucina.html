@@ -1819,7 +1819,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.58';
+const APP_VERSION = 'v2.7.59';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8946,7 +8946,7 @@ function renderSpList() {
             <div style="font-size:11px;color:#888;white-space:nowrap;">
               ${escapeHtml(n.supplier)} · €${n.my_price.toFixed(2)}
             </div>
-            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;flex-shrink:0;white-space:nowrap;"
+            <button style="padding:6px 12px;font-size:12px;flex-shrink:0;white-space:nowrap;background:#f3f4f6;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#374151;min-width:auto;width:auto;"
                     onclick="openFindMatch(${n.id})">🔍 找对应</button>
           </div>
         </div>
@@ -9045,7 +9045,7 @@ function renderFmCandidates(list) {
         <div style="font-size:14px;font-weight:700;color:#c9a961;white-space:nowrap;">
           €${(parseFloat(c.price) || 0).toFixed(2)}
         </div>
-        <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;flex-shrink:0;white-space:nowrap;"
+        <button style="padding:6px 14px;font-size:12px;flex-shrink:0;white-space:nowrap;background:#c9a961;color:#fff;border:none;border-radius:6px;cursor:pointer;min-width:auto;width:auto;"
                 onclick="confirmFmMatch(${c.id}, ${parseFloat(c.price) || 0}, '${escapeHtml((c.name || c.italian || '').replace(/'/g, "\\'"))}')">
           选这个
         </button>
