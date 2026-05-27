@@ -561,7 +561,7 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
-const ADMIN_VERSION = 'v1.3.0';   // 2026-05-26: 一键备份 + 供应商管理 + 审批
+const ADMIN_VERSION = 'v1.4.0';   // 2026-05-27: 供应商账号协助登录(代上传产品目录)
 // 立即把版本号显示到登录界面
 (function() {
   const el = document.getElementById('login-version');
@@ -1515,7 +1515,8 @@ function renderSupUsersList() {
           </div>
           <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">最近登录: ${escapeHtml(lastLogin)}</div>
         </div>
-        <div style="display:flex;gap:6px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-gold btn-sm" onclick="doSupUserImpersonate(${u.id}, '${escapeHtml(u.username)}')">🚀 协助登录</button>
           <button class="btn btn-ghost btn-sm" onclick='openSupUserEdit(JSON.parse(this.dataset.u))' data-u="${uJsonAttr}">改/重置</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSupUser(${u.id},'${escapeHtml(u.username)}')">🗑️</button>
         </div>
@@ -1585,6 +1586,27 @@ async function deleteSupUser(id, username) {
     await refreshSupUsers();
   } catch (e) {
     toast('删除失败:' + e.message, 'err');
+  }
+}
+
+// 协助登录供应商账号(2 小时 token,主要用于代上传产品目录)
+async function doSupUserImpersonate(userId, username) {
+  if (!confirm(`以「${username}」身份登录供应商端?\n\n会用一个临时 token(2 小时)打开新标签页,登录后能代他管理产品目录。`)) return;
+  try {
+    const d = await api('/platform/suppliers/impersonate', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+    if (!d || !d.token) {
+      toast('协助登录失败:未拿到 token', 'err');
+      return;
+    }
+    // 用 URL 参数把 token 传给 supplier.html(它会识别 ?token=xxx 自动登录)
+    const url = '/supplier.html?token=' + encodeURIComponent(d.token);
+    window.open(url, '_blank');
+    toast('已打开新标签页', 'ok');
+  } catch (e) {
+    toast('协助登录失败:' + e.message, 'err');
   }
 }
 

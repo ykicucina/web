@@ -598,7 +598,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.1.2';   // 2026-05-26: 顶部金色 YKI 文字换 logo 图
+const APP_VERSION = 'v1.2.0';   // 2026-05-27: 支持平台超管协助登录(URL ?token=)
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -1339,6 +1339,49 @@ async function saveProfile() {
   detectViewport();  // 立即识别桌面/移动
   applyI18n();
   document.getElementById('login-version').textContent = APP_VERSION;
+
+  // v1.2.0: 检测 URL 里的 token 参数(平台超管协助登录)
+  // 不写 localStorage,2 小时后浏览器关闭即清(impersonate token 本身 2h 过期)
+  const urlParams = new URLSearchParams(location.search);
+  const impToken = urlParams.get('token');
+  if (impToken) {
+    // 清掉 URL 里的 token 参数(避免泄露 / 刷新重登)
+    try { history.replaceState({}, '', location.pathname); } catch (e) {}
+    TOKEN = impToken;
+    // 拉一次 profile 拿到供应商+用户信息
+    fetch(API_URL + '/supplier/profile', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(d => {
+        CURRENT_PROFILE = d.profile;
+        CURRENT_SUPPLIER = { id: d.profile.id, name: d.profile.name, display_name: d.profile.display_name };
+        // 解 JWT 拿用户名(impersonate token 自带)
+        try {
+          const payloadB64 = TOKEN.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(decodeURIComponent(atob(payloadB64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+          CURRENT_USER = {
+            username: payload.username,
+            display_name: payload.displayName || payload.username,
+            role: payload.role || 'owner',
+          };
+        } catch (e) {
+          CURRENT_USER = { username: '协助登录', display_name: '协助登录', role: 'owner' };
+        }
+        // 不写 localStorage,只放 session(关浏览器即清)
+        try {
+          sessionStorage.setItem('yki_sup_user', JSON.stringify(CURRENT_USER));
+          sessionStorage.setItem('yki_sup_supplier', JSON.stringify(CURRENT_SUPPLIER));
+        } catch (e) {}
+        showMain();
+        // 提示是协助登录模式
+        toast('🔧 平台协助登录模式(2 小时有效)', 'ok');
+      })
+      .catch(() => {
+        TOKEN = '';
+        alert('协助登录失败或 token 已过期,请回 yki-admin 重新生成');
+      });
+    return;
+  }
+
   // 尝试用缓存的 token 自动登录
   const savedToken = localStorage.getItem(TOKEN_KEY);
   if (savedToken) {
