@@ -598,7 +598,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.2.1';   // 2026-05-27: 删"追加"导入选项 + 加"清空全部"
+const APP_VERSION = 'v1.2.2';   // 2026-05-27: 修复"清空"按钮 ReferenceError
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -1292,7 +1292,7 @@ async function confirmClearCatalog() {
     toast('只有管理员可以清空目录', 'err');
     return;
   }
-  const total = (CURRENT_CATALOG || []).length;
+  const total = (CATALOG || []).length;
   if (!total) {
     toast('目录已经是空的', 'ok');
     return;
