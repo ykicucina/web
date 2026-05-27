@@ -324,9 +324,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
       <div class="login-brand-sub">YKI SUPPLIER PORTAL</div>
     </div>
     <label class="field-label" data-i18n="login_supplier">供应商代号</label>
-    <input id="login-supplier" type="text" placeholder="HD / METRO / ..." autocomplete="username">
+    <input id="login-supplier" type="text" placeholder="HD / METRO / ..." autocomplete="organization" autocapitalize="off" spellcheck="false">
     <label class="field-label" data-i18n="login_username">用户名</label>
-    <input id="login-username" type="text" autocomplete="username">
+    <input id="login-username" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
     <label class="field-label" data-i18n="login_password">密码</label>
     <input id="login-password" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn btn-primary btn-block" style="margin-top:18px;" onclick="doLogin()" id="login-btn">
@@ -666,10 +666,11 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.4.0';   // 2026-05-27: 我的页加目录设置(自助开关公开/价格)
+const APP_VERSION = 'v1.4.1';   // 2026-05-27: 记住供应商代号 + 修登录框 autocomplete 误推 email
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
+const LAST_SUPPLIER_KEY = 'yki_last_supplier_code';
 
 let TOKEN = '';
 let CURRENT_USER = null;       // {username, displayName, role}
@@ -949,6 +950,7 @@ async function doLogin() {
     CURRENT_USER = data.user;
     CURRENT_SUPPLIER = data.supplier;
     localStorage.setItem(TOKEN_KEY, TOKEN);
+    try { localStorage.setItem(LAST_SUPPLIER_KEY, supplier); } catch(e) {}
     sessionStorage.setItem('yki_sup_user', JSON.stringify(data.user));
     sessionStorage.setItem('yki_sup_supplier', JSON.stringify(data.supplier));
     showMain();
@@ -1693,6 +1695,22 @@ async function saveProfile() {
   detectViewport();  // 立即识别桌面/移动
   applyI18n();
   document.getElementById('login-version').textContent = APP_VERSION;
+
+  // v1.4.1: 回填上次的供应商代号(跟 cucina 一致)
+  try {
+    const lastSup = localStorage.getItem(LAST_SUPPLIER_KEY) || '';
+    if (lastSup) {
+      const supEl = document.getElementById('login-supplier');
+      supEl.value = lastSup;
+      // 焦点直接到用户名框,省一步操作
+      setTimeout(() => {
+        const userEl = document.getElementById('login-username');
+        if (userEl && document.getElementById('login-screen').style.display !== 'none') {
+          userEl.focus();
+        }
+      }, 100);
+    }
+  } catch(e) {}
 
   // v1.2.0: 检测 URL 里的 token 参数(平台超管协助登录)
   // 不写 localStorage,2 小时后浏览器关闭即清(impersonate token 本身 2h 过期)
