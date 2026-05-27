@@ -1120,6 +1120,11 @@ function ridPickerGo() {
         <div class="menu-item-text"><div class="title">浏览供应商目录</div><div class="sub">从供应商产品目录一键导入到我的食材库</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
+      <div class="menu-item" onclick="showSyncPricesModal()">
+        <div class="menu-item-icon" style="background:#FEE2E2">💰</div>
+        <div class="menu-item-text"><div class="title">同步供应商价格</div><div class="sub">从供应商最新目录一键更新现有食材价格</div></div>
+        <span class="menu-item-arrow">›</span>
+      </div>
       <div class="menu-item" onclick="showSupplierModal()">
         <div class="menu-item-icon" style="background:#E6F4FF">📱</div>
         <div class="menu-item-text"><div class="title" id="lbl-supplier">供应商 WhatsApp</div><div class="sub" id="lbl-supplier-sub">设置各供应商联系方式</div></div>
@@ -1277,6 +1282,27 @@ function ridPickerGo() {
     <div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0;">
       <button class="btn btn-ghost" onclick="closeModal('modal-sup-catalog')" style="flex:1;">取消</button>
       <button class="btn btn-primary" id="sc-import-btn" onclick="importSupCatalogSelected()" style="flex:2;" disabled>导入选中 (0)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 💰 同步供应商价格 Modal -->
+<div class="modal-overlay" id="modal-sync-prices">
+  <div class="modal" style="max-height:92vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div style="padding:0 4px;flex-shrink:0;">
+      <div class="modal-title" style="margin-bottom:8px;">💰 同步供应商价格</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+        把你的食材跟供应商最新目录比对,一键更新涨价/降价的产品。
+      </div>
+      <div id="sp-summary" style="font-size:13px;color:var(--text2);margin-bottom:6px;"></div>
+    </div>
+    <div id="sp-list" style="flex:1;overflow-y:auto;min-height:200px;border:1px solid var(--border);border-radius:8px;background:#fafafa;padding:4px;">
+      <div style="text-align:center;color:#aaa;padding:40px 20px;">点击下方"扫描差异"开始</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sync-prices')" style="flex:1;">取消</button>
+      <button class="btn btn-primary" id="sp-apply-btn" onclick="applySyncPrices()" style="flex:2;" disabled>更新选中 (0)</button>
     </div>
   </div>
 </div>
@@ -1755,7 +1781,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.52';
+const APP_VERSION = 'v2.7.53';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8592,6 +8618,148 @@ async function importSupCatalogSelected() {
   } finally {
     btn.disabled = false;
     updateScImportBtn();
+  }
+}
+
+// ============================================================
+// v2.7.53: 同步供应商价格
+// ============================================================
+let _spChanged = [];      // 价格变了的列表
+let _spSelected = new Set();// 用户勾选的 item id
+
+async function showSyncPricesModal() {
+  _spChanged = [];
+  _spSelected.clear();
+  document.getElementById('sp-summary').textContent = '';
+  document.getElementById('sp-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:40px 20px;">⏳ 正在扫描差异...</div>';
+  updateSpApplyBtn();
+  openModal('modal-sync-prices');
+
+  try {
+    const r = await fetch(SB_URL + '/supplier-catalog/sync-prices/diff', {
+      headers: { 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '查询失败');
+
+    _spChanged = d.changed || [];
+    // 默认全选(用户可以反选不想更新的)
+    for (const c of _spChanged) _spSelected.add(c.id);
+
+    const summary = `共 ${d.total} 件食材 · ` +
+      `<b style="color:#dc2626;">${_spChanged.length} 件价格变了</b> · ` +
+      `<span style="color:#16a34a;">${(d.same || []).length} 件无变化</span> · ` +
+      `<span style="color:#888;">${(d.not_in_catalog || []).length} 件目录里没有</span>` +
+      (d.no_supplier_match ? ` · <span style="color:#888;">${d.no_supplier_match} 件 supplier 未对应公司</span>` : '');
+    document.getElementById('sp-summary').innerHTML = summary;
+
+    renderSpList();
+    updateSpApplyBtn();
+  } catch (e) {
+    document.getElementById('sp-list').innerHTML = `<div style="text-align:center;color:#d05050;padding:40px 20px;">扫描失败:${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderSpList() {
+  const list = document.getElementById('sp-list');
+  if (!_spChanged.length) {
+    list.innerHTML = '<div style="text-align:center;color:#16a34a;padding:40px 20px;font-size:14px;">✅ 所有食材价格都跟供应商目录一致,没什么要更新的</div>';
+    return;
+  }
+
+  list.innerHTML = `
+    <div style="padding:8px;border-bottom:1px solid #eee;background:#fff;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="sp-select-all" onchange="toggleAllSp(this.checked)"
+               ${_spSelected.size === _spChanged.length ? 'checked' : ''} style="width:16px;height:16px;">
+        全选/全不选
+      </label>
+    </div>
+  ` + _spChanged.map(c => {
+    const selected = _spSelected.has(c.id);
+    const isUp = c.diff > 0;
+    const diffStr = (c.diff > 0 ? '+' : '') + c.diff.toFixed(2);
+    return `
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;">
+        <input type="checkbox" ${selected ? 'checked' : ''}
+               onchange="toggleSpItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">
+            ${escapeHtml(c.name || c.italian || '?')}
+          </div>
+          <div style="font-size:11px;color:#888;">
+            ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
+            ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
+            供应商: ${escapeHtml(c.supplier)}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;color:#888;text-decoration:line-through;">€${c.my_price.toFixed(2)}</div>
+          <div style="font-size:14px;font-weight:700;color:${isUp ? '#dc2626' : '#16a34a'};">€${c.new_price.toFixed(2)}</div>
+          <div style="font-size:11px;color:${isUp ? '#dc2626' : '#16a34a'};">(${diffStr})</div>
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+function toggleSpItem(id) {
+  if (_spSelected.has(id)) _spSelected.delete(id);
+  else _spSelected.add(id);
+  updateSpApplyBtn();
+  // 同步全选 checkbox
+  const sa = document.getElementById('sp-select-all');
+  if (sa) sa.checked = _spSelected.size === _spChanged.length;
+}
+
+function toggleAllSp(checked) {
+  if (checked) {
+    for (const c of _spChanged) _spSelected.add(c.id);
+  } else {
+    _spSelected.clear();
+  }
+  renderSpList();
+  updateSpApplyBtn();
+}
+
+function updateSpApplyBtn() {
+  const btn = document.getElementById('sp-apply-btn');
+  if (!btn) return;
+  const n = _spSelected.size;
+  btn.disabled = n === 0;
+  btn.textContent = `更新选中 (${n})`;
+}
+
+async function applySyncPrices() {
+  const updates = _spChanged
+    .filter(c => _spSelected.has(c.id))
+    .map(c => ({ id: c.id, price: c.new_price }));
+  if (!updates.length) return;
+
+  if (!confirm(`确定要更新 ${updates.length} 件食材的价格吗?\n\n更新后,之后下单生成的订单都会用新价格(已有订单不变)。`)) return;
+
+  const btn = document.getElementById('sp-apply-btn');
+  btn.disabled = true;
+  btn.textContent = '更新中...';
+  try {
+    const r = await fetch(SB_URL + '/supplier-catalog/sync-prices/apply', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '更新失败');
+    let msg = `✓ 更新 ${d.updated} 件`;
+    if (d.failed) msg += `,失败 ${d.failed} 件`;
+    toast(msg);
+    closeModal('modal-sync-prices');
+    await loadAllData();
+    if (currentTab === 'inventory') renderInventory();
+  } catch (e) {
+    toast('更新失败:' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    updateSpApplyBtn();
   }
 }
 
