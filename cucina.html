@@ -1803,7 +1803,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.55';
+const APP_VERSION = 'v2.7.56';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8871,25 +8871,23 @@ function renderFmCandidates(list) {
     return;
   }
   document.getElementById('fm-list').innerHTML = list.map(c => `
-    <div style="padding:10px 8px;border-bottom:1px solid #eee;background:#fff;display:flex;gap:10px;align-items:center;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;">
-          ${escapeHtml(c.name || c.italian || '?')}
-          <span style="font-size:10px;color:#888;font-weight:normal;">(匹配度 ${c._score})</span>
-        </div>
-        <div style="font-size:11px;color:#888;">
-          ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
-          ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
-          ${c.item_code ? '#' + escapeHtml(c.item_code) : ''}
-        </div>
+    <div style="padding:10px 12px;border-bottom:1px solid #eee;background:#fff;">
+      <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;">
+        ${escapeHtml(c.name || c.italian || '?')}
+        <span style="font-size:10px;color:#888;font-weight:normal;">(${c._score})</span>
       </div>
-      <div style="font-size:14px;font-weight:700;color:#c9a961;flex-shrink:0;">
-        €${(parseFloat(c.price) || 0).toFixed(2)}
+      <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;">
+        ${c.italian ? escapeHtml(c.italian) : ''}${c.spec ? (c.italian ? ' · ' : '') + escapeHtml(c.spec) : ''}${c.item_code ? ' · #' + escapeHtml(c.item_code) : ''}
       </div>
-      <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;flex-shrink:0;"
-              onclick="confirmFmMatch(${c.id}, ${parseFloat(c.price) || 0}, '${escapeHtml((c.name || c.italian || '').replace(/'/g, "\\'"))}')">
-        选这个
-      </button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="font-size:14px;font-weight:700;color:#c9a961;white-space:nowrap;">
+          €${(parseFloat(c.price) || 0).toFixed(2)}
+        </div>
+        <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;flex-shrink:0;white-space:nowrap;"
+                onclick="confirmFmMatch(${c.id}, ${parseFloat(c.price) || 0}, '${escapeHtml((c.name || c.italian || '').replace(/'/g, "\\'"))}')">
+          选这个
+        </button>
+      </div>
     </div>
   `).join('');
 }
