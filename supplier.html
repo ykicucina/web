@@ -408,6 +408,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
       <div class="catalog-search">
         <input id="catalog-search-input" type="text" placeholder="搜索产品名…" oninput="renderCatalog()">
         <button class="btn btn-ghost btn-sm" onclick="openImportDialog()" data-i18n="import_excel">📥 导入</button>
+        <button class="btn btn-ghost btn-sm" id="catalog-clear-all-btn" onclick="confirmClearCatalog()" style="color:#dc2626;" data-i18n="clear_all">🗑️ 清空</button>
       </div>
       <div id="catalog-list">
         <div class="empty"><div class="big-icon">⏳</div><span data-i18n="loading">加载中…</span></div>
@@ -555,7 +556,6 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
         <select id="import-strategy">
           <option value="skip" data-i18n="strategy_skip">跳过(保留现有)</option>
           <option value="replace" data-i18n="strategy_replace">覆盖(更新现有)</option>
-          <option value="append" data-i18n="strategy_append">追加(允许重复)</option>
         </select>
       </div>
     </div>
@@ -598,7 +598,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.2.0';   // 2026-05-27: 支持平台超管协助登录(URL ?token=)
+const APP_VERSION = 'v1.2.1';   // 2026-05-27: 删"追加"导入选项 + 加"清空全部"
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -663,6 +663,7 @@ const I18N = {
     edit_profile: '编辑公司信息',
     display_name: '完整名称',
     import_excel: '📥 导入',
+    clear_all: '🗑️ 清空',
     import_excel_title: '📥 批量导入产品',
     import_excel_sub: '支持 Excel (.xlsx) 或 CSV 文件',
     import_format_title: '⚠️ 文件格式要求',
@@ -731,6 +732,7 @@ const I18N = {
     edit_profile: 'Modifica info azienda',
     display_name: 'Nome completo',
     import_excel: '📥 Importa',
+    clear_all: '🗑️ Svuota',
     import_excel_title: '📥 Importa prodotti',
     import_excel_sub: 'Supporta Excel (.xlsx) o CSV',
     import_format_title: '⚠️ Formato richiesto',
@@ -1281,6 +1283,32 @@ async function doImport() {
     toast(e.message, 'err');
   } finally {
     btn.disabled = false;
+  }
+}
+
+// 清空全部目录(危险操作,需要两次确认)
+async function confirmClearCatalog() {
+  if (CURRENT_USER && CURRENT_USER.role !== 'owner') {
+    toast('只有管理员可以清空目录', 'err');
+    return;
+  }
+  const total = (CURRENT_CATALOG || []).length;
+  if (!total) {
+    toast('目录已经是空的', 'ok');
+    return;
+  }
+  if (!confirm(`⚠️ 危险操作!\n\n这将永久删除当前供应商的全部 ${total} 件产品。\n\n餐厅那边已经导入过的食材不受影响。\n\n确定继续吗?`)) return;
+  const verify = prompt(`再次确认:请输入"CLEAR"(全大写)继续`);
+  if (verify !== 'CLEAR') {
+    toast('已取消', 'ok');
+    return;
+  }
+  try {
+    const d = await api('/supplier/catalog/clear-all', { method: 'POST', body: JSON.stringify({}) });
+    toast(`✓ 已清空 ${d.deleted || 0} 件产品`, 'ok');
+    await loadCatalog();
+  } catch (e) {
+    toast('清空失败:' + e.message, 'err');
   }
 }
 
