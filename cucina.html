@@ -1275,6 +1275,12 @@ function ridPickerGo() {
              oninput="onSupCatalogSearchInput()"
              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:8px;display:none;">
       <div id="sc-info" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
+      <div id="sc-legend" style="font-size:10px;color:var(--text-dim);margin-bottom:6px;display:none;">
+        <span style="background:#dcfce7;color:#16a34a;padding:1px 6px;border-radius:4px;margin-right:4px;">🔗 已绑定</span>
+        <span style="background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:4px;margin-right:4px;">📝 同名</span>
+        <span style="background:#e0e7ff;color:#4f46e5;padding:1px 6px;border-radius:4px;">🔍 可能</span>
+        <span style="margin-left:4px;">点彩色行可绑定</span>
+      </div>
     </div>
     <div id="sc-list" style="flex:1;overflow-y:auto;min-height:200px;border:1px solid var(--border);border-radius:8px;background:#fafafa;padding:4px;">
       <div style="text-align:center;color:#aaa;padding:40px 20px;">请先选择供应商</div>
@@ -1325,6 +1331,44 @@ function ridPickerGo() {
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0;">
       <button class="btn btn-ghost" onclick="closeModal('modal-find-match')" style="flex:1;">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⚠️ 浏览供应商目录:已有对应,引导绑定 -->
+<div class="modal-overlay" id="modal-sc-existing" style="z-index:2000;">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:8px;">⚠️ 食材库里似乎已经有了</div>
+
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="font-size:11px;color:#888;margin-bottom:2px;">供应商目录</div>
+      <div style="font-size:14px;font-weight:600;" id="sce-supplier-name">—</div>
+      <div style="font-size:11px;color:#666;" id="sce-supplier-sub">—</div>
+    </div>
+
+    <div style="text-align:center;color:#888;font-size:14px;margin:6px 0;">↕</div>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="font-size:11px;color:#888;margin-bottom:2px;">
+        我的食材库 <span id="sce-status-label" style="color:#d97706;font-weight:600;"></span>
+      </div>
+      <div style="font-size:14px;font-weight:600;" id="sce-my-name">—</div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;text-align:center;line-height:1.5;">
+      推荐<b>"绑定到现有"</b>:同步价格 + 以后用同一条记录管理。<br>
+      或者你确实需要新增一条,选"导入为新食材"。
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" onclick="bindExistingItem()">
+        🔗 绑定到现有(并同步价格)
+      </button>
+      <button class="btn btn-ghost" onclick="forceImportNew()">
+        ➕ 导入为新食材(重复记录)
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-sc-existing')">取消</button>
     </div>
   </div>
 </div>
@@ -1803,7 +1847,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.56';
+const APP_VERSION = 'v2.7.57';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8558,6 +8602,9 @@ async function loadSupCatalogItems(supplierId, q) {
     renderSupCatalogList();
     document.getElementById('sc-info').textContent =
       `${escapeHtml(d.supplier.name)} · ${_scCatalog.length} 件产品${q ? `(搜索: ${escapeHtml(q)})` : ''}`;
+    // 有任何状态产品时显示图例
+    const hasStatus = _scCatalog.some(c => c.carpi_status);
+    document.getElementById('sc-legend').style.display = hasStatus ? '' : 'none';
   } catch (e) {
     document.getElementById('sc-list').innerHTML = `<div style="text-align:center;color:#d05050;padding:40px 20px;">加载失败:${escapeHtml(e.message)}</div>`;
   }
@@ -8570,34 +8617,112 @@ function renderSupCatalogList() {
     return;
   }
   list.innerHTML = _scCatalog.map(c => {
-    const key = (c.name || '').toLowerCase().trim() + '|' + (c.italian || '').toLowerCase().trim();
-    const alreadyHave = _scMyKeys.has(key);
+    const status = c.carpi_status;  // 'bound' / 'same_name' / 'fuzzy' / null
     const selected = _scSelected.has(c.id);
     const imgHtml = c.image_url
       ? `<img src="${escapeHtml(c.image_url)}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;" onerror="this.style.display='none'">`
       : `<div style="width:42px;height:42px;background:#eee;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`;
+
+    let badge = '';
+    let bgColor = '#fff';
+    if (status === 'bound') {
+      badge = `<span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 6px;border-radius:4px;margin-left:6px;white-space:nowrap;">🔗 已绑定</span>`;
+      bgColor = '#f0fdf4';
+    } else if (status === 'same_name') {
+      badge = `<span style="font-size:10px;background:#fef3c7;color:#d97706;padding:2px 6px;border-radius:4px;margin-left:6px;white-space:nowrap;">📝 同名</span>`;
+      bgColor = '#fffbeb';
+    } else if (status === 'fuzzy') {
+      badge = `<span style="font-size:10px;background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;margin-left:6px;white-space:nowrap;">🔍 可能</span>`;
+      bgColor = '#eef2ff';
+    }
+
+    // 已绑定的:不允许勾选(已经搞定了)
+    // 同名/模糊的:可以勾选,但点击行(非 checkbox)弹"已存在"对话框引导绑定
+    const isBound = status === 'bound';
+    const hasExisting = status === 'bound' || status === 'same_name' || status === 'fuzzy';
+
+    const carpiInfo = hasExisting && c.carpi_item_name
+      ? `<div style="font-size:10px;color:#888;margin-top:2px;">↳ 对应我的:${escapeHtml(c.carpi_item_name)}</div>`
+      : '';
+
     return `
-      <label style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;cursor:${alreadyHave ? 'not-allowed' : 'pointer'};opacity:${alreadyHave ? 0.5 : 1};">
-        <input type="checkbox" ${selected ? 'checked' : ''} ${alreadyHave ? 'disabled' : ''}
+      <div data-sc-id="${c.id}" style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;background:${bgColor};opacity:${isBound ? 0.7 : 1};">
+        <input type="checkbox" ${selected ? 'checked' : ''} ${isBound ? 'disabled' : ''}
                onchange="toggleScItem(${c.id})" style="flex-shrink:0;width:18px;height:18px;">
         ${imgHtml}
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">
-            ${escapeHtml(c.name || c.italian || '?')}
-            ${alreadyHave ? '<span style="font-size:11px;color:#16a34a;font-weight:normal;">· 已在库</span>' : ''}
+        <div style="flex:1;min-width:0;cursor:${hasExisting && !isBound ? 'pointer' : 'default'};"
+             ${hasExisting && !isBound ? `onclick="onScExistingClick(${c.id})"` : ''}>
+          <div style="font-size:13px;font-weight:600;display:flex;align-items:center;flex-wrap:wrap;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">
+              ${escapeHtml(c.name || c.italian || '?')}
+            </span>
+            ${badge}
           </div>
-          <div style="font-size:11px;color:#888;">
-            ${c.italian ? escapeHtml(c.italian) + ' · ' : ''}
-            ${c.spec ? escapeHtml(c.spec) + ' · ' : ''}
-            ${c.category ? escapeHtml(c.category) : ''}
+          <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${c.italian ? escapeHtml(c.italian) : ''}${c.spec ? (c.italian ? ' · ' : '') + escapeHtml(c.spec) : ''}
           </div>
+          ${carpiInfo}
         </div>
         <div style="font-size:13px;font-weight:600;color:#c9a961;flex-shrink:0;">
           ${c.price ? '€' + parseFloat(c.price).toFixed(2) : ''}
         </div>
-      </label>
+      </div>
     `;
   }).join('');
+}
+
+// 点击"已有对应"产品 → 弹对话框
+function onScExistingClick(catalogId) {
+  const c = _scCatalog.find(x => x.id === catalogId);
+  if (!c) return;
+  if (c.carpi_status === 'bound') return;  // 已绑定,无需操作
+
+  _scExistingTarget = c;
+  document.getElementById('sce-supplier-name').textContent = c.name || c.italian || '?';
+  document.getElementById('sce-supplier-sub').textContent =
+    `${c.italian || ''} · ${c.spec || ''} · €${(parseFloat(c.price) || 0).toFixed(2)}`;
+  document.getElementById('sce-my-name').textContent = c.carpi_item_name || '?';
+  document.getElementById('sce-status-label').textContent =
+    c.carpi_status === 'same_name' ? '📝 同名(完全匹配)'
+    : c.carpi_status === 'fuzzy' ? `🔍 可能是同一个(评分 ${c.carpi_fuzzy_score})`
+    : '';
+  openModal('modal-sc-existing');
+}
+
+let _scExistingTarget = null;
+
+async function bindExistingItem() {
+  if (!_scExistingTarget) return;
+  const c = _scExistingTarget;
+  try {
+    const r = await fetch(SB_URL + '/supplier-catalog/bind-existing', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bindings: [{ catalog_id: c.id, item_id: c.carpi_item_id }],
+        sync_price: true,
+      }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '绑定失败');
+    toast(`✓ 已绑定到「${c.carpi_item_name}」(并同步价格)`);
+    closeModal('modal-sc-existing');
+    // 重新加载列表反映状态
+    if (_scCurrentSupplierId) await loadSupCatalogItems(_scCurrentSupplierId,
+      document.getElementById('sc-search') ? document.getElementById('sc-search').value : '');
+  } catch (e) {
+    toast('绑定失败:' + e.message, 'err');
+  }
+}
+
+function forceImportNew() {
+  if (!_scExistingTarget) return;
+  // 强行导入:加入选中集合,关闭对话框,提醒用户去点"导入选中"
+  _scSelected.add(_scExistingTarget.id);
+  updateScImportBtn();
+  closeModal('modal-sc-existing');
+  toast('已加入选中,记得点底部"导入选中"按钮');
+  renderSupCatalogList();
 }
 
 function toggleScItem(id) {
