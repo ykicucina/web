@@ -640,7 +640,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 // ============================================================
 // YKI Supplier Portal - v1.0.0
 // ============================================================
-const APP_VERSION = 'v1.3.0';   // 2026-05-27: 订单合并视图 + Excel 导出
+const APP_VERSION = 'v1.3.1';   // 2026-05-27: 合并视图 90 天限制 + 数据完整性警告
 const API_URL = 'https://api.yki.it';
 const TOKEN_KEY = 'yki_supplier_token';
 const LANG_KEY = 'yki_supplier_lang';
@@ -1034,6 +1034,18 @@ async function loadMergedOrders() {
     document.getElementById('mg-list').innerHTML = '<div class="empty">请先选时间范围</div>';
     return;
   }
+  // 限制最长 90 天(防数据量过大)
+  const dayDiff = (new Date(to) - new Date(from)) / 86400000;
+  if (dayDiff > 90) {
+    document.getElementById('mg-list').innerHTML = '<div class="empty" style="color:var(--danger);">⚠️ 时间范围最多 90 天,请缩小范围</div>';
+    document.getElementById('mg-summary').textContent = '';
+    return;
+  }
+  if (dayDiff < 0) {
+    document.getElementById('mg-list').innerHTML = '<div class="empty" style="color:var(--danger);">⚠️ 结束日期不能早于起始日期</div>';
+    document.getElementById('mg-summary').textContent = '';
+    return;
+  }
   const listEl = document.getElementById('mg-list');
   listEl.innerHTML = '<div class="empty"><div class="big-icon">⏳</div>加载中…</div>';
   document.getElementById('mg-summary').textContent = '';
@@ -1055,8 +1067,11 @@ async function loadMergedOrders() {
       }
     }
 
-    document.getElementById('mg-summary').innerHTML =
-      `<b>${d.total_products}</b> 种产品 · ${d.total_orders} 条订单 · ${d.restaurants.length} 家餐厅 · ${from}${from !== to ? ' 至 ' + to : ''}`;
+    let summary = `<b>${d.total_products}</b> 种产品 · ${d.total_orders} 条订单 · ${d.restaurants.length} 家餐厅 · ${from}${from !== to ? ' 至 ' + to : ''}`;
+    if (d.truncated) {
+      summary += '<br><span style="color:var(--danger);font-weight:600;">⚠️ 数据量超过 5000 条订单,可能不完整。请缩小时间范围或选具体餐厅。</span>';
+    }
+    document.getElementById('mg-summary').innerHTML = summary;
 
     renderMergedList();
   } catch (e) {
