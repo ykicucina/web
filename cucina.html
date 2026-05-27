@@ -1819,7 +1819,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.60';
+const APP_VERSION = 'v2.7.61';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1846,6 +1846,12 @@ const ff = k => featureFlags[k] !== false;
 const IMG_MAX_SIZE = 250;   // 最大边长（像素）
 const IMG_QUALITY  = 0.50;  // 质量 0~1
 // 366 张 × ~10KB = ~3.7 MB（远低于 Supabase 1GB 免费额度）
+
+// ════════════════════════════════════════
+// ⏰ 订货提醒提前量（分钟）
+// ════════════════════════════════════════
+// 比如 deadline=22:00, lead=180 → 从 19:00 起开始提醒
+const ALERT_LEAD_MINUTES = 180;
 
 // ════════════════════════════════════════
 // API 代理（Cloudflare Worker）
@@ -5451,7 +5457,11 @@ function renderOrderAlertPanel() {
     if (!cycle.includes(todayDay)) return;
     const sup = suppliers.find(s=>(s.name||'').toLowerCase()===(item.supplier||'').toLowerCase());
     const deadline = sup?.order_deadline || '19:00';
-    if (nowTime < deadline.slice(0,5)) return; // 还没到截止时间，不提醒
+    // 提前 ALERT_LEAD_MINUTES 分钟开始提醒(避免 22 点截止才提醒员工已下班的情况)
+    const [dh, dm] = deadline.slice(0,5).split(':').map(Number);
+    const alertStartMin = dh*60 + (dm||0) - ALERT_LEAD_MINUTES;
+    const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+    if (nowMin < alertStartMin) return; // 还没到提醒开始时间
     if (!staffWithTodayDuty[item.chef]) staffWithTodayDuty[item.chef] = new Set();
     staffWithTodayDuty[item.chef].add(item.supplier||'未知');
   });
@@ -5480,11 +5490,14 @@ function renderOrderAlertPanel() {
   if (pendingToday.length > 0) {
     const pendingSups = new Set();
     pendingToday.forEach(o=>(o.items||[]).forEach(i=>pendingSups.add(i.supplier||'未知')));
-    // 只提醒已过截止时间且今天是订货日的供应商
+    // 只提醒已过提醒开始时间且今天是订货日的供应商
     const overdue = [...pendingSups].filter(supName=>{
       const sup = suppliers.find(s=>(s.name||'').toLowerCase()===supName.toLowerCase());
       const deadline = sup?.order_deadline || '19:00';
-      if (nowTime < deadline.slice(0,5)) return false; // 还没到截止时间
+      const [dh, dm] = deadline.slice(0,5).split(':').map(Number);
+      const alertStartMin = dh*60 + (dm||0) - ALERT_LEAD_MINUTES;
+      const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+      if (nowMin < alertStartMin) return false; // 还没到提醒开始时间
       // 检查今天是不是这个供应商的订货日
       const supItems = items.filter(i=>(i.supplier||'').toLowerCase()===supName.toLowerCase());
       return supItems.some(i=>{
@@ -5879,7 +5892,8 @@ function updateOrderAlerts() {
     if (!sup.order_deadline) return;
     const [dh, dm] = (sup.order_deadline||'19:00').split(':').map(Number);
     const deadlineMinutes = dh*60 + (dm||0);
-    if (nowMinutes < deadlineMinutes) return; // 还没到截止时间
+    const alertStartMinutes = deadlineMinutes - ALERT_LEAD_MINUTES;
+    if (nowMinutes < alertStartMinutes) return; // 还没到提醒开始时间
 
     // 找负责这个供应商物料的员工
     const supItems = items.filter(i=>
@@ -5918,7 +5932,7 @@ function updateOrderAlerts() {
       const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
       if (!sup||!sup.order_deadline) return;
       const [dh,dm] = sup.order_deadline.split(':').map(Number);
-      if (nowMinutes < dh*60+(dm||0)) return; // 还没到截止时间
+      if (nowMinutes < dh*60+(dm||0)-ALERT_LEAD_MINUTES) return; // 还没到提醒开始时间
       // 检查今天是不是这个供应商的订货日
       const supItems = items.filter(i=>(i.supplier||'').toLowerCase()===supName.toLowerCase());
       const hasTodayCycle = supItems.some(i=>isTodayCycleForDay(i, todayDay));
