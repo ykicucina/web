@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.65';
+const APP_VERSION = 'v2.7.66';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4150,27 +4150,28 @@ function renderOrderList() {
           onclick="event.stopPropagation()">
       </div>
 
-      <!-- 上次订货(全宽) -->
-      ${ff('show_recent_order')?(()=>{
-        const r = getRecentOrder(item);
-        if (!r) return '<div class="oic-last" style="background:#fafafa;color:var(--text3);">📅 暂无订货记录</div>';
-        const timeTxt = r.days===0?'今天':(r.days===1?'昨天':r.days+'天前');
-        return `<div class="oic-last">📅 上次订 <strong>${r.qty}</strong>${item.spec?' '+item.spec:''} · ${timeTxt}${r.chef?' · '+r.chef:''}</div>`;
-      })():''}
-
-      <!-- 库存数字(consume_track 关闭时整行也隐藏,跟库存调整联动) -->
-      ${ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
-        <div class="oic-stock">
-          ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
-          ${ff('show_stock')&&ff('show_safety')?' · ':''}
-          ${ff('show_safety')?`${t('colSafe')}: ${getSafety(item)}`:''}
-        </div>`:''}
-
-      <!-- 下区: 库存调整 | 订货数量 -->
+      <!-- 上次订货 + 库存数字 + 下区(智能联动)-->
       ${(()=>{
+        // 1. 算"上次订"HTML(空字符串表示不显示)
+        const lastHtml = ff('show_recent_order')?(()=>{
+          const r = getRecentOrder(item);
+          if (!r) return '<div class="oic-last" style="background:#fafafa;color:var(--text3);">📅 暂无订货记录</div>';
+          const timeTxt = r.days===0?'今天':(r.days===1?'昨天':r.days+'天前');
+          return `<div class="oic-last">📅 上次订 <strong>${r.qty}</strong> · ${timeTxt}</div>`;
+        })():'';
+
+        // 2. 算库存数字 HTML
+        const stockHtml = ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
+          <div class="oic-stock">
+            ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
+            ${ff('show_stock')&&ff('show_safety')?' · ':''}
+            ${ff('show_safety')?`${t('colSafe')}: ${getSafety(item)}`:''}
+          </div>`:'';
+
+        // 3. 算下区
         const showConsume = ff('consume_track')&&(isAdmin||currentUserRole==='supervisor'||currentUserRole==='buyer'||(item.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim()||currentUserRole==='warehouse');
         const showOrder = currentUserRole!=='warehouse';
-        if (!showConsume && !showOrder) return '';
+
         const consumeBlock = showConsume?`
           <div class="oic-consume">
             <div class="oic-lbl">${t('consume')}:</div>
@@ -4197,8 +4198,33 @@ function renderOrderList() {
             </div>
             ${item.spec?`<div class="oic-unit">${item.spec}</div>`:''}
           </div>`:'';
-        const klass = (showConsume && showOrder) ? '' : 'full';
-        return `<div class="oic-bottom ${klass}">${consumeBlock}${orderBlock}</div>`;
+
+        // 4. 智能组装(方案 B)
+        // 有库存调整 → 上次订整宽放上面,bottom 双栏
+        // 无库存调整(且有 lastHtml)→ 上次订进 bottom 左格,跟订货数量并排
+        if (showConsume) {
+          // 经典布局:上次订整宽 → 库存数字 → bottom(库存调整 | 订货数量)
+          const klass = showOrder ? '' : 'full';
+          const bottom = (showConsume || showOrder)
+            ? `<div class="oic-bottom ${klass}">${consumeBlock}${orderBlock}</div>`
+            : '';
+          return `${lastHtml}${stockHtml}${bottom}`;
+        } else {
+          // 紧凑布局:无库存调整 → 上次订与订货数量并排
+          if (lastHtml && showOrder) {
+            return `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
+              <div style="align-self: end;">${lastHtml}</div>
+              ${orderBlock}
+            </div>`;
+          } else if (lastHtml) {
+            // 没有订货块(仓库员)→ 上次订单独显示
+            return lastHtml;
+          } else if (showOrder) {
+            // 没上次订 → 订货块靠右
+            return `<div class="oic-bottom full">${orderBlock}</div>`;
+          }
+          return '';
+        }
       })()}
     </div>`;
   }).join('');
