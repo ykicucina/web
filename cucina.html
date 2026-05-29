@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.70';
+const APP_VERSION = 'v2.7.71';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4204,15 +4204,15 @@ function renderOrderList() {
         const useCompact = !showConsume && showOrder;
 
         if (useCompact) {
-          // 方案 X: [图] | 标题 | 复选框(右上)+订货数量(右下,贴底)
-          // 下面 lastHtml 独占一行(如有)
+          // 方案 X: 整卡 grid - 左侧(图+标题)| 右侧(复选框上+订货数量下贴底)
+          //         lastHtml 独占底部一行(跨两列)
           return `
-            <div class="oic-top" style="grid-template-columns: 80px 1fr auto; align-items: stretch;">
+            <div style="display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:stretch;">
               ${thumbBlock}
               ${infoBlock}
-              <div style="display:flex;flex-direction:column;align-items:flex-end;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;min-height:80px;">
                 ${checkBlock}
-                <div style="margin-top:auto;">${orderBlock}</div>
+                ${orderBlock}
               </div>
             </div>
             ${lastHtml}`;
