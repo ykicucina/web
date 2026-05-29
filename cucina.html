@@ -240,9 +240,11 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid rgba(226, 231, 240, 0.9);
-  padding: 14px 130px 14px 70px;
+  padding: 12px 14px;
   margin-bottom: 10px;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
 }
 .order-item-card:hover { box-shadow: var(--shadow-md); }
@@ -297,6 +299,67 @@ input[type=number] { -moz-appearance: textfield; }
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .qty-unit { font-size: 12px; color: var(--text3); }
+
+/* ════════════════════════════════════════
+   订货卡片 Grid 布局 (v2.7.62 重构)
+   ════════════════════════════════════════ */
+.oic-top {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 12px;
+  align-items: flex-start;
+}
+.oic-thumb {
+  width: 64px; height: 64px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #eef2f7, #e2e8f0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--text3);
+  overflow: hidden; cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.oic-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.oic-info { min-width: 0; cursor: pointer; }
+.oic-info .oic-code { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+.oic-info .oic-name { font-weight: 600; font-size: 15px; line-height: 1.25; }
+.oic-info .oic-chef { font-size: 11px; color: var(--primary); margin-top: 3px; }
+.oic-info .oic-status { font-size: 11px; margin-top: 3px; color: var(--text3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.oic-check { width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; margin-top: 2px; }
+.oic-last {
+  font-size: 11px; color: #6b4f1a;
+  background: #f2e6d4;
+  padding: 4px 8px; border-radius: 6px;
+}
+.oic-stock {
+  font-size: 12px; color: var(--text2);
+}
+.oic-stock .low { color: var(--danger); font-weight: 600; }
+.oic-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+.oic-bottom.full { grid-template-columns: 1fr; }
+.oic-consume, .oic-order { display: flex; flex-direction: column; gap: 3px; }
+.oic-order { align-items: flex-end; }
+.oic-lbl { font-size: 11px; color: var(--text3); }
+.oic-ctrl { display: flex; align-items: center; gap: 4px; }
+.oic-ctrl button {
+  width: 36px; height: 36px;
+  border: 1px solid #ddd; border-radius: 8px;
+  background: #f5f5f5; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.oic-ctrl .qty-input,
+.oic-ctrl input[type=number] {
+  width: 48px; padding: 6px 2px; text-align: center;
+  border: 1px solid #ddd; border-radius: 8px;
+  font-size: 14px; font-weight: 500;
+  background: #f5f5f5; color: var(--text); outline: none;
+}
+.oic-ctrl .qty-input { cursor: pointer; }
+.oic-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .forecast-tag {
   font-size: 10px; font-weight: 600; color: var(--ok); background: var(--ok-light);
   padding: 2px 6px; border-radius: 6px;
@@ -1819,7 +1882,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.61';
+const APP_VERSION = 'v2.7.62';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4057,70 +4120,84 @@ function renderOrderList() {
     const isLow = ff('low_stock_highlight') && fc > 0;  // 开关：库存不足是否高亮
     const checked = item.checked;
     return `
-    <div class="order-item-card ${checked?(isLow?'selected-low':'selected'):''}" id="ocard-${item.id}" style="position:relative;">
-      <input type="checkbox" ${(item.orderModified||item.consume>0)?'checked':''}
-        onchange="toggleOrderItem(${item.id},this.checked)"
-        onclick="event.stopPropagation()"
-        style="position:absolute;bottom:10px;right:14px;width:22px;height:22px;accent-color:var(--primary);cursor:pointer;z-index:3;">
-      <div class="order-item-thumb" onclick="event.stopPropagation();showOrderItemDetail(${item.id})" title="${t('detailViewTip')}">
-        ${item.image_url
-          ? `<img src="${item.image_url}" alt="${item.name||''}" loading="lazy" onerror="this.parentNode.innerHTML='📦'">`
-          : `📦`}
+    <div class="order-item-card ${checked?(isLow?'selected-low':'selected'):''}" id="ocard-${item.id}">
+      <!-- 上区: 图 | 信息 | 复选框 -->
+      <div class="oic-top">
+        <div class="oic-thumb" onclick="event.stopPropagation();showOrderItemDetail(${item.id})" title="${t('detailViewTip')}">
+          ${item.image_url
+            ? `<img src="${item.image_url}" alt="${item.name||''}" loading="lazy" onerror="this.parentNode.innerHTML='📦'">`
+            : `📦`}
+        </div>
+        <div class="oic-info" onclick="showOrderItemDetail(${item.id})">
+          ${item.item_code?`<div class="oic-code">${item.item_code}</div>`:''}
+          <div class="oic-name">${displayName(item)}</div>
+          ${item.chef?`<div class="oic-chef">👤 ${item.chef}</div>`:''}
+          ${(()=>{
+            const parts = [];
+            if (isTodayCycle(item)) {
+              parts.push(`<span style="background:#e6f4ea;color:#2e7d32;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;">✅ 今日可订</span>`);
+            } else if (item.cycle && item.cycle.length>0) {
+              parts.push(`<span style="background:#f5f5f5;color:#999;font-size:10px;padding:2px 6px;border-radius:10px;">🔒 ${(item.cycle||[]).join('/')}</span>`);
+            }
+            if (item.supplier) parts.push(`<span style="color:var(--text3);">${item.supplier}</span>`);
+            return parts.length ? `<div class="oic-status">${parts.join('<span style="color:var(--text3);">·</span>')}</div>` : '';
+          })()}
+        </div>
+        <input type="checkbox" class="oic-check" ${(item.orderModified||item.consume>0)?'checked':''}
+          onchange="toggleOrderItem(${item.id},this.checked)"
+          onclick="event.stopPropagation()">
       </div>
-      <div class="order-item-info" onclick="showOrderItemDetail(${item.id})" style="cursor:pointer;">
-        ${item.item_code?`<div style="font-size:11px;color:var(--text3);margin-bottom:2px;">${item.item_code}</div>`:''}
-        <div class="name">${displayName(item)}</div>
-        ${item.chef?`<div style="font-size:11px;color:var(--primary);margin-top:2px;">👤 ${item.chef}</div>`:''}
-        ${(ff('show_stock')||ff('show_safety')||isTodayCycle(item)||(item.cycle&&item.cycle.length>0)||item.supplier)?`
-        <div class="stock-line" style="margin-top:4px;">
+
+      <!-- 上次订货(全宽) -->
+      ${ff('show_recent_order')?(()=>{
+        const r = getRecentOrder(item);
+        if (!r) return '<div class="oic-last" style="background:#fafafa;color:var(--text3);">📅 暂无订货记录</div>';
+        const timeTxt = r.days===0?'今天':(r.days===1?'昨天':r.days+'天前');
+        return `<div class="oic-last">📅 上次订 <strong>${r.qty}</strong>${item.spec?' '+item.spec:''} · ${timeTxt}${r.chef?' · '+r.chef:''}</div>`;
+      })():''}
+
+      <!-- 库存数字 -->
+      ${(ff('show_stock')||ff('show_safety'))?`
+        <div class="oic-stock">
           ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
           ${ff('show_stock')&&ff('show_safety')?' · ':''}
           ${ff('show_safety')?`${t('colSafe')}: ${getSafety(item)}`:''}
-          ${isTodayCycle(item)
-            ? `<span style="background:#e6f4ea;color:#2e7d32;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600;">✅ 今日可订</span>`
-            : (item.cycle&&item.cycle.length>0
-              ? `<span style="background:#f5f5f5;color:#999;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;">🔒 ${(item.cycle||[]).join('/')}</span>`
-              : '')}
-          ${item.supplier?`${(ff('show_stock')||ff('show_safety'))?'· ':''}<span style="color:var(--text3)">${item.supplier}</span>`:''}
         </div>`:''}
-        ${ff('show_recent_order')?(()=>{
-          const r = getRecentOrder(item);
-          if (!r) return '<div style="font-size:11px;color:var(--text3);margin-top:4px;">📅 暂无订货记录</div>';
-          const timeTxt = r.days===0?'今天':(r.days===1?'昨天':r.days+'天前');
-          return `<div style="font-size:11px;color:#6b4f1a;margin-top:4px;background:#f2e6d4;padding:3px 8px;border-radius:6px;display:inline-block;">📅 上次订 <strong>${r.qty}</strong>${item.spec?' '+item.spec:''} · ${timeTxt}${r.chef?' · '+r.chef:''}</div>`;
-        })():''}
-        <div class="stock-line" style="margin-top:4px;">
-          ${ff('consume_track')&&(isAdmin||currentUserRole==='supervisor'||currentUserRole==='buyer'||(item.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim()||currentUserRole==='warehouse')?`
-          <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-            <span style="font-size:13px;color:var(--text3);min-width:48px;">${t('consume')}:</span>
-            <button onclick="event.stopPropagation();stepConsume(${item.id},-1)"
-              style="width:36px;height:36px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-            <input type="number" step="1" value="${item.consume||0}"
-              style="width:48px;border:1px solid #ddd;border-radius:8px;padding:4px 2px;font-size:14px;text-align:center;"
-              onchange="setConsume(${item.id},this.value)"
-              onclick="event.stopPropagation()"
-              id="oconsume-${item.id}">
-            ${(isAdmin||currentUserPerms.can_add_stock)?`
-            <button onclick="event.stopPropagation();stepConsume(${item.id},+1)"
-              style="width:36px;height:36px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>`:''}
-          </div>`:''}
-        </div>
-      </div>
-      ${currentUserRole==='warehouse'?'':/* 仓库员没有订货区域 */`
-      <div class="order-qty-wrap">
-        <div class="order-qty-lbl" style="font-size:11px;color:var(--text3);">${t('orderQty')}</div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <button onclick="event.stopPropagation();stepQty(${item.id},-1)"
-            style="width:36px;height:36px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-          <div class="qty-input"
-               id="oqty-display-${item.id}"
-               onclick="event.stopPropagation();showQtyPad(${item.id})"
-               style="width:48px;text-align:center;padding:8px 0;border:1px solid #ddd;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:${item.orderModified?'var(--primary)':'var(--text3)'};background:${item.orderModified?'#faf6ec':'#f5f5f5'};">${item.need||0}</div>
-          <button onclick="event.stopPropagation();stepQty(${item.id},+1)"
-            style="width:36px;height:36px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
-        </div>
-        <span class="qty-unit" style="font-size:12px;color:var(--text3);">${item.spec||''}</span>
-      </div>`}
+
+      <!-- 下区: 库存调整 | 订货数量 -->
+      ${(()=>{
+        const showConsume = ff('consume_track')&&(isAdmin||currentUserRole==='supervisor'||currentUserRole==='buyer'||(item.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim()||currentUserRole==='warehouse');
+        const showOrder = currentUserRole!=='warehouse';
+        if (!showConsume && !showOrder) return '';
+        const consumeBlock = showConsume?`
+          <div class="oic-consume">
+            <div class="oic-lbl">${t('consume')}:</div>
+            <div class="oic-ctrl">
+              <button onclick="event.stopPropagation();stepConsume(${item.id},-1)">−</button>
+              <input type="number" step="1" value="${item.consume||0}"
+                onchange="setConsume(${item.id},this.value)"
+                onclick="event.stopPropagation()"
+                id="oconsume-${item.id}">
+              ${(isAdmin||currentUserPerms.can_add_stock)?`
+              <button onclick="event.stopPropagation();stepConsume(${item.id},+1)">+</button>`:''}
+            </div>
+          </div>`:'';
+        const orderBlock = showOrder?`
+          <div class="oic-order">
+            <div class="oic-lbl">${t('orderQty')}</div>
+            <div class="oic-ctrl">
+              <button onclick="event.stopPropagation();stepQty(${item.id},-1)">−</button>
+              <div class="qty-input"
+                   id="oqty-display-${item.id}"
+                   onclick="event.stopPropagation();showQtyPad(${item.id})"
+                   style="width:48px;text-align:center;padding:8px 0;border:1px solid #ddd;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:${item.orderModified?'var(--primary)':'var(--text3)'};background:${item.orderModified?'#faf6ec':'#f5f5f5'};">${item.need||0}</div>
+              <button onclick="event.stopPropagation();stepQty(${item.id},+1)">+</button>
+            </div>
+            ${item.spec?`<div class="oic-unit">${item.spec}</div>`:''}
+          </div>`:'';
+        const klass = (showConsume && showOrder) ? '' : 'full';
+        return `<div class="oic-bottom ${klass}">${consumeBlock}${orderBlock}</div>`;
+      })()}
     </div>`;
   }).join('');
   updateOrderFooter();
