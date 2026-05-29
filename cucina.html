@@ -342,9 +342,9 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   gap: 10px;
   align-items: end;
 }
-.oic-bottom.full { grid-template-columns: 1fr; }
+.oic-bottom.full { grid-template-columns: 1fr; justify-items: end; }
 .oic-consume, .oic-order { display: flex; flex-direction: column; gap: 3px; }
-.oic-order { align-items: flex-end; }
+.oic-order { align-items: center; }
 .oic-lbl { font-size: 11px; color: var(--text3); }
 .oic-ctrl { display: flex; align-items: center; gap: 4px; }
 .oic-ctrl button {
@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.63';
+const APP_VERSION = 'v2.7.65';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4158,8 +4158,8 @@ function renderOrderList() {
         return `<div class="oic-last">📅 上次订 <strong>${r.qty}</strong>${item.spec?' '+item.spec:''} · ${timeTxt}${r.chef?' · '+r.chef:''}</div>`;
       })():''}
 
-      <!-- 库存数字 -->
-      ${(ff('show_stock')||ff('show_safety'))?`
+      <!-- 库存数字(consume_track 关闭时整行也隐藏,跟库存调整联动) -->
+      ${ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
         <div class="oic-stock">
           ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
           ${ff('show_stock')&&ff('show_safety')?' · ':''}
