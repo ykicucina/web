@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.71';
+const APP_VERSION = 'v2.7.72';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4204,18 +4204,20 @@ function renderOrderList() {
         const useCompact = !showConsume && showOrder;
 
         if (useCompact) {
-          // 方案 X: 整卡 grid - 左侧(图+标题)| 右侧(复选框上+订货数量下贴底)
-          //         lastHtml 独占底部一行(跨两列)
+          // 方案: 上区(图+标题+复选框) | 下区(上次订左 + 订货数量右)
+          const bottomRow = lastHtml
+            ? `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
+                 <div style="align-self: end;">${lastHtml}</div>
+                 ${orderBlock}
+               </div>`
+            : `<div class="oic-bottom full">${orderBlock}</div>`;
           return `
-            <div style="display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:stretch;">
+            <div class="oic-top">
               ${thumbBlock}
               ${infoBlock}
-              <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;min-height:80px;">
-                ${checkBlock}
-                ${orderBlock}
-              </div>
+              ${checkBlock}
             </div>
-            ${lastHtml}`;
+            ${bottomRow}`;
         }
 
         // 经典布局(只有 showConsume 时):上区 + 上次订整宽 + 库存数字 + 下区双栏
