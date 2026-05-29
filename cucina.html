@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.66';
+const APP_VERSION = 'v2.7.67';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4123,36 +4123,10 @@ function renderOrderList() {
     const checked = item.checked;
     return `
     <div class="order-item-card ${checked?(isLow?'selected-low':'selected'):''}" id="ocard-${item.id}">
-      <!-- 上区: 图 | 信息 | 复选框 -->
-      <div class="oic-top">
-        <div class="oic-thumb" onclick="event.stopPropagation();showOrderItemDetail(${item.id})" title="${t('detailViewTip')}">
-          ${item.image_url
-            ? `<img src="${item.image_url}" alt="${item.name||''}" loading="lazy" onerror="this.parentNode.innerHTML='📦'">`
-            : `📦`}
-        </div>
-        <div class="oic-info" onclick="showOrderItemDetail(${item.id})">
-          ${item.item_code?`<div class="oic-code">${item.item_code}</div>`:''}
-          <div class="oic-name">${displayName(item)}</div>
-          ${item.chef?`<div class="oic-chef">👤 ${item.chef}</div>`:''}
-          ${(()=>{
-            const parts = [];
-            if (isTodayCycle(item)) {
-              parts.push(`<span style="background:#e6f4ea;color:#2e7d32;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;">✅ 今日可订</span>`);
-            } else if (item.cycle && item.cycle.length>0) {
-              parts.push(`<span style="background:#f5f5f5;color:#999;font-size:10px;padding:2px 6px;border-radius:10px;">🔒 ${(item.cycle||[]).join('/')}</span>`);
-            }
-            if (item.supplier) parts.push(`<span style="color:var(--text3);">${item.supplier}</span>`);
-            return parts.length ? `<div class="oic-status">${parts.join('<span style="color:var(--text3);">·</span>')}</div>` : '';
-          })()}
-        </div>
-        <input type="checkbox" class="oic-check" ${(item.orderModified||item.consume>0)?'checked':''}
-          onchange="toggleOrderItem(${item.id},this.checked)"
-          onclick="event.stopPropagation()">
-      </div>
-
-      <!-- 上次订货 + 库存数字 + 下区(智能联动)-->
       ${(()=>{
-        // 1. 算"上次订"HTML(空字符串表示不显示)
+        // 计算各块状态(决定布局)
+        const showConsume = ff('consume_track')&&(isAdmin||currentUserRole==='supervisor'||currentUserRole==='buyer'||(item.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim()||currentUserRole==='warehouse');
+        const showOrder = currentUserRole!=='warehouse';
         const lastHtml = ff('show_recent_order')?(()=>{
           const r = getRecentOrder(item);
           if (!r) return '<div class="oic-last" style="background:#fafafa;color:var(--text3);">📅 暂无订货记录</div>';
@@ -4160,31 +4134,36 @@ function renderOrderList() {
           return `<div class="oic-last">📅 上次订 <strong>${r.qty}</strong> · ${timeTxt}</div>`;
         })():'';
 
-        // 2. 算库存数字 HTML
-        const stockHtml = ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
-          <div class="oic-stock">
-            ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
-            ${ff('show_stock')&&ff('show_safety')?' · ':''}
-            ${ff('show_safety')?`${t('colSafe')}: ${getSafety(item)}`:''}
-          </div>`:'';
+        // 各 HTML 模块
+        const infoBlock = `
+          <div class="oic-info" onclick="showOrderItemDetail(${item.id})">
+            ${item.item_code?`<div class="oic-code">${item.item_code}</div>`:''}
+            <div class="oic-name">${displayName(item)}</div>
+            ${item.chef?`<div class="oic-chef">👤 ${item.chef}</div>`:''}
+            ${(()=>{
+              const parts = [];
+              if (isTodayCycle(item)) {
+                parts.push(`<span style="background:#e6f4ea;color:#2e7d32;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;">✅ 今日可订</span>`);
+              } else if (item.cycle && item.cycle.length>0) {
+                parts.push(`<span style="background:#f5f5f5;color:#999;font-size:10px;padding:2px 6px;border-radius:10px;">🔒 ${(item.cycle||[]).join('/')}</span>`);
+              }
+              if (item.supplier) parts.push(`<span style="color:var(--text3);">${item.supplier}</span>`);
+              return parts.length ? `<div class="oic-status">${parts.join('<span style="color:var(--text3);">·</span>')}</div>` : '';
+            })()}
+          </div>`;
 
-        // 3. 算下区
-        const showConsume = ff('consume_track')&&(isAdmin||currentUserRole==='supervisor'||currentUserRole==='buyer'||(item.chef||'').toLowerCase().trim()===(currentUser||'').toLowerCase().trim()||currentUserRole==='warehouse');
-        const showOrder = currentUserRole!=='warehouse';
+        const thumbBlock = `
+          <div class="oic-thumb" onclick="event.stopPropagation();showOrderItemDetail(${item.id})" title="${t('detailViewTip')}">
+            ${item.image_url
+              ? `<img src="${item.image_url}" alt="${item.name||''}" loading="lazy" onerror="this.parentNode.innerHTML='📦'">`
+              : `📦`}
+          </div>`;
 
-        const consumeBlock = showConsume?`
-          <div class="oic-consume">
-            <div class="oic-lbl">${t('consume')}:</div>
-            <div class="oic-ctrl">
-              <button onclick="event.stopPropagation();stepConsume(${item.id},-1)">−</button>
-              <input type="number" step="1" value="${item.consume||0}"
-                onchange="setConsume(${item.id},this.value)"
-                onclick="event.stopPropagation()"
-                id="oconsume-${item.id}">
-              ${(isAdmin||currentUserPerms.can_add_stock)?`
-              <button onclick="event.stopPropagation();stepConsume(${item.id},+1)">+</button>`:''}
-            </div>
-          </div>`:'';
+        const checkBlock = `
+          <input type="checkbox" class="oic-check" ${(item.orderModified||item.consume>0)?'checked':''}
+            onchange="toggleOrderItem(${item.id},this.checked)"
+            onclick="event.stopPropagation()">`;
+
         const orderBlock = showOrder?`
           <div class="oic-order">
             <div class="oic-lbl">${t('orderQty')}</div>
@@ -4199,32 +4178,71 @@ function renderOrderList() {
             ${item.spec?`<div class="oic-unit">${item.spec}</div>`:''}
           </div>`:'';
 
-        // 4. 智能组装(方案 B)
-        // 有库存调整 → 上次订整宽放上面,bottom 双栏
-        // 无库存调整(且有 lastHtml)→ 上次订进 bottom 左格,跟订货数量并排
-        if (showConsume) {
-          // 经典布局:上次订整宽 → 库存数字 → bottom(库存调整 | 订货数量)
-          const klass = showOrder ? '' : 'full';
-          const bottom = (showConsume || showOrder)
-            ? `<div class="oic-bottom ${klass}">${consumeBlock}${orderBlock}</div>`
-            : '';
-          return `${lastHtml}${stockHtml}${bottom}`;
-        } else {
-          // 紧凑布局:无库存调整 → 上次订与订货数量并排
-          if (lastHtml && showOrder) {
-            return `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
-              <div style="align-self: end;">${lastHtml}</div>
-              ${orderBlock}
+        const consumeBlock = showConsume?`
+          <div class="oic-consume">
+            <div class="oic-lbl">${t('consume')}:</div>
+            <div class="oic-ctrl">
+              <button onclick="event.stopPropagation();stepConsume(${item.id},-1)">−</button>
+              <input type="number" step="1" value="${item.consume||0}"
+                onchange="setConsume(${item.id},this.value)"
+                onclick="event.stopPropagation()"
+                id="oconsume-${item.id}">
+              ${(isAdmin||currentUserPerms.can_add_stock)?`
+              <button onclick="event.stopPropagation();stepConsume(${item.id},+1)">+</button>`:''}
+            </div>
+          </div>`:'';
+
+        const stockHtml = ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
+          <div class="oic-stock">
+            ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
+            ${ff('show_stock')&&ff('show_safety')?' · ':''}
+            ${ff('show_safety')?`${t('colSafe')}: ${getSafety(item)}`:''}
+          </div>`:'';
+
+        // ── 布局判断 ──
+        // 紧凑模式(方案 X):无库存调整 + 无上次订 → 订货数量塞图右边
+        const useCompact = !showConsume && !lastHtml && showOrder;
+
+        if (useCompact) {
+          // 方案 X: [图] | 标题 | 复选框+订货数量
+          return `
+            <div class="oic-top" style="grid-template-columns: 80px 1fr auto; align-items: center;">
+              ${thumbBlock}
+              ${infoBlock}
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                ${checkBlock}
+                ${orderBlock}
+              </div>
             </div>`;
-          } else if (lastHtml) {
-            // 没有订货块(仓库员)→ 上次订单独显示
-            return lastHtml;
-          } else if (showOrder) {
-            // 没上次订 → 订货块靠右
-            return `<div class="oic-bottom full">${orderBlock}</div>`;
-          }
-          return '';
         }
+
+        // 经典布局:上区 + (上次订/库存) + 下区
+        const topBlock = `
+          <div class="oic-top">
+            ${thumbBlock}
+            ${infoBlock}
+            ${checkBlock}
+          </div>`;
+
+        // 下区智能切换
+        let bottomHtml = '';
+        if (showConsume) {
+          // 有库存调整:上次订整宽 + 库存数字 + bottom 双栏
+          const klass = showOrder ? '' : 'full';
+          bottomHtml = `${lastHtml}${stockHtml}<div class="oic-bottom ${klass}">${consumeBlock}${orderBlock}</div>`;
+        } else if (lastHtml && showOrder) {
+          // 无库存调整 + 有上次订:并排
+          bottomHtml = `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
+            <div style="align-self: end;">${lastHtml}</div>
+            ${orderBlock}
+          </div>`;
+        } else if (lastHtml) {
+          bottomHtml = lastHtml;
+        } else if (showOrder) {
+          bottomHtml = `<div class="oic-bottom full">${orderBlock}</div>`;
+        }
+
+        return topBlock + bottomHtml;
       })()}
     </div>`;
   }).join('');
