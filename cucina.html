@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.68';
+const APP_VERSION = 'v2.7.69';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4204,13 +4204,13 @@ function renderOrderList() {
         const useCompact = !showConsume && showOrder;
 
         if (useCompact) {
-          // 方案 X: [图] | 标题 | 复选框+订货数量(右列堆叠)
+          // 方案 X: [图] | 标题 | 复选框(右上)+订货数量(右下)
           // 下面 lastHtml 独占一行(如有)
           return `
-            <div class="oic-top" style="grid-template-columns: 80px 1fr auto; align-items: flex-start;">
+            <div class="oic-top" style="grid-template-columns: 80px 1fr auto; align-items: stretch;">
               ${thumbBlock}
               ${infoBlock}
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;">
                 ${checkBlock}
                 ${orderBlock}
               </div>
