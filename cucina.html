@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.73';
+const APP_VERSION = 'v2.7.74';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4030,24 +4030,73 @@ function renderOrderList() {
     }
   }
   // ════════════════════════════════════════
-  // v2.7.73: 智能名称匹配 - 主名称提取 + 规格大小提取
+  // v2.7.74: 智能名称归组 - italian 首词 + 中文 LCS≥3 双重匹配
   // ════════════════════════════════════════
-  // 提取主名称(去掉规格/数字/单位),用于把"同类大小"排在一起
-  // 例: "Vino Fusto Rosso 5L" → "vino fusto rosso"
-  //     "Branzino 800g"        → "branzino"
+  // 缓存: itemId → groupKey(归组后的代号)
+  // 失效条件: items 数组的内容变了(用长度+第一项 id 当指纹,粗略但够用)
+  function _itemsFingerprint() {
+    return items.length + '#' + (items[0]?.id || 0) + '#' + (items[items.length-1]?.id || 0);
+  }
+  if (!window._baseNameCache || window._baseNameCacheFp !== _itemsFingerprint()) {
+    const map = new Map();
+    // ── Step 1: 按 italian 首词分组 ──
+    items.forEach(it => {
+      const raw = (it.italian || '').toLowerCase().trim();
+      // 去掉数字+单位
+      const clean = raw
+        .replace(/\d+([.,]\d+)?\s*(kg|g|ml|cl|l|pz|fusti?|cartoni?)\b/gi, '')
+        .replace(/\b\d+([.,]\d+)?\b/g, '')
+        .trim();
+      const firstWord = clean.split(/\s+/)[0] || '';
+      map.set(it.id, firstWord || ('__' + it.id));  // 无意大利文名 → 独占一组
+    });
+    // ── Step 2: 用中文名 LCS≥3 进一步合并组 ──
+    // 把 groupKey → [itemIds] 反转,方便合并
+    function longestCommonSubstring(a, b) {
+      if (!a || !b) return 0;
+      const m = a.length, n = b.length;
+      let max = 0;
+      let prev = new Array(n + 1).fill(0);
+      let curr = new Array(n + 1).fill(0);
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (a[i-1] === b[j-1]) {
+            curr[j] = prev[j-1] + 1;
+            if (curr[j] > max) max = curr[j];
+          } else { curr[j] = 0; }
+        }
+        [prev, curr] = [curr, prev];
+      }
+      return max;
+    }
+    // 简单并查集(Union-Find)用于把不同 group 合并
+    const parent = new Map();
+    function find(k) { if (parent.get(k) !== k) parent.set(k, find(parent.get(k))); return parent.get(k); }
+    function union(a, b) { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); }
+    // 初始化:每个 groupKey 自己是根
+    const allGroups = new Set(map.values());
+    allGroups.forEach(g => parent.set(g, g));
+    // 全部食材两两比较中文名
+    const itemsArr = items.map(it => ({ id: it.id, name: (it.name||'').toLowerCase().trim(), gk: map.get(it.id) }));
+    for (let i = 0; i < itemsArr.length; i++) {
+      if (!itemsArr[i].name) continue;
+      for (let j = i + 1; j < itemsArr.length; j++) {
+        if (!itemsArr[j].name) continue;
+        if (find(itemsArr[i].gk) === find(itemsArr[j].gk)) continue;  // 已同组,跳过
+        if (longestCommonSubstring(itemsArr[i].name, itemsArr[j].name) >= 3) {
+          union(itemsArr[i].gk, itemsArr[j].gk);
+        }
+      }
+    }
+    // 应用并查集结果:把每个 item 的 groupKey 换成根
+    items.forEach(it => map.set(it.id, find(map.get(it.id))));
+    window._baseNameCache = map;
+    window._baseNameCacheFp = _itemsFingerprint();
+  }
   function getItemBaseName(item) {
-    const raw = (item.italian || item.name || '').toLowerCase().trim();
-    if (!raw) return '';
-    // 去掉规格关键词与数字+单位
-    return raw
-      .replace(/\d+([.,]\d+)?\s*(kg|kilogrammi?|g|grammi?|ml|cl|l|litri?|pz|pezzi?|fusti?|cartoni?|bottiglie?|barrattoli?|lattine?|confezioni?|conf|sacchi?|sacchetti?|buste?|kg\.|gr\.|ltr\.?)\b/gi, '')
-      .replace(/\b\d+([.,]\d+)?\b/g, '')  // 剩余孤立数字
-      .replace(/[×x*]/g, '')  // 乘号
-      .replace(/\s+/g, ' ')
-      .trim();
+    return (window._baseNameCache && window._baseNameCache.get(item.id)) || '';
   }
   // 提取"规格大小"用于组内排序(转成克/毫升等可比单位,失败返 999999)
-  // 例: "5L" → 5000, "800g" → 800, "2 kg" → 2000
   function getItemSize(item) {
     const raw = (item.spec || item.italian || item.name || '').toLowerCase();
     const m = raw.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|grammi?|ml|cl|l|litri?)?/i);
@@ -4057,7 +4106,6 @@ function renderOrderList() {
     if (u === 'kg' || u.startsWith('kilo')) n *= 1000;
     else if (u === 'l' || u.startsWith('litr')) n *= 1000;
     else if (u === 'cl') n *= 10;
-    // g / ml / 空 / pezzi 等 - 保持原值
     return n;
   }
   // 二级排序比较器(同主名称紧邻,组内按规格大小)
