@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.72';
+const APP_VERSION = 'v2.7.73';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -4029,19 +4029,73 @@ function renderOrderList() {
       hintEl.style.color = 'var(--ok,#2e7d32)';
     }
   }
+  // ════════════════════════════════════════
+  // v2.7.73: 智能名称匹配 - 主名称提取 + 规格大小提取
+  // ════════════════════════════════════════
+  // 提取主名称(去掉规格/数字/单位),用于把"同类大小"排在一起
+  // 例: "Vino Fusto Rosso 5L" → "vino fusto rosso"
+  //     "Branzino 800g"        → "branzino"
+  function getItemBaseName(item) {
+    const raw = (item.italian || item.name || '').toLowerCase().trim();
+    if (!raw) return '';
+    // 去掉规格关键词与数字+单位
+    return raw
+      .replace(/\d+([.,]\d+)?\s*(kg|kilogrammi?|g|grammi?|ml|cl|l|litri?|pz|pezzi?|fusti?|cartoni?|bottiglie?|barrattoli?|lattine?|confezioni?|conf|sacchi?|sacchetti?|buste?|kg\.|gr\.|ltr\.?)\b/gi, '')
+      .replace(/\b\d+([.,]\d+)?\b/g, '')  // 剩余孤立数字
+      .replace(/[×x*]/g, '')  // 乘号
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  // 提取"规格大小"用于组内排序(转成克/毫升等可比单位,失败返 999999)
+  // 例: "5L" → 5000, "800g" → 800, "2 kg" → 2000
+  function getItemSize(item) {
+    const raw = (item.spec || item.italian || item.name || '').toLowerCase();
+    const m = raw.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|grammi?|ml|cl|l|litri?)?/i);
+    if (!m) return 999999;
+    let n = parseFloat(m[1].replace(',', '.'));
+    const u = (m[2] || '').toLowerCase();
+    if (u === 'kg' || u.startsWith('kilo')) n *= 1000;
+    else if (u === 'l' || u.startsWith('litr')) n *= 1000;
+    else if (u === 'cl') n *= 10;
+    // g / ml / 空 / pezzi 等 - 保持原值
+    return n;
+  }
+  // 二级排序比较器(同主名称紧邻,组内按规格大小)
+  function compareBaseName(a, b) {
+    const an = getItemBaseName(a), bn = getItemBaseName(b);
+    if (an !== bn) return an.localeCompare(bn);
+    return getItemSize(a) - getItemSize(b);
+  }
+
   // Sort: 今日周期+库存不足 → 最高优先级
   let sorted = [...items];
   // 用户自定义顺序仅在 'custom' 模式下应用
   if (_orderSortMode === 'custom' && _userSortOrder) {
     sorted = applyCustomSortOrder(sorted, _userSortOrder);
   } else if (_orderSortMode === 'low') {
-    sorted.sort((a,b)=>{ const aL=stockStatus(a)==='low',bL=stockStatus(b)==='low'; return aL===bL?0:aL?-1:1; });
+    sorted.sort((a,b)=>{
+      const aL=stockStatus(a)==='low',bL=stockStatus(b)==='low';
+      if (aL!==bL) return aL?-1:1;
+      return compareBaseName(a, b);
+    });
   } else if (_orderSortMode === 'today') {
-    sorted.sort((a,b)=>{ const aT=isTodayCycle(a),bT=isTodayCycle(b); return aT===bT?0:aT?-1:1; });
+    sorted.sort((a,b)=>{
+      const aT=isTodayCycle(a),bT=isTodayCycle(b);
+      if (aT!==bT) return aT?-1:1;
+      return compareBaseName(a, b);
+    });
   } else if (_orderSortMode === 'chef') {
-    sorted.sort((a,b)=>(a.chef||'').localeCompare(b.chef||''));
+    sorted.sort((a,b)=>{
+      const c = (a.chef||'').localeCompare(b.chef||'');
+      if (c !== 0) return c;
+      return compareBaseName(a, b);
+    });
   } else if (_orderSortMode === 'supplier') {
-    sorted.sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
+    sorted.sort((a,b)=>{
+      const c = (a.supplier||'').localeCompare(b.supplier||'');
+      if (c !== 0) return c;
+      return compareBaseName(a, b);
+    });
   } else {
     sorted.sort((a,b)=>{
       const aToday=isTodayCycle(a),bToday=isTodayCycle(b);
@@ -4066,7 +4120,8 @@ function renderOrderList() {
       if(aToday&&!bToday)return -1; if(!aToday&&bToday)return 1;
       // 7. 库存不足
       if(aLow&&!bLow)return -1; if(!aLow&&bLow)return 1;
-      return 0;
+      // 8. 同优先级:主名称分组 + 组内按规格大小
+      return compareBaseName(a, b);
     });
   }
 
