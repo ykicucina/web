@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.74';
+const APP_VERSION = 'v2.7.75';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3031,7 +3031,12 @@ async function init() {
         <div style="font-size:48px;margin-bottom:16px;">🚫</div>
         <h2 style="color:#e74c3c;">餐厅账户不存在</h2>
         <p style="color:#666;">Restaurant ID: ${REST_ID}</p>
-        <p style="color:#666;">请联系系统管理员</p>
+        <p style="color:#666;margin-bottom:24px;">代号填错了?</p>
+        <button onclick="(function(){try{localStorage.removeItem('yki_last_rid');}catch(e){}location.replace('/cucina.html');})()"
+          style="padding:12px 24px;background:#c9a961;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:12px;width:240px;">
+          🔄 重新输入代号
+        </button>
+        <a href="/" style="padding:12px 24px;color:#666;text-decoration:none;font-size:14px;">← 返回首页</a>
       </div>`;
       return;
     }
