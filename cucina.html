@@ -1884,7 +1884,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.75';
+const APP_VERSION = 'v2.7.76';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3026,17 +3026,35 @@ async function init() {
   try {
     const rRes = await fetch(SB_URL+'/restaurant-info?restaurantId='+encodeURIComponent(REST_ID));
     const rData = await rRes.json();
+    // v2.7.76 错误页三语文案
+    const _L = currentLang || 'zh';
+    const errTxt = {
+      not_found_title: {zh: '餐厅账户不存在', it: 'Account ristorante non trovato', bn: 'রেস্তোরাঁ অ্যাকাউন্ট পাওয়া যায়নি'},
+      not_found_hint:  {zh: '代号填错了?',       it: 'Codice errato?',              bn: 'কোড ভুল?'},
+      retry_input:     {zh: '🔄 重新输入代号',   it: '🔄 Reinserisci codice',       bn: '🔄 পুনরায় কোড লিখুন'},
+      back_home:       {zh: '← 返回首页',       it: '← Torna alla home',           bn: '← হোমে ফিরুন'},
+      pending_title:   {zh: '账户审核中',        it: 'Account in revisione',        bn: 'অ্যাকাউন্ট পর্যালোচনাধীন'},
+      pending_msg:     {zh: '您的注册已提交,正在等待管理员审核', it: 'Registrazione inviata, in attesa di approvazione', bn: 'নিবন্ধন জমা দেওয়া হয়েছে, অনুমোদনের অপেক্ষায়'},
+      pending_note:    {zh: '审核通过后会以联系方式通知您', it: 'Sarà avvisato al momento dell’approvazione', bn: 'অনুমোদনের পর জানানো হবে'},
+      suspended_title: {zh: '账户已暂停',        it: 'Account sospeso',             bn: 'অ্যাকাউন্ট স্থগিত'},
+      contact_renew:   {zh: '请联系系统管理员续费', it: 'Contatta l’amministratore per rinnovare', bn: 'নবায়নের জন্য অ্যাডমিনের সাথে যোগাযোগ করুন'},
+      expired_title:   {zh: '账户已到期',        it: 'Account scaduto',             bn: 'অ্যাকাউন্ট মেয়াদোত্তীর্ণ'},
+      expires_label:   {zh: '到期日',           it: 'Scaduto il',                  bn: 'মেয়াদ শেষ'},
+      whatsapp_renew:  {zh: '💬 WhatsApp 联系续费', it: '💬 Contatta su WhatsApp',  bn: '💬 WhatsApp এ যোগাযোগ'},
+    };
+    const _t = (k) => errTxt[k]?.[_L] || errTxt[k]?.zh || k;
+
     if (!rRes.ok || rData.error === 'not_found' || !rData.id) {
       document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
         <div style="font-size:48px;margin-bottom:16px;">🚫</div>
-        <h2 style="color:#e74c3c;">餐厅账户不存在</h2>
+        <h2 style="color:#e74c3c;">${_t('not_found_title')}</h2>
         <p style="color:#666;">Restaurant ID: ${REST_ID}</p>
-        <p style="color:#666;margin-bottom:24px;">代号填错了?</p>
+        <p style="color:#666;margin-bottom:24px;">${_t('not_found_hint')}</p>
         <button onclick="(function(){try{localStorage.removeItem('yki_last_rid');}catch(e){}location.replace('/cucina.html');})()"
           style="padding:12px 24px;background:#c9a961;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:12px;width:240px;">
-          🔄 重新输入代号
+          ${_t('retry_input')}
         </button>
-        <a href="/" style="padding:12px 24px;color:#666;text-decoration:none;font-size:14px;">← 返回首页</a>
+        <a href="/" style="padding:12px 24px;color:#666;text-decoration:none;font-size:14px;">${_t('back_home')}</a>
       </div>`;
       return;
     }
@@ -3044,32 +3062,32 @@ async function init() {
     if (restaurantInfo.status === 'pending') {
       document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
         <div style="font-size:48px;margin-bottom:16px;">⏳</div>
-        <h2 style="color:#c9a961;">账户审核中</h2>
+        <h2 style="color:#c9a961;">${_t('pending_title')}</h2>
         <p style="color:#666;">${restaurantInfo.name || REST_ID}</p>
-        <p style="color:#666;">您的注册已提交，正在等待管理员审核</p>
-        <p style="color:#999;font-size:13px;margin-top:8px;">审核通过后会以联系方式通知您</p>
+        <p style="color:#666;">${_t('pending_msg')}</p>
+        <p style="color:#999;font-size:13px;margin-top:8px;">${_t('pending_note')}</p>
       </div>`;
       return;
     }
     if (restaurantInfo.status === 'suspended') {
       document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
         <div style="font-size:48px;margin-bottom:16px;">⏸️</div>
-        <h2 style="color:#e67e22;">账户已暂停</h2>
+        <h2 style="color:#e67e22;">${_t('suspended_title')}</h2>
         <p style="color:#666;">${restaurantInfo.name}</p>
-        <p style="color:#666;">请联系系统管理员续费</p>
+        <p style="color:#666;">${_t('contact_renew')}</p>
       </div>`;
       return;
     }
     if (restaurantInfo.expires_at && new Date(restaurantInfo.expires_at) < new Date()) {
       document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
         <div style="font-size:48px;margin-bottom:16px;">📅</div>
-        <h2 style="color:#e74c3c;">账户已到期</h2>
+        <h2 style="color:#e74c3c;">${_t('expired_title')}</h2>
         <p style="color:#666;">${restaurantInfo.name}</p>
-        <p style="color:#666;">到期日：${restaurantInfo.expires_at}</p>
-        <p style="color:#666;">请联系系统管理员续费</p>
+        <p style="color:#666;">${_t('expires_label')}: ${restaurantInfo.expires_at}</p>
+        <p style="color:#666;">${_t('contact_renew')}</p>
         <a href="https://wa.me/393778826875?text=Ciao!%20${encodeURIComponent('餐厅 ' + (restaurantInfo.name || REST_ID) + ' 申请续费')}" target="_blank"
            style="margin-top:20px;padding:12px 24px;background:#25d366;color:#fff;border-radius:8px;text-decoration:none;font-weight:500;">
-          💬 WhatsApp 联系续费
+          ${_t('whatsapp_renew')}
         </a>
       </div>`;
       return;
