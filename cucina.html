@@ -1879,7 +1879,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.78';
+const APP_VERSION = 'v2.7.79';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8399,8 +8399,33 @@ function renderStaffList() {
           ${v.can_stocktake?'<span style="font-size:10px;color:#2980b9;margin-left:4px;">盘点</span>':''}
           ${v.can_receive?'<span style="font-size:10px;color:#8e44ad;margin-left:4px;">收货员</span>':''}
         </span>
+        <button class="btn btn-sm" style="background:#e8f4fd;color:#2980b9;padding:4px 10px;margin-right:6px;" onclick="adminChangeChefPass('${n.replace(/'/g, "\\'")}')">🔑 改密码</button>
         <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:4px 10px" onclick="deleteStaff('${n}')">删除</button>
       </div>`).join('');
+}
+
+// v2.7.79: admin 重置员工密码
+async function adminChangeChefPass(name) {
+  const newPass = prompt(`为员工「${name}」设置新密码(至少 4 位):`);
+  if (newPass === null) return;  // 用户取消
+  const p = newPass.trim();
+  if (p.length < 4) {
+    toast('密码至少 4 位', 'err');
+    return;
+  }
+  if (!confirm(`确认把「${name}」的密码改为「${p}」?\n\n请把新密码告诉员工。`)) return;
+  try {
+    const r = await fetch(SB_URL + '/admin-set-chef-password', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chefName: name, newPassword: p })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    toast(`✅ 已重置「${name}」的密码`);
+  } catch (e) {
+    toast('❌ 失败: ' + (e.message || e), 'err');
+  }
 }
 
 function showStaffSetting(name) {
