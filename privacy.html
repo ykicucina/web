@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>隐私政策 — YKI Supply Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/logo.png" type="image/png">
+<style>
+:root {
+  --bg: #faf6ed; --bg2: #f0e8d4;
+  --surface: #fff;
+  --primary: #c9a961; --primary-dark: #b3924c;
+  --text: #2c2418; --text2: #5a4f3a; --text3: #8a7858;
+  --border: #e8dec5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  min-height: 100vh; color: var(--text); line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-logo { height: 26px; }
+.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.lang-toggle { display: flex; background: rgba(255,255,255,0.6); border-radius: 8px; border: 1px solid var(--border); padding: 2px; }
+.lang-btn { background: transparent; border: none; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text3); border-radius: 6px; font-family: inherit; }
+.lang-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
+.home-link { font-size: 13px; color: var(--text3); text-decoration: none; padding: 5px 10px; border-radius: 6px; white-space: nowrap; }
+.home-link:hover { background: var(--bg); color: var(--text); }
+
+.container { max-width: 760px; margin: 0 auto; padding: 30px 20px 80px; }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+.lead { color: var(--text3); font-size: 14px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.lead .update { display: inline-block; padding: 2px 10px; background: var(--bg); border-radius: 10px; color: var(--text3); font-size: 12px; }
+h2 { font-size: 19px; font-weight: 600; margin: 36px 0 8px; padding-top: 8px; }
+h2 .num { display:inline-block; color: var(--primary); font-size: 14px; font-weight: 600; vertical-align: middle; margin-right: 8px; background: var(--bg); padding: 4px 10px; border-radius: 6px; }
+p { margin-bottom: 12px; color: var(--text2); }
+ul, ol { margin-bottom: 14px; padding-left: 24px; color: var(--text2); }
+ul li, ol li { margin-bottom: 6px; }
+strong { color: var(--text); font-weight: 600; }
+a { color: var(--primary-dark); }
+code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.92em; color: var(--primary-dark); }
+.box { background: #eaf3fb; border-left: 3px solid #3498db; padding: 12px 16px; margin: 14px 0; border-radius: 6px; font-size: 14px; }
+
+.foot { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); margin-top: 40px; color: var(--text3); font-size: 13px; }
+.foot a { color: var(--primary-dark); text-decoration: none; }
+
+.lang-zh { display: inline; }
+.lang-it { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <img class="topbar-logo" src="/logo.png" alt="YKI">
+    <div class="topbar-title">
+      <span class="lang-zh">隐私政策</span><span class="lang-it">Informativa sulla privacy</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a href="/" class="home-link"><span class="lang-zh">← 首页</span><span class="lang-it">← Home</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中</button>
+      <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <h1>
+    <span class="lang-zh">隐私政策</span>
+    <span class="lang-it">Informativa sulla privacy</span>
+  </h1>
+  <div class="lead">
+    <span class="update">
+      <span class="lang-zh">最后更新:2026 年 6 月</span>
+      <span class="lang-it">Ultimo aggiornamento: Giugno 2026</span>
+    </span>
+    <p style="margin-top:12px;">
+      <span class="lang-zh">本政策说明 YKI Supply Hub(以下简称"YKI"或"我们")如何收集、使用和保护您的个人信息,符合欧盟《通用数据保护条例》(GDPR) 及意大利相关法律。</span>
+      <span class="lang-it">La presente informativa descrive come YKI Supply Hub (di seguito "YKI" o "noi") raccoglie, utilizza e protegge i dati personali, in conformità al Regolamento UE 2016/679 (GDPR) e alle normative italiane vigenti.</span>
+    </p>
+  </div>
+
+  <h2><span class="num">1</span><span class="lang-zh">谁在收集您的数据</span><span class="lang-it">Titolare del trattamento</span></h2>
+  <p>
+    <span class="lang-zh">数据控制人:<strong>YKI Supply Hub</strong><br>联系方式:<a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a> / <a href="https://wa.me/393778826875" target="_blank">WhatsApp +39 377 882 6875</a></span>
+    <span class="lang-it">Titolare: <strong>YKI Supply Hub</strong><br>Contatti: <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a> / <a href="https://wa.me/393778826875" target="_blank">WhatsApp +39 377 882 6875</a></span>
+  </p>
+
+  <h2><span class="num">2</span><span class="lang-zh">我们收集哪些信息</span><span class="lang-it">Dati raccolti</span></h2>
+
+  <p><strong><span class="lang-zh">注册时</span><span class="lang-it">Al momento della registrazione</span></strong></p>
+  <ul>
+    <li><span class="lang-zh">餐厅 / 公司名称、代号</span><span class="lang-it">Nome e codice del ristorante / azienda</span></li>
+    <li><span class="lang-zh">联系邮箱、WhatsApp 号码</span><span class="lang-it">Email, numero WhatsApp</span></li>
+    <li><span class="lang-zh">登录密码(以加密哈希形式存储,我们看不到明文)</span><span class="lang-it">Password (memorizzata come hash crittografico, non in chiaro)</span></li>
+  </ul>
+
+  <p><strong><span class="lang-zh">使用过程中</span><span class="lang-it">Durante l'uso</span></strong></p>
+  <ul>
+    <li><span class="lang-zh">业务数据(食材、订单、库存、供应商信息等)</span><span class="lang-it">Dati operativi (articoli, ordini, scorte, fornitori, ecc.)</span></li>
+    <li><span class="lang-zh">员工账号(姓名、角色、密码哈希)</span><span class="lang-it">Account dipendenti (nome, ruolo, hash password)</span></li>
+    <li><span class="lang-zh">推送订阅信息(用于发送通知)</span><span class="lang-it">Abbonamenti push (per inviare notifiche)</span></li>
+    <li><span class="lang-zh">设备 / 浏览器基础信息(IP、UA)用于安全审计</span><span class="lang-it">Informazioni base del dispositivo / browser (IP, User-Agent) per finalità di sicurezza</span></li>
+  </ul>
+
+  <p><strong><span class="lang-zh">我们不收集</span><span class="lang-it">Non raccogliamo</span></strong></p>
+  <ul>
+    <li><span class="lang-zh">支付卡号、银行账户(目前未开通支付)</span><span class="lang-it">Carte di credito o conti bancari (al momento non gestiamo pagamenti)</span></li>
+    <li><span class="lang-zh">位置信息</span><span class="lang-it">Dati di geolocalizzazione</span></li>
+    <li><span class="lang-zh">用于广告追踪的数据</span><span class="lang-it">Dati a scopo pubblicitario</span></li>
+  </ul>
+
+  <h2><span class="num">3</span><span class="lang-zh">我们如何使用</span><span class="lang-it">Finalità del trattamento</span></h2>
+  <ul>
+    <li><span class="lang-zh">提供和改进服务(订货、库存、报表等核心功能)</span><span class="lang-it">Fornire e migliorare il servizio (ordini, scorte, report)</span></li>
+    <li><span class="lang-zh">必要的客户沟通(账户审批、问题排查)</span><span class="lang-it">Comunicazioni necessarie (approvazione, supporto)</span></li>
+    <li><span class="lang-zh">安全保护(防止恶意登录、限制暴力破解)</span><span class="lang-it">Sicurezza (prevenzione di accessi non autorizzati)</span></li>
+    <li><span class="lang-zh">符合法律要求</span><span class="lang-it">Adempimenti normativi</span></li>
+  </ul>
+  <p>
+    <span class="lang-zh"><strong>我们不会</strong>把您的数据卖给第三方,不会用于广告投放。</span>
+    <span class="lang-it"><strong>Non vendiamo</strong> i dati a terzi e non li utilizziamo per scopi pubblicitari.</span>
+  </p>
+
+  <h2><span class="num">4</span><span class="lang-zh">第三方处理者</span><span class="lang-it">Sub-fornitori</span></h2>
+  <p>
+    <span class="lang-zh">我们使用以下服务,它们处理与系统运行相关的数据:</span>
+    <span class="lang-it">Utilizziamo i seguenti servizi:</span>
+  </p>
+  <ul>
+    <li><strong>Cloudflare</strong>:
+      <span class="lang-zh">CDN 和反代理(部分流量经其服务器)</span>
+      <span class="lang-it">CDN e proxy (parte del traffico transita sui loro server)</span>
+    </li>
+    <li><strong>Supabase</strong>:
+      <span class="lang-zh">数据库托管(您的业务数据存储位置)</span>
+      <span class="lang-it">Database hosting (dove sono conservati i dati)</span>
+    </li>
+    <li><strong>Google FCM / Apple APNs</strong>:
+      <span class="lang-zh">推送通知中转(仅传送通知本身)</span>
+      <span class="lang-it">Inoltro delle notifiche push (solo contenuto della notifica)</span>
+    </li>
+  </ul>
+  <p>
+    <span class="lang-zh">这些服务商各自的隐私政策对其处理活动适用。</span>
+    <span class="lang-it">Le rispettive informative dei fornitori si applicano alle loro attività di trattamento.</span>
+  </p>
+
+  <h2><span class="num">5</span><span class="lang-zh">数据存储位置</span><span class="lang-it">Localizzazione dei dati</span></h2>
+  <p>
+    <span class="lang-zh">数据可能存储在欧盟或美国(取决于 Supabase / Cloudflare 的数据中心)。所有传输通过 HTTPS 加密。</span>
+    <span class="lang-it">I dati possono essere archiviati nell'UE o negli Stati Uniti (a seconda dei data center Supabase / Cloudflare). Tutte le trasmissioni sono cifrate HTTPS.</span>
+  </p>
+
+  <h2><span class="num">6</span><span class="lang-zh">数据保留期限</span><span class="lang-it">Periodo di conservazione</span></h2>
+  <ul>
+    <li><span class="lang-zh">账户活跃期间持续保留</span><span class="lang-it">Durante l'esistenza dell'account</span></li>
+    <li><span class="lang-zh">账户取消后保留 <strong>30 天</strong>(以便您找回),之后彻底删除</span><span class="lang-it">Dopo la cancellazione, conservati <strong>30 giorni</strong> per eventuale ripristino, poi cancellati definitivamente</span></li>
+    <li><span class="lang-zh">登录失败日志保留 <strong>15 天</strong></span><span class="lang-it">Log di accesso falliti: <strong>15 giorni</strong></span></li>
+  </ul>
+
+  <h2><span class="num">7</span><span class="lang-zh">您的权利(GDPR)</span><span class="lang-it">Diritti dell'interessato (GDPR)</span></h2>
+  <p>
+    <span class="lang-zh">您随时可以行使以下权利,联系我们即可:</span>
+    <span class="lang-it">Può esercitare in qualsiasi momento i seguenti diritti, contattandoci:</span>
+  </p>
+  <ul>
+    <li><span class="lang-zh"><strong>访问权</strong>:查看我们持有的您的数据</span><span class="lang-it"><strong>Accesso</strong>: ottenere copia dei dati</span></li>
+    <li><span class="lang-zh"><strong>更正权</strong>:修改错误的信息</span><span class="lang-it"><strong>Rettifica</strong>: correzione di dati errati</span></li>
+    <li><span class="lang-zh"><strong>删除权</strong>(被遗忘权):要求删除数据</span><span class="lang-it"><strong>Cancellazione</strong> (oblio): cancellazione dei dati</span></li>
+    <li><span class="lang-zh"><strong>限制处理</strong>:暂停对您数据的处理</span><span class="lang-it"><strong>Limitazione</strong>: sospensione del trattamento</span></li>
+    <li><span class="lang-zh"><strong>可携权</strong>:导出您的数据(JSON 格式)</span><span class="lang-it"><strong>Portabilità</strong>: esportazione dei dati (formato JSON)</span></li>
+    <li><span class="lang-zh"><strong>反对权</strong>:反对特定的数据处理</span><span class="lang-it"><strong>Opposizione</strong>: opposizione a determinati trattamenti</span></li>
+    <li><span class="lang-zh"><strong>投诉权</strong>:向意大利数据保护局 (Garante per la protezione dei dati personali) 投诉</span><span class="lang-it"><strong>Reclamo</strong>: presentare reclamo al Garante per la protezione dei dati personali</span></li>
+  </ul>
+  <div class="box">
+    <span class="lang-zh">行使任何权利,请发邮件至 <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a>,我们会在 <strong>30 天内</strong>响应。</span>
+    <span class="lang-it">Per esercitare i diritti, scrivere a <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a>: risponderemo entro <strong>30 giorni</strong>.</span>
+  </div>
+
+  <h2><span class="num">8</span><span class="lang-zh">Cookies / 本地存储</span><span class="lang-it">Cookies / archiviazione locale</span></h2>
+  <p>
+    <span class="lang-zh">我们只使用<strong>技术性必要</strong>的浏览器存储(localStorage),用于:</span>
+    <span class="lang-it">Utilizziamo solo <strong>localStorage tecnicamente necessario</strong> per:</span>
+  </p>
+  <ul>
+    <li><span class="lang-zh">记住您的登录状态(JWT token)</span><span class="lang-it">Mantenere la sessione di accesso (token JWT)</span></li>
+    <li><span class="lang-zh">记住语言偏好</span><span class="lang-it">Memorizzare la lingua preferita</span></li>
+    <li><span class="lang-zh">本地缓存提升性能</span><span class="lang-it">Cache locale per migliorare le performance</span></li>
+  </ul>
+  <p>
+    <span class="lang-zh">没有跟踪 cookies,没有广告 cookies,没有第三方分析工具。</span>
+    <span class="lang-it">Nessun cookie di tracciamento, pubblicitario o di analisi di terzi.</span>
+  </p>
+
+  <h2><span class="num">9</span><span class="lang-zh">数据安全</span><span class="lang-it">Sicurezza dei dati</span></h2>
+  <ul>
+    <li><span class="lang-zh">所有传输使用 HTTPS / TLS 加密</span><span class="lang-it">Trasmissione cifrata HTTPS / TLS</span></li>
+    <li><span class="lang-zh">密码使用 PBKDF2-SHA256 (100,000 次迭代) 哈希</span><span class="lang-it">Password con hash PBKDF2-SHA256 (100.000 iterazioni)</span></li>
+    <li><span class="lang-zh">登录限流(15 分钟内 5 次失败锁定 15 分钟)</span><span class="lang-it">Rate limiting (5 tentativi falliti in 15 min = blocco di 15 min)</span></li>
+    <li><span class="lang-zh">餐厅之间数据严格隔离(即使是 YKI 团队也无法越权访问)</span><span class="lang-it">Isolamento rigoroso tra ristoranti (nemmeno il team YKI accede oltre ai permessi)</span></li>
+  </ul>
+
+  <h2><span class="num">10</span><span class="lang-zh">未成年人</span><span class="lang-it">Minori</span></h2>
+  <p>
+    <span class="lang-zh">本服务面向商业用户(餐厅 / 供应商企业)。未成年人不应自行注册账户。</span>
+    <span class="lang-it">Il servizio è destinato a utenti professionali (ristoranti / fornitori). I minori non devono registrare un account.</span>
+  </p>
+
+  <h2><span class="num">11</span><span class="lang-zh">政策变更</span><span class="lang-it">Modifiche all'informativa</span></h2>
+  <p>
+    <span class="lang-zh">如本政策有重大变更,我们会在登录时显示通知,并保留版本历史。继续使用服务即表示您接受新版本。</span>
+    <span class="lang-it">In caso di modifiche sostanziali, mostreremo un avviso all'accesso e conserveremo lo storico. L'uso continuato del servizio implica accettazione.</span>
+  </p>
+
+  <h2><span class="num">12</span><span class="lang-zh">联系我们</span><span class="lang-it">Contatti</span></h2>
+  <p>
+    <span class="lang-zh">如对本政策或数据处理有疑问,请联系:</span>
+    <span class="lang-it">Per domande sull'informativa o sul trattamento dati:</span>
+  </p>
+  <ul>
+    <li>📧 <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a></li>
+    <li>💬 <a href="https://wa.me/393778826875" target="_blank">WhatsApp +39 377 882 6875</a></li>
+  </ul>
+
+</div>
+
+<div class="foot">
+  <a href="/">YKI Supply Hub</a> · 
+  <a href="/terms.html"><span class="lang-zh">用户协议</span><span class="lang-it">Termini di servizio</span></a> · 
+  <a href="/guide.html"><span class="lang-zh">使用教程</span><span class="lang-it">Guida</span></a>
+</div>
+
+<script>
+const LANG_KEY = 'yki_lang';
+function setLang(lang) {
+  const isIt = lang === 'it';
+  const zhEls = document.querySelectorAll('.lang-zh');
+  const itEls = document.querySelectorAll('.lang-it');
+  for (let i = 0; i < zhEls.length; i++) zhEls[i].style.display = isIt ? 'none' : 'inline';
+  for (let i = 0; i < itEls.length; i++) itEls[i].style.display = isIt ? 'inline' : 'none';
+  document.getElementById('btn-zh').classList.toggle('active', !isIt);
+  document.getElementById('btn-it').classList.toggle('active', isIt);
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  document.documentElement.lang = isIt ? 'it' : 'zh-CN';
+}
+(function() {
+  let lang = '';
+  try { lang = localStorage.getItem(LANG_KEY) || ''; } catch(e) {}
+  if (!lang) lang = (navigator.language || '').toLowerCase().startsWith('it') ? 'it' : 'zh';
+  setLang(lang);
+})();
+</script>
+</body></html>

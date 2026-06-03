@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>用户协议 — YKI Supply Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/logo.png" type="image/png">
+<style>
+:root {
+  --bg: #faf6ed; --bg2: #f0e8d4;
+  --surface: #fff;
+  --primary: #c9a961; --primary-dark: #b3924c;
+  --text: #2c2418; --text2: #5a4f3a; --text3: #8a7858;
+  --border: #e8dec5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  min-height: 100vh; color: var(--text); line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-logo { height: 26px; }
+.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.lang-toggle { display: flex; background: rgba(255,255,255,0.6); border-radius: 8px; border: 1px solid var(--border); padding: 2px; }
+.lang-btn { background: transparent; border: none; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text3); border-radius: 6px; font-family: inherit; }
+.lang-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
+.home-link { font-size: 13px; color: var(--text3); text-decoration: none; padding: 5px 10px; border-radius: 6px; white-space: nowrap; }
+.home-link:hover { background: var(--bg); color: var(--text); }
+
+.container { max-width: 760px; margin: 0 auto; padding: 30px 20px 80px; }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+.lead { color: var(--text3); font-size: 14px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.lead .update { display: inline-block; padding: 2px 10px; background: var(--bg); border-radius: 10px; color: var(--text3); font-size: 12px; }
+h2 { font-size: 19px; font-weight: 600; margin: 36px 0 8px; padding-top: 8px; }
+h2 .num { display:inline-block; color: var(--primary); font-size: 14px; font-weight: 600; vertical-align: middle; margin-right: 8px; background: var(--bg); padding: 4px 10px; border-radius: 6px; }
+p { margin-bottom: 12px; color: var(--text2); }
+ul, ol { margin-bottom: 14px; padding-left: 24px; color: var(--text2); }
+ul li, ol li { margin-bottom: 6px; }
+strong { color: var(--text); font-weight: 600; }
+a { color: var(--primary-dark); }
+.box { background: #fef6e7; border-left: 3px solid #f39c12; padding: 12px 16px; margin: 14px 0; border-radius: 6px; font-size: 14px; }
+.box.warn { background: #fdecec; border-left-color: #e74c3c; }
+
+.foot { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); margin-top: 40px; color: var(--text3); font-size: 13px; }
+.foot a { color: var(--primary-dark); text-decoration: none; }
+
+.lang-zh { display: inline; }
+.lang-it { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <img class="topbar-logo" src="/logo.png" alt="YKI">
+    <div class="topbar-title">
+      <span class="lang-zh">用户协议</span><span class="lang-it">Termini di servizio</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a href="/" class="home-link"><span class="lang-zh">← 首页</span><span class="lang-it">← Home</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中</button>
+      <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <h1>
+    <span class="lang-zh">用户协议</span>
+    <span class="lang-it">Termini di servizio</span>
+  </h1>
+  <div class="lead">
+    <span class="update">
+      <span class="lang-zh">最后更新:2026 年 6 月</span>
+      <span class="lang-it">Ultimo aggiornamento: Giugno 2026</span>
+    </span>
+    <p style="margin-top:12px;">
+      <span class="lang-zh">注册或使用 YKI Supply Hub(以下简称"服务"或"YKI")即表示您已阅读并同意本协议。请仔细阅读。</span>
+      <span class="lang-it">La registrazione o l'utilizzo di YKI Supply Hub (di seguito "Servizio" o "YKI") implica l'accettazione dei presenti termini. Si prega di leggere attentamente.</span>
+    </p>
+  </div>
+
+  <h2><span class="num">1</span><span class="lang-zh">服务描述</span><span class="lang-it">Descrizione del servizio</span></h2>
+  <p>
+    <span class="lang-zh">YKI Supply Hub 是一个面向餐厅和供应商的订货管理 SaaS 平台,提供:食材库存管理、订单流转、供应商协同、报表分析等功能。</span>
+    <span class="lang-it">YKI Supply Hub è una piattaforma SaaS per la gestione degli ordini, rivolta a ristoranti e fornitori. Funzionalità: gestione scorte, flusso ordini, integrazione fornitori, reportistica.</span>
+  </p>
+
+  <h2><span class="num">2</span><span class="lang-zh">注册资格</span><span class="lang-it">Requisiti di registrazione</span></h2>
+  <ul>
+    <li><span class="lang-zh">用户必须是依法成立的餐饮或食品供应商业实体(或其法定代表人)</span><span class="lang-it">L'utente deve essere un'attività di ristorazione o un fornitore alimentare legalmente costituito (o un legale rappresentante)</span></li>
+    <li><span class="lang-zh">注册者需满 18 岁,具备签订合同的法律行为能力</span><span class="lang-it">Il registrante deve avere almeno 18 anni e capacità di contrarre</span></li>
+    <li><span class="lang-zh">所提供信息必须真实、准确、完整</span><span class="lang-it">Le informazioni fornite devono essere veritiere, accurate e complete</span></li>
+    <li><span class="lang-zh">注册需经 YKI 审批通过</span><span class="lang-it">La registrazione richiede approvazione da parte di YKI</span></li>
+  </ul>
+
+  <h2><span class="num">3</span><span class="lang-zh">账户安全</span><span class="lang-it">Sicurezza dell'account</span></h2>
+  <ul>
+    <li><span class="lang-zh">您负责保护账户密码,不应与他人共享</span><span class="lang-it">L'utente è responsabile della custodia delle password</span></li>
+    <li><span class="lang-zh">所有通过您账户进行的操作视为您本人的操作</span><span class="lang-it">Tutte le azioni effettuate con il proprio account sono considerate dell'utente</span></li>
+    <li><span class="lang-zh">发现未授权使用应立即通知 YKI</span><span class="lang-it">In caso di uso non autorizzato, contattare immediatamente YKI</span></li>
+    <li><span class="lang-zh">管理员负责员工账号的管理(创建、停用、密码重置)</span><span class="lang-it">L'amministratore gestisce gli account dei dipendenti (creazione, disattivazione, reset password)</span></li>
+  </ul>
+
+  <h2><span class="num">4</span><span class="lang-zh">服务费用</span><span class="lang-it">Costi del servizio</span></h2>
+  <ul>
+    <li><span class="lang-zh"><strong>餐厅</strong>:注册后享有 <strong>60 天免费试用</strong>,试用结束后按双方协商的方案续费</span><span class="lang-it"><strong>Ristoranti</strong>: <strong>60 giorni di prova gratuita</strong>; al termine, il rinnovo avviene secondo accordi singoli</span></li>
+    <li><span class="lang-zh"><strong>供应商</strong>:目前免费</span><span class="lang-it"><strong>Fornitori</strong>: attualmente gratuito</span></li>
+    <li><span class="lang-zh">价格调整将提前 <strong>30 天</strong>通知</span><span class="lang-it">Eventuali variazioni di prezzo saranno comunicate con <strong>30 giorni</strong> di preavviso</span></li>
+  </ul>
+
+  <h2><span class="num">5</span><span class="lang-zh">数据所有权</span><span class="lang-it">Proprietà dei dati</span></h2>
+  <p>
+    <span class="lang-zh">您输入到系统的所有业务数据(食材、订单、客户信息等)归您所有。YKI 仅作为技术服务提供方进行托管。您可以随时通过备份功能导出。</span>
+    <span class="lang-it">Tutti i dati operativi (articoli, ordini, contatti) restano di proprietà dell'utente. YKI funge solo da fornitore tecnico per l'archiviazione. È possibile esportarli in qualsiasi momento.</span>
+  </p>
+
+  <h2><span class="num">6</span><span class="lang-zh">禁止行为</span><span class="lang-it">Uso vietato</span></h2>
+  <p>
+    <span class="lang-zh">您不得:</span>
+    <span class="lang-it">È vietato:</span>
+  </p>
+  <ul>
+    <li><span class="lang-zh">使用服务进行任何违法活动</span><span class="lang-it">Utilizzare il servizio per attività illecite</span></li>
+    <li><span class="lang-zh">尝试破解、逆向工程、绕过安全机制</span><span class="lang-it">Tentare di violare, decompilare o aggirare le misure di sicurezza</span></li>
+    <li><span class="lang-zh">向系统输入垃圾数据、恶意代码或恶意脚本</span><span class="lang-it">Inserire dati spam, codice malevolo o script dannosi</span></li>
+    <li><span class="lang-zh">未经授权访问其他用户的账户或数据</span><span class="lang-it">Accedere senza autorizzazione ad account o dati altrui</span></li>
+    <li><span class="lang-zh">将服务用于非业务目的的过度使用(滥用 API、抢占资源等)</span><span class="lang-it">Uso eccessivo non legato all'attività (abuso API, monopolizzazione risorse)</span></li>
+    <li><span class="lang-zh">伪冒他人或机构身份注册</span><span class="lang-it">Registrarsi impersonando altri</span></li>
+  </ul>
+
+  <h2><span class="num">7</span><span class="lang-zh">服务可用性</span><span class="lang-it">Disponibilità del servizio</span></h2>
+  <p>
+    <span class="lang-zh">我们尽力维持服务 24/7 可用,但不保证 100% 不中断。可能因维护、第三方服务故障、不可抗力等原因暂时不可用。</span>
+    <span class="lang-it">Ci impegniamo a garantire la massima disponibilità del servizio, ma non garantiamo un'operatività ininterrotta. Sospensioni possono verificarsi per manutenzione, guasti di terzi o cause di forza maggiore.</span>
+  </p>
+  <div class="box">
+    <span class="lang-zh">关键业务数据(订单、库存)建议您定期手动备份(管理员可在后台一键导出)。</span>
+    <span class="lang-it">Si consiglia di effettuare backup periodici manuali dei dati critici (l'amministratore può esportarli dalla console).</span>
+  </div>
+
+  <h2><span class="num">8</span><span class="lang-zh">免责声明</span><span class="lang-it">Limitazione di responsabilità</span></h2>
+  <p>
+    <span class="lang-zh">服务按"现状"提供,不附带任何明示或暗示的保证。YKI 在适用法律允许的最大范围内不承担:</span>
+    <span class="lang-it">Il servizio è fornito "così com'è", senza garanzie esplicite o implicite. Nel limite massimo consentito dalla legge applicabile, YKI non è responsabile per:</span>
+  </p>
+  <ul>
+    <li><span class="lang-zh">您与供应商或客户之间的业务争议</span><span class="lang-it">Controversie commerciali tra l'utente e i suoi fornitori o clienti</span></li>
+    <li><span class="lang-zh">因服务中断造成的间接损失或利润损失</span><span class="lang-it">Danni indiretti o perdita di profitti dovuti a interruzioni del servizio</span></li>
+    <li><span class="lang-zh">第三方服务(如 WhatsApp、邮件、Supabase)的故障</span><span class="lang-it">Malfunzionamenti di servizi terzi (WhatsApp, email, Supabase, ecc.)</span></li>
+    <li><span class="lang-zh">用户输入错误数据导致的业务后果</span><span class="lang-it">Conseguenze derivanti da dati errati inseriti dall'utente</span></li>
+  </ul>
+
+  <h2><span class="num">9</span><span class="lang-zh">服务终止</span><span class="lang-it">Cessazione del servizio</span></h2>
+  <p><strong><span class="lang-zh">您可以随时终止</span><span class="lang-it">L'utente può recedere in qualsiasi momento</span></strong></p>
+  <p>
+    <span class="lang-zh">联系我们要求取消账户。取消前可以导出您的数据。</span>
+    <span class="lang-it">Contattandoci per richiedere la cancellazione. È possibile esportare i dati prima della cancellazione.</span>
+  </p>
+  <p><strong><span class="lang-zh">YKI 在以下情况可暂停或终止账户</span><span class="lang-it">YKI può sospendere o cessare un account in caso di</span></strong></p>
+  <ul>
+    <li><span class="lang-zh">违反本协议</span><span class="lang-it">Violazione dei presenti termini</span></li>
+    <li><span class="lang-zh">长期未使用(超过 12 个月)</span><span class="lang-it">Inattività prolungata (oltre 12 mesi)</span></li>
+    <li><span class="lang-zh">逾期未支付费用</span><span class="lang-it">Mancato pagamento delle quote</span></li>
+    <li><span class="lang-zh">服务整体终止(提前 60 天通知)</span><span class="lang-it">Chiusura generale del servizio (preavviso di 60 giorni)</span></li>
+  </ul>
+
+  <h2><span class="num">10</span><span class="lang-zh">协议变更</span><span class="lang-it">Modifiche</span></h2>
+  <p>
+    <span class="lang-zh">YKI 可以修订本协议。重大变更将在登录时显示通知,继续使用即视为接受。</span>
+    <span class="lang-it">YKI può modificare i presenti termini. Le modifiche sostanziali saranno notificate al login; l'uso continuato implica accettazione.</span>
+  </p>
+
+  <h2><span class="num">11</span><span class="lang-zh">适用法律和管辖</span><span class="lang-it">Legge applicabile e foro</span></h2>
+  <p>
+    <span class="lang-zh">本协议受意大利法律管辖。任何争议优先通过友好协商解决;无法解决的,提交意大利有管辖权的法院。</span>
+    <span class="lang-it">I presenti termini sono regolati dalla legge italiana. Eventuali controversie saranno risolte preferibilmente in via amichevole; in difetto, sarà competente il foro italiano.</span>
+  </p>
+
+  <h2><span class="num">12</span><span class="lang-zh">联系方式</span><span class="lang-it">Contatti</span></h2>
+  <ul>
+    <li>📧 <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a></li>
+    <li>💬 <a href="https://wa.me/393778826875" target="_blank">WhatsApp +39 377 882 6875</a></li>
+  </ul>
+
+</div>
+
+<div class="foot">
+  <a href="/">YKI Supply Hub</a> · 
+  <a href="/privacy.html"><span class="lang-zh">隐私政策</span><span class="lang-it">Informativa privacy</span></a> · 
+  <a href="/guide.html"><span class="lang-zh">使用教程</span><span class="lang-it">Guida</span></a>
+</div>
+
+<script>
+const LANG_KEY = 'yki_lang';
+function setLang(lang) {
+  const isIt = lang === 'it';
+  const zhEls = document.querySelectorAll('.lang-zh');
+  const itEls = document.querySelectorAll('.lang-it');
+  for (let i = 0; i < zhEls.length; i++) zhEls[i].style.display = isIt ? 'none' : 'inline';
+  for (let i = 0; i < itEls.length; i++) itEls[i].style.display = isIt ? 'inline' : 'none';
+  document.getElementById('btn-zh').classList.toggle('active', !isIt);
+  document.getElementById('btn-it').classList.toggle('active', isIt);
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  document.documentElement.lang = isIt ? 'it' : 'zh-CN';
+}
+(function() {
+  let lang = '';
+  try { lang = localStorage.getItem(LANG_KEY) || ''; } catch(e) {}
+  if (!lang) lang = (navigator.language || '').toLowerCase().startsWith('it') ? 'it' : 'zh';
+  setLang(lang);
+})();
+</script>
+</body></html>
