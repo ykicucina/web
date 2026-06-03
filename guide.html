@@ -1193,21 +1193,27 @@ function setLang(lang) {
     const firstZh = document.querySelector('main.content .lang-zh');
     if (main && main.offsetHeight < 200) {
       console.error('YKI Guide: 切到 ' + lang + ' 正文 offsetHeight=' + main.offsetHeight);
+      const container = document.querySelector('.container');
+      console.error('container offsetHeight=' + container.offsetHeight + ' getBoundingClientRect=' + JSON.stringify(container.getBoundingClientRect()));
+      console.error('body 高度:', document.body.offsetHeight, 'scrollHeight:', document.body.scrollHeight);
+      console.error('window 宽度:', window.innerWidth);
       if (firstIt) {
         const cs = getComputedStyle(firstIt);
         console.error('第一个 lang-it span: display=' + cs.display + ' visibility=' + cs.visibility + ' offsetHeight=' + firstIt.offsetHeight);
-        console.error('  textContent=' + firstIt.textContent.substring(0, 80));
-      }
-      if (firstZh) {
-        const cs = getComputedStyle(firstZh);
-        console.error('第一个 lang-zh span: display=' + cs.display);
       }
       const h1 = document.querySelector('main.content h1');
       if (h1) {
         const cs = getComputedStyle(h1);
-        console.error('h1: display=' + cs.display + ' offsetHeight=' + h1.offsetHeight + ' innerHTML 长度=' + h1.innerHTML.length);
+        console.error('h1: display=' + cs.display + ' offsetHeight=' + h1.offsetHeight + ' lineHeight=' + cs.lineHeight + ' fontSize=' + cs.fontSize);
+        console.error('h1 children:');
+        h1.childNodes.forEach((n, i) => {
+          if (n.nodeType === 1) {
+            console.error('  child ' + i + ': <' + n.tagName + ' class="' + n.className + '"> display=' + getComputedStyle(n).display + ' text="' + n.textContent.substring(0,40) + '"');
+          } else if (n.nodeType === 3) {
+            console.error('  text ' + i + ': "' + n.textContent.replace(/\s/g, '·') + '"');
+          }
+        });
       }
-      console.error('body.classList:', document.body.className);
     }
   }, 150);
 }
