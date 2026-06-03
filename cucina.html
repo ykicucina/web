@@ -861,6 +861,13 @@ function ridPickerGo() {
       </div>
     </div>
 
+    <!-- v2.7.80: admin 管理按钮组(替代原"物料管理"入口) -->
+    <div id="inv-admin-actions" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#c9a961;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="openModal('modal-admin-panel');document.getElementById('admin-panel-title').textContent='新增食材';renderItemsPanel();">➕ 新增食材</button>
+      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showImportModal()">📥 批量导入</button>
+      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="exportInventoryExcel()">📤 备份导出</button>
+    </div>
+
     <!-- Search -->
     <div class="search-wrap">
       <span style="color:var(--text3);font-size:16px">🔍</span>
@@ -1163,11 +1170,6 @@ function ridPickerGo() {
       <div class="menu-item" onclick="showAdminPanel('staff')">
         <div class="menu-item-icon" style="background:#ECFDF5">👥</div>
         <div class="menu-item-text"><div class="title" id="lbl-staff-mgmt">员工账号管理</div><div class="sub" id="lbl-staff-sub">新增、修改、删除员工</div></div>
-        <span class="menu-item-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="showAdminPanel('items')">
-        <div class="menu-item-icon" style="background:#FFF5F5">📦</div>
-        <div class="menu-item-text"><div class="title" id="lbl-item-mgmt">物料管理</div><div class="sub" id="lbl-item-sub">新增、编辑物料信息</div></div>
         <span class="menu-item-arrow">›</span>
       </div>
       <div class="menu-item" onclick="showItemsPublicModal()" style="display:none">
@@ -1879,7 +1881,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.79';
+const APP_VERSION = 'v2.7.80';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3527,6 +3529,9 @@ function showApp() {
   document.getElementById('profile-role').textContent = isAdmin ? (t('roleAdmin')||'管理员') : (roleLabel[currentUserRole]||t('roleStaff')||'员工');
   if (isAdmin) document.getElementById('admin-menu').style.display='block';
   else document.getElementById('admin-menu').style.display='none';
+  // v2.7.80: 库存管理顶部 admin 操作按钮组(替代原"物料管理"菜单入口)
+  const invAdminActions = document.getElementById('inv-admin-actions');
+  if (invAdminActions) invAdminActions.style.display = isAdmin ? 'flex' : 'none';
   // 推送通知设置（仅 admin/buyer/supervisor 可见）
   refreshPushSettingUI();
   // 库存/报表只有管理员看
@@ -5966,17 +5971,23 @@ function renderReceivePanel() {
   // 从订单系统移除待收货清单，改为收货Tab
   const panel = document.getElementById('receive-panel');
   if (panel) panel.style.display = 'none';
-  // 更新收货角标
+  // v2.7.80: 跟 renderReceiveTab 保持一致,数"可收货供应商数"而非"订单数"
   const pending = orders.filter(o=>o.status==='已发送' && o.type!=='consume');
-  const isFullAccess = isAdmin || currentUserRole==='supervisor' || currentUserRole==='buyer';
-  const myPending = pending.filter(o=>{
-    if (isFullAccess) return true;
-    return (o.items||[]).some(i=>{
-      const sup = suppliers.find(s=>s.name.toLowerCase()===(i.supplier||'').toLowerCase());
-      return sup?.receiver === currentUser;
+  // 按供应商分组
+  const supSet = new Set();
+  pending.forEach(o=>{
+    (o.items||[]).forEach(i=>{
+      supSet.add(i.supplier||'未知');
     });
   });
-  updateReceiveBadge(myPending.length > 0 ? myPending.length : 0);
+  // 收货员过滤
+  const isFullAccess = isAdmin || currentUserRole==='supervisor' || currentUserRole==='buyer';
+  const filteredSups = [...supSet].filter(supName=>{
+    if (isFullAccess) return true;
+    const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
+    return sup?.receiver === currentUser;
+  });
+  updateReceiveBadge(filteredSups.length);
 }
 
 function showReceiveConfirmBySup(supName, orderIdsStr) {
@@ -8326,8 +8337,6 @@ function changeLang(v) {
   se('lbl-admin-func', t('adminFunc'));
   se('lbl-staff-mgmt', t('staffMgmt'));
   se('lbl-staff-sub', t('staffMgmtSub'));
-  se('lbl-item-mgmt', t('itemMgmt'));
-  se('lbl-item-sub', t('itemMgmtSub'));
   se('lbl-supplier', t('supplierWA'));
   se('lbl-supplier-sub', t('supplierWASub'));
   se('lbl-approve', t('approveOrder'));
