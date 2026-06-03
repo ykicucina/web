@@ -95,7 +95,7 @@
 <div class="wrap">
   <div class="brand">
     <img class="brand-logo" src="/logo.png" alt="YKI">
-    <div class="brand-sub">YKI SUPPLY HUB</div>
+    <div class="brand-sub">SUPPLY HUB</div>
   </div>
 
   <!-- ===== 餐厅注册卡片(默认显示) ===== -->
@@ -143,6 +143,11 @@
          data-expired-callback="onTurnstileRErr"
          data-theme="light"
          style="margin: 14px 0;"></div>
+
+    <label style="display:flex;align-items:flex-start;gap:8px;margin:14px 0;font-size:13px;color:#5a4f3a;cursor:pointer;line-height:1.5;">
+      <input type="checkbox" id="f-agree" style="margin-top:3px;width:16px;height:16px;accent-color:#c9a961;flex-shrink:0;">
+      <span>我已阅读并同意 <a href="/privacy.html" target="_blank" style="color:#b3924c;">《隐私政策》</a> 和 <a href="/terms.html" target="_blank" style="color:#b3924c;">《用户协议》</a></span>
+    </label>
 
     <button class="btn" id="btn-submit" onclick="doRegister()">提交注册</button>
 
@@ -202,6 +207,11 @@
          data-expired-callback="onTurnstileSErr"
          data-theme="light"
          style="margin: 14px 0;"></div>
+
+    <label style="display:flex;align-items:flex-start;gap:8px;margin:14px 0;font-size:13px;color:#5a4f3a;cursor:pointer;line-height:1.5;">
+      <input type="checkbox" id="sup-f-agree" style="margin-top:3px;width:16px;height:16px;accent-color:#c9a961;flex-shrink:0;">
+      <span>我已阅读并同意 <a href="/privacy.html" target="_blank" style="color:#b3924c;">《隐私政策》</a> 和 <a href="/terms.html" target="_blank" style="color:#b3924c;">《用户协议》</a></span>
+    </label>
 
     <button class="btn" id="sup-btn-submit" onclick="doSupplierRegister()">提交注册</button>
 
@@ -330,6 +340,7 @@ async function doRegister() {
   if (!pass || pass.length < 8) { showError('管理员密码至少 8 位'); return; }
   if (pass !== pass2) { showError('两次密码不一致'); return; }
   if (!_turnstileTokenR) { showError('请等待人机验证完成'); return; }
+  if (!document.getElementById('f-agree').checked) { showError('请阅读并勾选同意《隐私政策》和《用户协议》'); return; }
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
@@ -384,6 +395,7 @@ async function doSupplierRegister() {
   if (!pass || pass.length < 8) { showError('管理员密码至少 8 位', 'sup-form-err'); return; }
   if (pass !== pass2) { showError('两次密码不一致', 'sup-form-err'); return; }
   if (!_turnstileTokenS) { showError('请等待人机验证完成', 'sup-form-err'); return; }
+  if (!document.getElementById('sup-f-agree').checked) { showError('请阅读并勾选同意《隐私政策》和《用户协议》', 'sup-form-err'); return; }
 
   const btn = document.getElementById('sup-btn-submit');
   btn.disabled = true;
