@@ -1785,6 +1785,34 @@ function ridPickerGo() {
     </div>
     <button class="btn btn-primary" onclick="doAdminLogin()">登录管理端</button>
     <button class="btn btn-ghost" style="margin-top:8px" onclick="closeModal('modal-admin-login')">取消</button>
+    <div style="text-align:center;margin-top:14px;">
+      <a href="javascript:showForgotPasswordModal()" style="font-size:13px;color:var(--text3);text-decoration:underline;">
+        忘记密码? / Password dimenticata?
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- v2.7.83 忘密码弹窗 -->
+<div class="modal-overlay" id="modal-forgot-pass">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 重置管理员密码 / Reimposta password admin</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+      填写餐厅代号和注册时的邮箱,我们会发送重置链接到该邮箱。<br>
+      <span style="color:var(--text3);">Inserisci il codice del ristorante e l'email di registrazione: ti invieremo il link di reset.</span>
+    </p>
+    <div class="form-group">
+      <label class="form-label">餐厅代号 / Codice ristorante</label>
+      <input id="fp-rid" class="form-control" placeholder="例如 carpi" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">注册邮箱 / Email registrazione</label>
+      <input id="fp-email" class="form-control" type="email" placeholder="您注册时填的邮箱" autocomplete="email">
+    </div>
+    <div id="fp-msg" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;"></div>
+    <button class="btn btn-primary" id="fp-submit-btn" onclick="doForgotPassword()">发送重置链接</button>
+    <button class="btn btn-ghost" style="margin-top:8px" onclick="closeModal('modal-forgot-pass')">取消</button>
   </div>
 </div>
 
@@ -1881,7 +1909,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.82';
+const APP_VERSION = 'v2.7.83';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3351,6 +3379,54 @@ async function doLogin() {
 }
 
 function showAdminLogin() { openModal('modal-admin-login'); }
+
+// v2.7.83: 忘密码流程
+function showForgotPasswordModal() {
+  closeModal('modal-admin-login');
+  // 自动填入当前餐厅代号
+  const fpRid = document.getElementById('fp-rid');
+  if (fpRid && typeof REST_ID !== 'undefined' && REST_ID) fpRid.value = REST_ID;
+  document.getElementById('fp-msg').style.display = 'none';
+  document.getElementById('fp-email').value = '';
+  openModal('modal-forgot-pass');
+}
+async function doForgotPassword() {
+  const rid = document.getElementById('fp-rid').value.trim().toLowerCase();
+  const email = document.getElementById('fp-email').value.trim();
+  const msg = document.getElementById('fp-msg');
+  const btn = document.getElementById('fp-submit-btn');
+  if (!rid) { showFpMsg('请填写餐厅代号', 'err'); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showFpMsg('请填写有效邮箱', 'err'); return; }
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+  try {
+    const r = await fetch(SB_URL + '/password-reset/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ restaurantId: rid, contact: email }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    showFpMsg('✅ ' + (d.message || '重置链接已发送到邮箱(15 分钟内有效)'), 'ok');
+    btn.textContent = '已发送';
+  } catch (e) {
+    showFpMsg('❌ ' + (e.message || e), 'err');
+    btn.disabled = false;
+    btn.textContent = '发送重置链接';
+  }
+}
+function showFpMsg(text, kind) {
+  const el = document.getElementById('fp-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  if (kind === 'ok') {
+    el.style.background = '#e8f5e9';
+    el.style.color = '#1e8449';
+  } else {
+    el.style.background = '#fdecec';
+    el.style.color = '#c0392b';
+  }
+}
 
 async function doAdminLogin() {
   const p = document.getElementById('admin-pass-input').value;
