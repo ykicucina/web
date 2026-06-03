@@ -271,14 +271,10 @@ body {
 .foot a { color: var(--primary-dark); text-decoration: none; }
 
 /* ── i18n ── */
-/* 注:用 display 而非 visibility,因为隐藏元素不占空间 */
+/* 默认状态(无 JS 时显示中文) */
 .lang-zh { display: inline; }
 .lang-it { display: none; }
-body.lang-it .lang-zh { display: none; }
-body.lang-it .lang-it { display: inline; }
-/* block 切换(目前无用,保留备用) */
-body.lang-it .block-zh { display: none; }
-body.lang-it .block-it { display: block; }
+/* JS 切换走 hidden 属性,不用 class */
 </style>
 </head>
 <body>
@@ -1181,53 +1177,23 @@ document.querySelectorAll('.toc a').forEach(a => {
 });
 
 function setLang(lang) {
-  // 立即创建诊断浮层 (无论是否出错都会有)
-  let panel = document.getElementById('diag-panel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'diag-panel';
-    panel.style.cssText = 'position:fixed;top:60px;left:10px;right:10px;background:#fff;border:3px solid #e74c3c;border-radius:8px;padding:12px;z-index:99999;max-height:70vh;overflow:auto;font-size:12px;font-family:monospace;line-height:1.4;color:#222;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
-    document.body.appendChild(panel);
+  const isIt = lang === 'it';
+  // 直接遍历所有 lang-zh / lang-it 元素,用 inline style 控制 display
+  // 这样彻底绕过 CSS class 选择器,避免浏览器渲染 bug
+  const zhEls = document.querySelectorAll('.lang-zh');
+  const itEls = document.querySelectorAll('.lang-it');
+  for (let i = 0; i < zhEls.length; i++) {
+    zhEls[i].style.display = isIt ? 'none' : 'inline';
   }
-  let log = '🔍 setLang(' + lang + ') 开始<br>';
-  function w(s) { log += s + '<br>'; panel.innerHTML = log + '<br><button onclick="document.body.className=\\\'\\\';localStorage.removeItem(\\\'yki_lang\\\');location.reload();" style="padding:8px 14px;background:#c9a961;color:#fff;border:none;border-radius:6px;font-size:14px;">强制中文 + 刷新</button>'; }
-
-  try {
-    w('step 1: body.classList.toggle');
-    document.body.classList.toggle('lang-it', lang === 'it');
-    w('step 2: btn 切换');
-    document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
-    document.getElementById('btn-it').classList.toggle('active', lang === 'it');
-    w('step 3: localStorage');
-    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { w('localStorage 失败: ' + e.message); }
-    w('step 4: html.lang');
-    document.documentElement.lang = lang === 'it' ? 'it' : 'zh-CN';
-    w('step 5: 计时 200ms 后检测');
-    setTimeout(function() {
-      try {
-        const main = document.querySelector('main.content');
-        const h = main ? main.offsetHeight : -1;
-        w('main.offsetHeight = ' + h);
-        w('container.offsetHeight = ' + (document.querySelector('.container')||{}).offsetHeight);
-        w('body.scrollHeight = ' + document.body.scrollHeight);
-        w('window.innerWidth = ' + window.innerWidth);
-        const h1 = main && main.querySelector('h1');
-        if (h1) {
-          w('h1.offsetHeight = ' + h1.offsetHeight + ' display = ' + getComputedStyle(h1).display);
-        }
-        if (h >= 200) {
-          w('✅ 渲染正常,3 秒后自动隐藏诊断面板');
-          setTimeout(() => { if (panel) panel.remove(); }, 3000);
-        } else {
-          w('❌ 正文高度异常');
-        }
-      } catch (e) {
-        w('❌ 检测时报错: ' + e.message);
-      }
-    }, 200);
-  } catch (e) {
-    w('❌ setLang 报错: ' + e.message);
+  for (let i = 0; i < itEls.length; i++) {
+    itEls[i].style.display = isIt ? 'inline' : 'none';
   }
+  // 按钮高亮
+  document.getElementById('btn-zh').classList.toggle('active', !isIt);
+  document.getElementById('btn-it').classList.toggle('active', isIt);
+  // 记忆 + html lang
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  document.documentElement.lang = isIt ? 'it' : 'zh-CN';
 }
 (function() {
   let lang = '';
