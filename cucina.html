@@ -1881,7 +1881,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.80';
+const APP_VERSION = 'v2.7.81';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -8550,39 +8550,90 @@ async function deleteStaff(n) {
 }
 
 function renderItemsPanel() {
+  // v2.7.81: 跟点食材的编辑框保持一致结构;导入/导出移到库存管理顶部按钮
   document.getElementById('admin-panel-content').innerHTML = `
-    <button class="btn btn-ghost" onclick="showItemsPublicModal()" style="display:none;width:100%;margin-bottom:12px;border:1.5px dashed #c9a961;color:#c9a961;">📚 从公共库选食材</button>
-    <p style="font-size:13px;font-weight:600;margin-bottom:12px">新增物料</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label class="form-label">货物号</label><input id="ni-code" class="form-control" placeholder="001"></div>
-      <div class="form-group"><label class="form-label">材料类型</label><input id="ni-cat" class="form-control" placeholder="salsa"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group"><label class="form-label">货物号</label><input class="form-control" id="ni-code" placeholder="001"></div>
+      <div class="form-group"><label class="form-label">材料类型</label><input class="form-control" id="ni-cat" placeholder="salsa"></div>
     </div>
-    <div class="form-group"><label class="form-label">意大利文名称 *</label><input id="ni-italian" class="form-control" required placeholder="Involtino primavera"></div>
-    <div class="form-group"><label class="form-label">中文名称</label><input id="ni-name" class="form-control" placeholder="春卷"></div>
-    <div class="form-group"><label class="form-label">规格</label><input id="ni-spec" class="form-control" placeholder="10x900G"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label class="form-label">价格 (€)</label><input id="ni-price" class="form-control" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="form-group"><label class="form-label">进货单位/供应商</label><input id="ni-supplier" class="form-control" placeholder="jfc"></div>
+    <div class="form-group"><label class="form-label">意大利文名称 *</label><input class="form-control" id="ni-italian" required placeholder="Involtino primavera"></div>
+    <div class="form-group"><label class="form-label">中文名称</label><input class="form-control" id="ni-name" placeholder="春卷"></div>
+    <div class="form-group"><label class="form-label">规格</label><input class="form-control" id="ni-spec" placeholder="10x900G"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">价格 (€)</label><input class="form-control" id="ni-price" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">进货单位</label><input class="form-control" id="ni-supplier" placeholder="jfc"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label class="form-label">当前库存</label><input id="ni-stock" class="form-control" type="number" step="0.1" placeholder="0"></div>
-      <div class="form-group"><label class="form-label">安全库存</label><input id="ni-safety" class="form-control" type="number" step="0.1" placeholder="1"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">当前库存</label><input class="form-control" id="ni-stock" type="number" step="0.1" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">安全库存(默认)</label><input class="form-control" id="ni-safety" type="number" step="0.1" placeholder="1"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">最大订货量（留空=不限制）</label>
+      <input class="form-control" id="ni-max-order" type="number" step="1" min="0" placeholder="不限制">
+    </div>
+    <div class="form-group">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label class="form-label" style="margin:0;">安全库存（按星期）</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2);">
+          <span id="ni-sbd-toggle-lbl">关闭</span>
+          <input type="checkbox" id="ni-sbd-toggle"
+            onchange="document.getElementById('ni-sbd-grid').style.display=this.checked?'grid':'none';document.getElementById('ni-sbd-toggle-lbl').textContent=this.checked?'开启':'关闭';"
+            style="width:18px;height:18px;accent-color:var(--primary);">
+        </label>
+      </div>
+      <div id="ni-sbd-grid" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;">
+        ${['一','二','三','四','五','六','日'].map((d,i)=>{
+          const key=String(i+1);
+          return `<div style="text-align:center;"><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">周${d}</div>
+          <input type="number" min="0" step="0.1" value="0" id="ni-sbd-${key}"
+            style="width:100%;border:1px solid #ddd;border-radius:4px;padding:3px;font-size:12px;text-align:center;"></div>`;
+        }).join('')}
+      </div>
     </div>
     <div class="form-group"><label class="form-label">${t('editChef')}</label>
-    <select id="ni-chef" class="form-control">
+    <select class="form-control" id="ni-chef">
       <option value="">-- 选择订货人 --</option>
       ${Object.keys(chefs).map(n=>`<option value="${n}">${n}</option>`).join('')}
     </select></div>
-    <button class="btn btn-primary" onclick="saveNewItem()">➕ 添加到物料库</button>
-    <div class="divider"></div>
-    <button class="btn btn-ghost" onclick="showImportModal()">📥 批量导入 Excel/CSV</button>
-    <button class="btn btn-ghost" onclick="exportInventoryExcel()">📤 备份导出 Excel</button>
+    <div class="form-group">
+      <label class="form-label">订货周期</label>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;">
+        ${['一','二','三','四','五','六','日'].map((d,i)=>{
+          const dayName='星期'+d;
+          return `<label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;">
+            <span style="font-size:11px;color:var(--text3);">周${d}</span>
+            <input type="checkbox" value="${dayName}" id="ni-cycle-${i+1}"
+              style="width:18px;height:18px;accent-color:var(--primary);">
+          </label>`;
+        }).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="saveNewItem()">➕ 添加到物料库</button>
   `;
 }
 
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value;
   if(!italian){toast(t('fill_italian'),'err');return;}
+  // v2.7.81: 收集所有字段(对齐编辑表单)
+  // 订货周期
+  const cycle = [];
+  ['一','二','三','四','五','六','日'].forEach((d,i)=>{
+    if (document.getElementById('ni-cycle-'+(i+1))?.checked) cycle.push('星期'+d);
+  });
+  // 安全库存(按星期)
+  let safety_by_day = null;
+  if (document.getElementById('ni-sbd-toggle')?.checked) {
+    safety_by_day = {};
+    for (let i = 1; i <= 7; i++) {
+      const v = parseFloat(document.getElementById('ni-sbd-'+i)?.value);
+      safety_by_day[String(i)] = isNaN(v) ? 0 : v;
+    }
+  }
+  // 最大订货量
+  const maxOrderRaw = document.getElementById('ni-max-order')?.value;
+  const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
+
   const newItem = {
     restaurant_id:REST_ID,
     item_code:document.getElementById('ni-code').value,
@@ -8594,7 +8645,9 @@ async function saveNewItem() {
     stock:document.getElementById('ni-stock').value||'0',
     safety:document.getElementById('ni-safety').value||'1',
     chef:document.getElementById('ni-chef').value,
-    departments:['厨房'], cycle:['星期日']
+    departments:['厨房'],
+    cycle: cycle.length ? cycle : ['星期日'],
+    safety_by_day, max_order
   };
   try {
     const r=await sb('cucina_items',{method:'POST',prefer:'return=representation',body:JSON.stringify(newItem)});
