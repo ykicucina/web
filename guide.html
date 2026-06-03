@@ -1186,36 +1186,51 @@ function setLang(lang) {
   document.getElementById('btn-it').classList.toggle('active', lang === 'it');
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
   document.documentElement.lang = lang === 'it' ? 'it' : 'zh-CN';
-  // 诊断
+  // 诊断:切到 it 后看正文是否真的可见
   setTimeout(function() {
     const main = document.querySelector('main.content');
-    const firstIt = document.querySelector('main.content .lang-it');
-    const firstZh = document.querySelector('main.content .lang-zh');
-    if (main && main.offsetHeight < 200) {
-      console.error('YKI Guide: 切到 ' + lang + ' 正文 offsetHeight=' + main.offsetHeight);
-      const container = document.querySelector('.container');
-      console.error('container offsetHeight=' + container.offsetHeight + ' getBoundingClientRect=' + JSON.stringify(container.getBoundingClientRect()));
-      console.error('body 高度:', document.body.offsetHeight, 'scrollHeight:', document.body.scrollHeight);
-      console.error('window 宽度:', window.innerWidth);
-      if (firstIt) {
-        const cs = getComputedStyle(firstIt);
-        console.error('第一个 lang-it span: display=' + cs.display + ' visibility=' + cs.visibility + ' offsetHeight=' + firstIt.offsetHeight);
+    if (!main) return;
+    const h = main.offsetHeight;
+    if (h < 200) {
+      // 创建可见诊断面板
+      let panel = document.getElementById('diag-panel');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'diag-panel';
+        panel.style.cssText = 'position:fixed;top:60px;left:10px;right:10px;background:#fff;border:2px solid #e74c3c;border-radius:8px;padding:16px;z-index:9999;max-height:60vh;overflow:auto;font-size:13px;font-family:monospace;line-height:1.5;color:#2c2418;box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+        document.body.appendChild(panel);
       }
-      const h1 = document.querySelector('main.content h1');
+      const h1 = main.querySelector('h1');
+      const firstIt = main.querySelector('.lang-it');
+      const container = document.querySelector('.container');
+      let out = '<strong style="color:#e74c3c;">⚠️ 页面渲染异常诊断</strong><br><br>';
+      out += 'lang = ' + lang + '<br>';
+      out += 'body.className = ' + JSON.stringify(document.body.className) + '<br>';
+      out += 'window.innerWidth = ' + window.innerWidth + '<br>';
+      out += 'main.offsetHeight = ' + h + '<br>';
+      out += 'container.offsetHeight = ' + container.offsetHeight + '<br>';
+      out += 'body.scrollHeight = ' + document.body.scrollHeight + '<br>';
       if (h1) {
         const cs = getComputedStyle(h1);
-        console.error('h1: display=' + cs.display + ' offsetHeight=' + h1.offsetHeight + ' lineHeight=' + cs.lineHeight + ' fontSize=' + cs.fontSize);
-        console.error('h1 children:');
-        h1.childNodes.forEach((n, i) => {
-          if (n.nodeType === 1) {
-            console.error('  child ' + i + ': <' + n.tagName + ' class="' + n.className + '"> display=' + getComputedStyle(n).display + ' text="' + n.textContent.substring(0,40) + '"');
-          } else if (n.nodeType === 3) {
-            console.error('  text ' + i + ': "' + n.textContent.replace(/\s/g, '·') + '"');
-          }
-        });
+        out += 'h1.offsetHeight = ' + h1.offsetHeight + '<br>';
+        out += 'h1.display = ' + cs.display + '<br>';
+        out += 'h1.font = ' + cs.fontSize + ' / ' + cs.lineHeight + '<br>';
+        out += 'h1 first child = ' + (h1.firstElementChild ? h1.firstElementChild.outerHTML.substring(0, 100) : 'none') + '<br>';
       }
+      if (firstIt) {
+        const cs = getComputedStyle(firstIt);
+        out += 'first lang-it: display=' + cs.display + ' offsetHeight=' + firstIt.offsetHeight + '<br>';
+        out += 'text = "' + firstIt.textContent.substring(0, 60) + '"<br>';
+      }
+      out += '<br><button onclick="setLang(\'zh\');this.parentNode.remove();" style="padding:8px 14px;background:#c9a961;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">回到中文</button>';
+      out += ' <button onclick="this.parentNode.remove();" style="padding:8px 14px;background:#888;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">关闭面板</button>';
+      panel.innerHTML = out;
+    } else {
+      // 渲染正常 — 移除可能存在的诊断面板
+      const panel = document.getElementById('diag-panel');
+      if (panel) panel.remove();
     }
-  }, 150);
+  }, 200);
 }
 (function() {
   let lang = '';
