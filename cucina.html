@@ -1909,7 +1909,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.83';
+const APP_VERSION = 'v2.7.84';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1951,7 +1951,7 @@ const SB_URL  = 'https://api.yki.it';
 // SB_KEY 不再是写死的数据库密钥，而是【登录后存放的令牌】
 // 登录前为空字符串；doLogin() 成功后写入 JWT 令牌
 let SB_KEY  = '';
-const WA_NUM  = '393778826875';
+const WA_NUM  = '393520203031';
 
 // ════════════════════════════════════════
 // 🔔 Web Push 推送通知（订阅 / 触发 / 与 SW 桥接）
@@ -3035,7 +3035,7 @@ function showTrialBanner(expiresAt, restaurantName) {
   banner.innerHTML = `
     <span>${icon} ${msg}</span>
     &nbsp;·&nbsp;
-    <a href="https://wa.me/393778826875?text=${waMsg}" target="_blank"
+    <a href="https://wa.me/393520203031?text=${waMsg}" target="_blank"
        style="color:${color};text-decoration:underline;font-weight:600;">
       💬 WhatsApp 联系续费
     </a>
@@ -3115,7 +3115,7 @@ async function init() {
         <p style="color:#666;">${restaurantInfo.name}</p>
         <p style="color:#666;">${_t('expires_label')}: ${restaurantInfo.expires_at}</p>
         <p style="color:#666;">${_t('contact_renew')}</p>
-        <a href="https://wa.me/393778826875?text=Ciao!%20${encodeURIComponent('餐厅 ' + (restaurantInfo.name || REST_ID) + ' 申请续费')}" target="_blank"
+        <a href="https://wa.me/393520203031?text=Ciao!%20${encodeURIComponent('餐厅 ' + (restaurantInfo.name || REST_ID) + ' 申请续费')}" target="_blank"
            style="margin-top:20px;padding:12px 24px;background:#25d366;color:#fff;border-radius:8px;text-decoration:none;font-weight:500;">
           ${_t('whatsapp_renew')}
         </a>
@@ -7438,7 +7438,7 @@ function renderSupplierList() {
       <!-- WhatsApp 号码 -->
       <div style="margin-bottom:10px;">
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;">📱 WhatsApp 号码</label>
-        <input type="text" value="${escapeAttr(s.wa_number||'')}" placeholder="例如 393778826875（带国家区号，不要+号）"
+        <input type="text" value="${escapeAttr(s.wa_number||'')}" placeholder="例如 393520203031（带国家区号，不要+号）"
           style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;box-sizing:border-box;background:${hasWa?'#f9fdf9':'#fffaf0'};"
           onchange="updateSupplierWa(${s.id},this.value)">
       </div>
