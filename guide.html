@@ -41,22 +41,42 @@ body {
   position: sticky; top: 0; z-index: 100;
   background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
-  padding: 10px 20px;
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
 }
-.topbar-left { display: flex; align-items: center; gap: 10px; }
-.topbar-logo { height: 28px; }
-.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); }
+.topbar-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.topbar-logo { height: 26px; flex-shrink: 0; }
+.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar-title .sub { color: var(--text3); font-weight: 400; font-size: 13px; }
-.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .lang-toggle { display: flex; background: rgba(255,255,255,0.6); border-radius: 8px; border: 1px solid var(--border); padding: 2px; }
 .lang-btn { background: transparent; border: none; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text3); border-radius: 6px; font-family: inherit; }
 .lang-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
 .home-link {
   font-size: 13px; color: var(--text3); text-decoration: none;
   padding: 5px 10px; border-radius: 6px; transition: background 0.15s;
+  white-space: nowrap;
 }
 .home-link:hover { background: var(--bg); color: var(--text); }
+
+/* 汉堡按钮(只在手机显示) */
+.menu-btn {
+  display: none;
+  background: transparent; border: none;
+  font-size: 22px; cursor: pointer; padding: 4px 8px;
+  color: var(--text2); font-family: inherit;
+}
+.menu-btn:hover { color: var(--text); }
+
+/* 手机端 topbar 紧凑 */
+@media (max-width: 900px) {
+  .topbar { padding: 10px 12px; gap: 6px; }
+  .menu-btn { display: block; }
+  .topbar-title .sub { display: none; }
+  .topbar-title { font-size: 14px; }
+  .home-link { padding: 5px 6px; font-size: 12px; }
+  .lang-btn { padding: 5px 9px; }
+}
 
 /* ── Layout ── */
 .container {
@@ -65,10 +85,19 @@ body {
 }
 @media (max-width: 900px) {
   .container { grid-template-columns: 1fr; gap: 20px; padding: 20px 16px 60px; }
-  .toc { position: static !important; max-height: none !important; }
-  .toc-toggle { display: block !important; }
-  .toc-list { display: none; }
-  .toc.open .toc-list { display: block; }
+}
+
+/* TOC 遮罩(手机抽屉打开时显示) */
+.toc-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 199;
+  opacity: 0; transition: opacity 0.2s;
+}
+.toc-overlay.show {
+  display: block;
+  opacity: 1;
 }
 
 /* ── TOC ── */
@@ -81,13 +110,12 @@ body {
   padding: 18px 14px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.toc-toggle {
-  display: none; width: 100%; background: transparent; border: none;
-  font-size: 14px; font-weight: 600; color: var(--text);
-  padding: 6px 0; text-align: left; cursor: pointer; font-family: inherit;
+.toc-close-btn {
+  display: none; background: transparent; border: none;
+  font-size: 22px; cursor: pointer; color: var(--text3);
+  position: absolute; top: 12px; right: 12px; padding: 4px 10px;
+  font-family: inherit;
 }
-.toc-toggle::after { content: '▾'; float: right; transition: transform 0.2s; }
-.toc.open .toc-toggle::after { transform: rotate(180deg); }
 .toc-title { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text3); margin: 0 0 10px; }
 .toc ol { list-style: none; padding: 0; }
 .toc ol > li { margin-bottom: 4px; }
@@ -100,6 +128,29 @@ body {
 .toc a.active { background: var(--bg); color: var(--primary-dark); border-left-color: var(--primary); font-weight: 500; }
 .toc .toc-chapter { font-weight: 600; color: var(--text); margin: 12px 0 4px; padding: 0 10px; font-size: 13px; }
 .toc .toc-chapter:first-child { margin-top: 0; }
+
+/* 手机端:TOC 变成左侧抽屉 */
+@media (max-width: 900px) {
+  .toc {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 280px; max-width: 80vw;
+    max-height: 100vh;
+    border-radius: 0;
+    border-right: 1px solid var(--border);
+    border-top: none; border-bottom: none; border-left: none;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-out;
+    z-index: 200;
+    padding: 50px 14px 18px;
+    overflow-y: auto;
+  }
+  .toc.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+  .toc-close-btn { display: block; }
+}
 
 /* ── Content ── */
 .content { min-width: 0; }
@@ -220,12 +271,11 @@ body {
 .foot a { color: var(--primary-dark); text-decoration: none; }
 
 /* ── i18n ── */
+.lang-zh, .lang-it { white-space: normal; }
+.lang-it { display: none !important; }
 .lang-zh { display: inline; }
-.lang-it { display: none; }
-body.lang-it .lang-zh { display: none; }
-body.lang-it .lang-it { display: inline; }
-body.lang-it .toc .toc-chapter .lang-zh,
-body.lang-it .toc a .lang-zh { display: none; }
+body.lang-it .lang-zh { display: none !important; }
+body.lang-it .lang-it { display: inline !important; }
 /* block-level switch */
 .block-zh { display: block; }
 .block-it { display: none; }
@@ -237,6 +287,7 @@ body.lang-it .block-it { display: block; }
 
 <!-- Topbar -->
 <div class="topbar">
+  <button class="menu-btn" onclick="toggleToc()" aria-label="目录">≡</button>
   <div class="topbar-left">
     <img class="topbar-logo" src="/logo.png" alt="YKI">
     <div class="topbar-title">
@@ -255,18 +306,18 @@ body.lang-it .block-it { display: block; }
   </div>
 </div>
 
+<!-- TOC 遮罩 -->
+<div class="toc-overlay" id="toc-overlay" onclick="toggleToc(false)"></div>
+
 <div class="container">
 
   <!-- ═══════════════ 目录 ═══════════════ -->
   <aside class="toc" id="toc">
-    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">
-      <span class="lang-zh">📑 目录</span><span class="lang-it">📑 Indice</span>
-    </button>
-    <div class="toc-list">
-      <div class="toc-title">
-        <span class="lang-zh">目录</span><span class="lang-it">INDICE</span>
-      </div>
-      <ol>
+    <button class="toc-close-btn" onclick="toggleToc(false)" aria-label="关闭">×</button>
+    <div class="toc-title">
+      <span class="lang-zh">目录</span><span class="lang-it">INDICE</span>
+    </div>
+    <ol>
         <li class="toc-chapter">
           <span class="lang-zh">第 1 章 餐厅老板入门</span>
           <span class="lang-it">Cap. 1 — Per il ristoratore</span>
@@ -316,7 +367,6 @@ body.lang-it .block-it { display: block; }
         <li><a href="#faq"><span class="lang-zh">常见问题 FAQ</span><span class="lang-it">FAQ</span></a></li>
         <li><a href="#support"><span class="lang-zh">联系支持</span><span class="lang-it">Supporto</span></a></li>
       </ol>
-    </div>
   </aside>
 
   <!-- ═══════════════ 正文 ═══════════════ -->
@@ -344,10 +394,7 @@ body.lang-it .block-it { display: block; }
       <span class="lang-it">Apri <a href="https://yki.it/">yki.it</a> nel browser e clicca il bottone dorato <strong>«Inizia ora»</strong> per andare alla pagina di registrazione.</span>
     </p>
 
-    <div class="shot">
-      <img src="/images/guide-1-home.jpg" alt="yki.it 首页" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>yki.it 首页</div>'">
-    </div>
+    <div class="shot" data-fallback="yki.it 首页"><img src="/images/guide-1-home.jpg" alt="yki.it 首页" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h3><span class="lang-zh">填写注册表单</span><span class="lang-it">Compila il modulo</span></h3>
     <ol class="steps">
@@ -377,10 +424,7 @@ body.lang-it .block-it { display: block; }
       </li>
     </ol>
 
-    <div class="shot">
-      <img src="/images/guide-2-register.jpg" alt="register.html 注册表单" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>register.html 注册表单</div>'">
-    </div>
+    <div class="shot" data-fallback="register.html 注册表单"><img src="/images/guide-2-register.jpg" alt="register.html 注册表单" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <div class="box tip">
       <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
@@ -398,10 +442,7 @@ body.lang-it .block-it { display: block; }
       <span class="lang-it">Dopo l'invio entri nello stato <strong>"In revisione"</strong>. Di solito l'approvazione avviene entro <strong>24 ore</strong> e ti contatteremo al recapito indicato.</span>
     </p>
 
-    <div class="shot">
-      <img src="/images/guide-3-pending.jpg" alt="审核中页面" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>审核中页面</div>'">
-    </div>
+    <div class="shot" data-fallback="审核中页面"><img src="/images/guide-3-pending.jpg" alt="审核中页面" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h3><span class="lang-zh">通过后登录</span><span class="lang-it">Accesso dopo l'approvazione</span></h3>
     <ol class="steps">
@@ -415,10 +456,7 @@ body.lang-it .block-it { display: block; }
       </li>
     </ol>
 
-    <div class="shot">
-      <img src="/images/guide-4-login.jpg" alt="cucina 登录界面" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>cucina 登录界面</div>'">
-    </div>
+    <div class="shot" data-fallback="cucina 登录界面"><img src="/images/guide-4-login.jpg" alt="cucina 登录界面" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <div class="box tip">
       <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
@@ -448,10 +486,7 @@ body.lang-it .block-it { display: block; }
           <span class="lang-it">Carica l'Excel → anteprima → <strong>«Conferma importazione»</strong>.</span></li>
     </ol>
 
-    <div class="shot">
-      <img src="/images/guide-5-import.jpg" alt="Excel 导入对话框" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>Excel 导入对话框</div>'">
-    </div>
+    <div class="shot" data-fallback="Excel 导入对话框"><img src="/images/guide-5-import.jpg" alt="Excel 导入对话框" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h3><span class="lang-zh">方式 B:手动添加</span><span class="lang-it">Opzione B: Aggiungi manualmente</span></h3>
     <p>
@@ -503,10 +538,7 @@ body.lang-it .block-it { display: block; }
           <span class="lang-it">Comunica la password temporanea al dipendente; dopo il primo accesso può cambiarla. Se non riesce, puoi resettarla con <strong>«🔑 Reset password»</strong>.</span></li>
     </ol>
 
-    <div class="shot">
-      <img src="/images/guide-6-staff.jpg" alt="员工账号管理" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>员工账号管理</div>'">
-    </div>
+    <div class="shot" data-fallback="员工账号管理"><img src="/images/guide-6-staff.jpg" alt="员工账号管理" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h2 id="sec-1-5"><span class="num">1.5</span>
       <span class="lang-zh">设置供应商</span>
@@ -567,10 +599,7 @@ body.lang-it .block-it { display: block; }
           <span class="lang-it">sotto questo valore la scheda si colora di blu per ricordare "ordina ora".</span></li>
     </ul>
 
-    <div class="shot">
-      <img src="/images/guide-7-item-edit.jpg" alt="食材编辑表单" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>食材编辑表单</div>'">
-    </div>
+    <div class="shot" data-fallback="食材编辑表单"><img src="/images/guide-7-item-edit.jpg" alt="食材编辑表单" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h3><span class="lang-zh">绑定供应商目录(高级)</span><span class="lang-it">Aggancia al catalogo fornitore (avanzato)</span></h3>
     <p>
@@ -627,10 +656,7 @@ body.lang-it .block-it { display: block; }
           <span class="lang-it"><strong>Consumi</strong> (se attivo «Aggiorna scorta»): movimenti di magazzino</span></li>
     </ul>
 
-    <div class="shot">
-      <img src="/images/guide-8-report.jpg" alt="报表分析页" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>报表分析页</div>'">
-    </div>
+    <div class="shot" data-fallback="报表分析页"><img src="/images/guide-8-report.jpg" alt="报表分析页" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h2 id="sec-2-4"><span class="num">2.4</span>
       <span class="lang-zh">收货确认</span>
@@ -763,10 +789,7 @@ body.lang-it .block-it { display: block; }
           <span class="lang-it">Basso a destra — quantità [−][numero][+]</span></li>
     </ul>
 
-    <div class="shot">
-      <img src="/images/guide-9-order-card.jpg" alt="订货卡片" 
-           onerror="this.parentNode.classList.add('placeholder');this.outerHTML='<div class=\'ph-icon\'>📷</div><div>订货卡片</div>'">
-    </div>
+    <div class="shot" data-fallback="订货卡片"><img src="/images/guide-9-order-card.jpg" alt="订货卡片" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
 
     <h3><span class="lang-zh">改订货数量</span><span class="lang-it">Modificare la quantità</span></h3>
     <ol class="steps">
@@ -1087,8 +1110,8 @@ body.lang-it .block-it { display: block; }
 
     <h3><span class="lang-zh">Q8: 试用期多久?之后多少钱?</span><span class="lang-it">Q8: Periodo di prova? Costo dopo?</span></h3>
     <p>
-      <span class="lang-zh">餐厅注册后默认 <strong>60 天免费试用</strong>。试用结束后我们会联系你商谈,目前价格还在制定中(预估 €30-50/月)。供应商<strong>始终免费</strong>。</span>
-      <span class="lang-it">Per i ristoranti la prova è di <strong>60 giorni gratuiti</strong>. Alla fine ti contatteremo per discutere il piano (indicativamente €30-50/mese). Per i fornitori è <strong>sempre gratuito</strong>.</span>
+      <span class="lang-zh">餐厅注册后默认 <strong>60 天免费试用</strong>。试用结束后 <strong>€15/月</strong>。</span>
+      <span class="lang-it">Per i ristoranti la prova è di <strong>60 giorni gratuiti</strong>. Dopo la prova, <strong>€15/mese</strong>.</span>
     </p>
 
     <h3><span class="lang-zh">Q9: 能在电脑上用吗?</span><span class="lang-it">Q9: Si può usare al PC?</span></h3>
@@ -1142,12 +1165,37 @@ body.lang-it .block-it { display: block; }
 
 <script>
 const LANG_KEY = 'yki_lang';
+// 手机端 TOC 抽屉
+function toggleToc(force) {
+  const toc = document.getElementById('toc');
+  const overlay = document.getElementById('toc-overlay');
+  if (!toc || !overlay) return;
+  const willOpen = (force === undefined) ? !toc.classList.contains('open') : !!force;
+  toc.classList.toggle('open', willOpen);
+  overlay.classList.toggle('show', willOpen);
+  document.body.style.overflow = willOpen ? 'hidden' : '';
+}
+// 点目录链接后自动关闭抽屉(只在手机端)
+document.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', () => {
+    if (window.innerWidth <= 900) toggleToc(false);
+  });
+});
+
 function setLang(lang) {
   document.body.classList.toggle('lang-it', lang === 'it');
   document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
   document.getElementById('btn-it').classList.toggle('active', lang === 'it');
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
   document.documentElement.lang = lang === 'it' ? 'it' : 'zh-CN';
+  // 诊断:切到 it 后看看正文是否有内容
+  setTimeout(function() {
+    const main = document.querySelector('main.content');
+    if (main && main.offsetHeight < 200) {
+      console.error('YKI Guide: 切到 ' + lang + ' 后正文高度异常 = ' + main.offsetHeight + 'px');
+      console.error('可见 lang-it span 数:', document.querySelectorAll('.lang-it').length);
+    }
+  }, 100);
 }
 (function() {
   let lang = '';
