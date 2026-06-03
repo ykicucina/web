@@ -271,14 +271,12 @@ body {
 .foot a { color: var(--primary-dark); text-decoration: none; }
 
 /* ── i18n ── */
-.lang-zh, .lang-it { white-space: normal; }
-.lang-it { display: none !important; }
+/* 注:用 display 而非 visibility,因为隐藏元素不占空间 */
 .lang-zh { display: inline; }
-body.lang-it .lang-zh { display: none !important; }
-body.lang-it .lang-it { display: inline !important; }
-/* block-level switch */
-.block-zh { display: block; }
-.block-it { display: none; }
+.lang-it { display: none; }
+body.lang-it .lang-zh { display: none; }
+body.lang-it .lang-it { display: inline; }
+/* block 切换(目前无用,保留备用) */
 body.lang-it .block-zh { display: none; }
 body.lang-it .block-it { display: block; }
 </style>
@@ -1188,14 +1186,30 @@ function setLang(lang) {
   document.getElementById('btn-it').classList.toggle('active', lang === 'it');
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
   document.documentElement.lang = lang === 'it' ? 'it' : 'zh-CN';
-  // 诊断:切到 it 后看看正文是否有内容
+  // 诊断
   setTimeout(function() {
     const main = document.querySelector('main.content');
+    const firstIt = document.querySelector('main.content .lang-it');
+    const firstZh = document.querySelector('main.content .lang-zh');
     if (main && main.offsetHeight < 200) {
-      console.error('YKI Guide: 切到 ' + lang + ' 后正文高度异常 = ' + main.offsetHeight + 'px');
-      console.error('可见 lang-it span 数:', document.querySelectorAll('.lang-it').length);
+      console.error('YKI Guide: 切到 ' + lang + ' 正文 offsetHeight=' + main.offsetHeight);
+      if (firstIt) {
+        const cs = getComputedStyle(firstIt);
+        console.error('第一个 lang-it span: display=' + cs.display + ' visibility=' + cs.visibility + ' offsetHeight=' + firstIt.offsetHeight);
+        console.error('  textContent=' + firstIt.textContent.substring(0, 80));
+      }
+      if (firstZh) {
+        const cs = getComputedStyle(firstZh);
+        console.error('第一个 lang-zh span: display=' + cs.display);
+      }
+      const h1 = document.querySelector('main.content h1');
+      if (h1) {
+        const cs = getComputedStyle(h1);
+        console.error('h1: display=' + cs.display + ' offsetHeight=' + h1.offsetHeight + ' innerHTML 长度=' + h1.innerHTML.length);
+      }
+      console.error('body.classList:', document.body.className);
     }
-  }, 100);
+  }, 150);
 }
 (function() {
   let lang = '';
