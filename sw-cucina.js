@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   '/manifest.json',
   '/logo.png',
   '/icon.png',
+  '/i18n.js',
 ];
 
 // ── INSTALL：缓存核心资源 + 自动激活（静默升级，不打扰用户） ──
