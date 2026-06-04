@@ -166,6 +166,7 @@ self.addEventListener('push', e => {
         body: '有新动态，打开 App 查看',
         icon: '/icon.png',
         badge: '/icon.png',
+        image: '/logo.png',
         tag: 'yki-cucina',
         renotify: true,
       });
@@ -200,6 +201,7 @@ self.addEventListener('push', e => {
       body,
       icon: '/icon.png',
       badge: '/icon.png',
+      image: '/logo.png',
       tag: 'yki-cucina-order',  // 同 tag 替换之前的，不会堆叠
       renotify: true,
       data: { restaurantId: auth.restaurantId || '' },
