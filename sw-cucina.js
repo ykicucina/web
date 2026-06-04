@@ -11,6 +11,7 @@ const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // 启动时立即缓存的核心资源
 const CORE_ASSETS = [
   '/cucina.html',
+  '/cucina.css',
   '/manifest.json',
   '/logo.png',
   '/icon.png',
