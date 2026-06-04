@@ -15,6 +15,7 @@ const CORE_ASSETS = [
   '/logo.png',
   '/icon.png',
   '/i18n.js',
+  '/sortable.min.js',
 ];
 
 // ── INSTALL：缓存核心资源 + 自动激活（静默升级，不打扰用户） ──
