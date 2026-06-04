@@ -1157,11 +1157,11 @@ function ridPickerGo() {
       <div class="menu-section-title">通知</div>
       <div class="menu-item" style="cursor:default">
         <div class="menu-item-icon" style="background:#FFF0F6">🔔</div>
-        <div class="menu-item-text">
-          <div class="title">推送通知</div>
-          <div class="sub" id="push-setting-status">未开启</div>
+        <div class="menu-item-text" style="min-width:0;">
+          <div class="title" style="white-space:nowrap;">推送通知</div>
+          <div class="sub" id="push-setting-status" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">未开启</div>
         </div>
-        <button id="push-setting-btn" class="btn btn-primary" style="padding:6px 14px;font-size:13px;min-width:auto;">开启推送</button>
+        <button id="push-setting-btn" class="btn btn-primary" style="padding:6px 12px;font-size:13px;min-width:auto;white-space:nowrap;flex-shrink:0;">开启</button>
       </div>
     </div>
 
@@ -1909,7 +1909,7 @@ function ridPickerGo() {
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.84';
+const APP_VERSION = 'v2.7.86';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2033,6 +2033,25 @@ function _urlB64ToUint8Array(b64) {
   return out;
 }
 
+// v2.7.85: 登录后自动把浏览器现有订阅"重绑"到当前用户
+// (解决"在同一台浏览器多账号轮流登录,推送只跟新号走"的问题 - 这就是 native APP 的体验)
+// 静默执行: 没订阅就跳过, 有订阅就 POST 给 Worker(Worker 会用当前 JWT 关联用户)
+async function rebindPushSubscription() {
+  try {
+    if (!pushSupported()) return;
+    if (Notification.permission !== 'granted') return;  // 没权限,跳过
+    const sub = await getCurrentPushSubscription();
+    if (!sub) return;  // 浏览器没订阅,跳过
+    if (!SB_KEY) return;  // 没登录,跳过
+    await fetch(SB_URL + '/push/subscribe', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON(), userAgent: navigator.userAgent })
+    });
+    // 静默,不弹 toast
+  } catch (e) { console.warn('重绑推送订阅失败(忽略):', e); }
+}
+
 // ── 开启推送（订阅）──
 async function enablePush() {
   if (!pushSupported()) { toast(t('push_not_supported'), 'err'); return false; }
@@ -2122,7 +2141,7 @@ async function refreshPushSettingUI() {
   const sub = await getCurrentPushSubscription();
   if (sub) {
     status.textContent = '✅ 已开启';
-    btn.textContent = '关闭推送';
+    btn.textContent = '关闭';
     btn.className = 'btn btn-ghost';
     btn.onclick = async () => {
       btn.disabled = true;
@@ -2132,7 +2151,7 @@ async function refreshPushSettingUI() {
     };
   } else {
     status.textContent = '未开启';
-    btn.textContent = '开启推送';
+    btn.textContent = '开启';
     btn.className = 'btn btn-primary';
     btn.onclick = async () => {
       btn.disabled = true;
@@ -3366,6 +3385,9 @@ async function doLogin() {
     role: currentUserRole
   });
 
+  // v2.7.85: 重绑推送订阅到当前用户(如果浏览器有现成订阅)
+  rebindPushSubscription();  // 不 await,后台执行
+
   // 加载用户偏好（订货排序 + 语言 + 排序模式）—— 并行加载，节省 ~200ms
   await Promise.all([
     loadUserSortOrder().catch(()=>{}),
@@ -3450,6 +3472,8 @@ async function doAdminLogin() {
 
   isAdmin = true;
   closeModal('modal-admin-login');
+  // v2.7.85: 重绑推送订阅到当前用户(管理员)
+  rebindPushSubscription();
   if (currentUser) {
     // 已在 App 内（员工已登录）→ 仅提权，保留现有令牌和数据
     document.getElementById('admin-menu').style.display='block';
