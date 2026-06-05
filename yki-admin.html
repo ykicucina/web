@@ -561,7 +561,7 @@
 // 配置
 // ============================================================
 const WORKER_URL = 'https://api.yki.it';
-const ADMIN_VERSION = 'v1.6.0';   // 2026-05-27: 价格可见性独立开关
+const ADMIN_VERSION = 'v1.6.1';   // 2026-06-05: 审批后卡片显示联系方式
 // 立即把版本号显示到登录界面
 (function() {
   const el = document.getElementById('login-version');
@@ -739,6 +739,7 @@ function renderRestaurants() {
         <div class="meta-item"><div class="k">员工</div><div class="v">${r.chef_count ?? 0}</div></div>
         <div class="meta-item"><div class="k">订单</div><div class="v">${r.order_count ?? 0}</div></div>
       </div>
+      ${r.contact ? `<div class="contact-row">📞 联系方式：<strong>${escapeHtml(r.contact)}</strong></div>` : ''}
       <div class="rest-actions">
         ${suspended
           ? `<button class="btn btn-green btn-sm" onclick="toggleStatus('${r.id}','active')">恢复</button>`
