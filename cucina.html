@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.89">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.90">
 </head>
 <body>
 
@@ -1264,18 +1264,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.89"></script>
+<script src="/i18n.js?v=v2.7.90"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.89"></script>
+<script src="/sortable.min.js?v=v2.7.90"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.89';
+const APP_VERSION = 'v2.7.90';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1406,15 +1406,33 @@ async function rebindPushSubscription() {
   try {
     if (!pushSupported()) return;
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
-    const sub = await getCurrentPushSubscription();
-    if (!sub) return;  // 浏览器没订阅,跳过
     if (!SB_KEY) return;  // 没登录,跳过
+    let sub = await getCurrentPushSubscription();
+    // v2.7.90: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
+    //  切回来时开关显示未开启且收不到通知"的问题)
+    if (!sub) {
+      try {
+        const r = await fetch(SB_URL + '/push/vapid-public-key');
+        const d = await r.json();
+        if (!d.key) return;  // 拿不到公钥,跳过
+        const reg = await navigator.serviceWorker.getRegistration('/sw-cucina.js')
+                    || await navigator.serviceWorker.ready;
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: _urlB64ToUint8Array(d.key)
+        });
+      } catch (e) { console.warn('自动重新订阅失败(忽略):', e); return; }
+    }
+    if (!sub) return;
     await fetch(SB_URL + '/push/subscribe', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ subscription: sub.toJSON(), userAgent: navigator.userAgent })
     });
     // 静默,不弹 toast
+    // 重绑/重订后刷新设置页 UI(如果当前正在看)
+    if (typeof refreshPushSettingUI === 'function') refreshPushSettingUI();
   } catch (e) { console.warn('重绑推送订阅失败(忽略):', e); }
 }
 
