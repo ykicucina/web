@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.90">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.91">
 </head>
 <body>
 
@@ -818,6 +818,48 @@ function ridPickerGo() {
   </div>
 </div>
 
+<!-- 🎉 首次欢迎引导 Modal (v2.7.91) -->
+<div class="modal-overlay" id="modal-welcome">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🎉 欢迎使用 YKI Supply Hub</div>
+    <p style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:16px;">
+      你的餐厅已经开通,食材库和供应商都已经预填好了 👍<br>
+      接下来只要 3 步就能开始用:
+    </p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--surface2);border-radius:10px;">
+        <span style="font-size:20px;flex-shrink:0;">1️⃣</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;">建立员工账号</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.5;">把厨房和大厅的员工加进来,给每人设密码和岗位</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="welcomeGoStaff()">去建员工 →</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--surface2);border-radius:10px;">
+        <span style="font-size:20px;flex-shrink:0;">2️⃣</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;">分配食材给订货员</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.5;">在库存管理里勾选食材,批量指定由哪个员工负责订货</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="welcomeGoInventory()">去分配食材 →</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--surface2);border-radius:10px;">
+        <span style="font-size:20px;flex-shrink:0;">3️⃣</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;">开始订货</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.5;">员工登录后就能给自己负责的食材下订单,你来审核发送</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:12px;">
+      💡 需要完整教程?随时打开侧边菜单的「使用教程」
+    </p>
+    <button class="btn btn-ghost" style="width:100%;" onclick="dismissWelcome()">知道了,稍后自己操作</button>
+  </div>
+</div>
+
+
 <!-- 收货确认Modal -->
 <div class="modal-overlay" id="modal-receive-confirm">
   <div class="modal">
@@ -1264,18 +1306,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.90"></script>
+<script src="/i18n.js?v=v2.7.91"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.90"></script>
+<script src="/sortable.min.js?v=v2.7.91"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.90';
+const APP_VERSION = 'v2.7.91';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1408,7 +1450,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.90: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.91: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1637,7 +1679,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.90: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.91: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -1977,7 +2019,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.90: 加载岗位列表
+    // v2.7.91: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2363,7 +2405,46 @@ function showApp() {
     document.getElementById('system-notif-content').textContent = window._systemNotification;
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
+  } else {
+    // v2.7.91: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    maybeShowWelcome();
   }
+}
+
+// v2.7.91: 新店首次引导
+// 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
+function maybeShowWelcome() {
+  try {
+    if (!isAdmin) return;  // 只引导老板/管理员
+    // 本浏览器已经看过/手动关过 → 不再弹（按餐厅记，避免换店误判）
+    if (localStorage.getItem('yki_welcome_done_' + REST_ID) === '1') return;
+    // 已经有员工了（除 __admin__ 占位外）→ 说明不是全新店，不弹
+    const realStaff = Object.keys(chefs).filter(n => n !== '__admin__');
+    if (realStaff.length > 0) return;
+    setTimeout(()=>openModal('modal-welcome'), 800);
+  } catch(e) { /* 静默 */ }
+}
+
+function dismissWelcome() {
+  try { localStorage.setItem('yki_welcome_done_' + REST_ID, '1'); } catch(e) {}
+  closeModal('modal-welcome');
+}
+
+function welcomeGoStaff() {
+  dismissWelcome();
+  if (typeof showAdminPanel === 'function') showAdminPanel('staff');
+}
+
+function welcomeGoInventory() {
+  dismissWelcome();
+  switchTab('inventory');
+  // 滚动到批量操作栏（管理员进库存管理时本就常驻显示），引导视线
+  setTimeout(()=>{
+    const bar = document.getElementById('inv-bulk-bar');
+    if (bar && bar.style.display !== 'none') {
+      bar.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }, 300);
 }
 // ════════════════════════════════════════
 const tabs = ['inventory','order','receive','orders','report','profile'];
@@ -7330,7 +7411,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.90: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.91: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
