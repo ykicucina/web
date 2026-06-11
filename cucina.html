@@ -1637,6 +1637,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
+let positionsList = [];    // v2.7.90: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -1920,7 +1921,7 @@ async function loadAllData() {
     const [iRes, oRes, cRes, sRes] = await Promise.all([
       sbRetry('cucina_items?restaurant_id=eq.'+REST_ID+'&select=*&order=id'),
       sbRetry('cucina_orders?restaurant_id=eq.'+REST_ID+'&select=*&order=created_at.desc'),
-      sbRetry('cucina_chefs?restaurant_id=eq.'+REST_ID+'&select=name,password,role,can_add_stock,can_stocktake,can_receive'),
+      sbRetry('cucina_chefs?restaurant_id=eq.'+REST_ID+'&select=name,password,role,can_add_stock,can_stocktake,can_receive,positions'),
       sbRetry('cucina_suppliers?restaurant_id=eq.'+REST_ID+'&select=*&order=name')
     ]);
     items  = (await iRes.json()).map(r=>({
@@ -1942,7 +1943,7 @@ async function loadAllData() {
       type:r.type, buyer:r.buyer, received_items:r.received_items, hidden:!!r.hidden
     }));
     chefs = {};
-    (await cRes.json()).forEach(c=>{ chefs[c.name] = {hash: c.password, role: c.role||'staff', can_add_stock: !!c.can_add_stock, can_stocktake: !!c.can_stocktake, can_receive: !!c.can_receive}; });
+    (await cRes.json()).forEach(c=>{ chefs[c.name] = {hash: c.password, role: c.role||'staff', can_add_stock: !!c.can_add_stock, can_stocktake: !!c.can_stocktake, can_receive: !!c.can_receive, positions: Array.isArray(c.positions) ? c.positions : []}; });
     suppliers = await sRes.json();
   } catch(e) {
     console.error('关键数据加载失败:', e);
@@ -1951,10 +1952,11 @@ async function loadAllData() {
   }
   // 单独读取管理员密码哈希，出错不影响主流程
   try {
-    const [settRes, notifRes, ffRes] = await Promise.all([
+    const [settRes, notifRes, ffRes, posRes] = await Promise.all([
       sb('cucina_settings?restaurant_id=eq.'+REST_ID+'&key=eq.admin_pass_hash&select=value'),
       sb('cucina_settings?restaurant_id=eq.__system__&key=eq.system_notification&select=value'),
-      sb('cucina_settings?restaurant_id=eq.'+REST_ID+'&key=eq.feature_flags&select=value')
+      sb('cucina_settings?restaurant_id=eq.'+REST_ID+'&key=eq.feature_flags&select=value'),
+      sb('cucina_settings?restaurant_id=eq.'+REST_ID+'&key=eq.positions&select=value')
     ]);
     const settData = await settRes.json();
     _adminPassHash = settData.length > 0 ? settData[0].value : null;
@@ -1975,6 +1977,16 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
+    // v2.7.90: 加载岗位列表
+    try {
+      const posData = await posRes.json();
+      if (posData.length && posData[0].value) {
+        const parsed = typeof posData[0].value === 'string'
+          ? JSON.parse(posData[0].value)
+          : posData[0].value;
+        if (Array.isArray(parsed)) positionsList = parsed;
+      }
+    } catch(e) { console.warn('解析岗位列表失败:', e); }
   } catch(e) {
     console.error('读取设置失败:', e);
   }
@@ -7160,6 +7172,15 @@ function renderStaffPanel() {
       <option value="supervisor">主管（看全部订单）</option>
       <option value="buyer">采购员（发送给供应商）</option>
     </select>
+    ${positionsList.length ? `
+    <p style="font-size:11px;color:var(--text3);margin-bottom:6px">岗位（可多选，可选填）</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+      ${positionsList.map(p=>`
+        <label style="display:flex;align-items:center;gap:5px;padding:5px 9px;background:var(--surface2);border-radius:8px;cursor:pointer;font-size:12px;">
+          <input type="checkbox" class="new-pos-cb" value="${escapeHtml(p)}" style="width:15px;height:15px;accent-color:var(--primary);">
+          <span>${escapeHtml(p)}</span>
+        </label>`).join('')}
+    </div>` : ''}
     <button class="btn btn-primary btn-sm" style="width:100%" onclick="saveStaff()">保存员工</button>
   `;
   document.getElementById('admin-panel-content').innerHTML = html;
@@ -7180,6 +7201,7 @@ function renderStaffList() {
           ${v.can_add_stock?'<span style="font-size:10px;color:#27ae60;margin-left:4px;">+库存</span>':''}
           ${v.can_stocktake?'<span style="font-size:10px;color:#2980b9;margin-left:4px;">盘点</span>':''}
           ${v.can_receive?'<span style="font-size:10px;color:#8e44ad;margin-left:4px;">收货员</span>':''}
+          ${(Array.isArray(v.positions)&&v.positions.length)?'<br>'+v.positions.map(p=>`<span style="display:inline-block;font-size:10px;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:8px;margin:3px 3px 0 0;border:1px solid #ffcc80;">${escapeHtml(p)}</span>`).join(''):''}
         </span>
         <button class="btn btn-sm" style="background:#e8f4fd;color:#2980b9;padding:4px 10px;margin-right:6px;" onclick="adminChangeChefPass('${n.replace(/'/g, "\\'")}')">🔑 改密码</button>
         <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:4px 10px" onclick="deleteStaff('${n}')">删除</button>
@@ -7244,6 +7266,20 @@ function showStaffSetting(name) {
           <span style="font-size:13px;">${t('recvCanReceive')}</span>
         </label>
       </div>
+      <div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <p style="font-size:12px;font-weight:600;color:var(--text3);margin:0;">岗位（可多选）</p>
+          <button class="btn btn-sm" style="background:var(--surface);color:var(--primary);padding:3px 10px;font-size:11px;border:1px solid var(--primary);" onclick="managePositions('${name.replace(/'/g, "\\'")}')">⚙️ 管理岗位</button>
+        </div>
+        <div id="staff-positions-box" style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${positionsList.length ? positionsList.map((p,i)=>`
+            <label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface);border-radius:8px;cursor:pointer;border:1px solid var(--border);font-size:13px;">
+              <input type="checkbox" class="pos-cb" value="${escapeHtml(p)}" ${(chef.positions||[]).includes(p)?'checked':''} style="width:16px;height:16px;accent-color:var(--primary);">
+              <span>${escapeHtml(p)}</span>
+            </label>`).join('')
+            : '<span style="font-size:12px;color:var(--text3);">还没有岗位，点右上角「管理岗位」添加</span>'}
+        </div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button class="btn btn-primary" style="flex:1" onclick="saveStaffRole('${name}')">保存</button>
         <button class="btn btn-ghost" style="flex:1" onclick="renderStaffPanel()">取消</button>
@@ -7274,20 +7310,101 @@ async function saveStaffRole(name) {
   const canAddStock = document.getElementById('perm-add-stock').checked;
   const canStocktake = document.getElementById('perm-stocktake').checked;
   const canReceive = document.getElementById('perm-receive').checked;
+  const positions = Array.from(document.querySelectorAll('.pos-cb'))
+    .filter(cb=>cb.checked).map(cb=>cb.value);
   try {
     await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(name), {
       method:'PATCH',
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({role, can_add_stock: canAddStock, can_stocktake: canStocktake, can_receive: canReceive})
+      body:JSON.stringify({role, can_add_stock: canAddStock, can_stocktake: canStocktake, can_receive: canReceive, positions})
     });
     if (chefs[name]) {
       chefs[name].role = role;
       chefs[name].can_add_stock = canAddStock;
       chefs[name].can_stocktake = canStocktake;
       chefs[name].can_receive = canReceive;
+      chefs[name].positions = positions;
     }
     renderStaffPanel();
     toast(t('updated_colon')+name);
+  } catch(e) { toast(t('save_fail'),'err'); }
+}
+
+// v2.7.90: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+function managePositions(backName) {
+  const html = `
+    <div style="padding:16px 0;">
+      <p style="font-size:15px;font-weight:600;margin-bottom:6px;">⚙️ 管理岗位列表</p>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:14px;">这些岗位会出现在每个员工的设置里供选择。删除岗位不会影响已保存的员工标签。</p>
+      <div id="pos-mgmt-list" style="margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input id="new-pos-input" class="form-control" placeholder="新岗位名称，如 洗碗工" onkeydown="if(event.key==='Enter')addPosition()">
+        <button class="btn btn-primary btn-sm" style="white-space:nowrap;" onclick="addPosition()">＋ 添加</button>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="${backName ? `showStaffSetting('${backName.replace(/'/g, "\\'")}')` : 'renderStaffPanel()'}">← 返回</button>
+    </div>
+  `;
+  document.getElementById('admin-panel-content').innerHTML = html;
+  renderPositionMgmtList();
+}
+
+function renderPositionMgmtList() {
+  const box = document.getElementById('pos-mgmt-list');
+  if (!box) return;
+  if (!positionsList.length) {
+    box.innerHTML = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:14px 0;">还没有岗位</p>';
+    return;
+  }
+  box.innerHTML = positionsList.map((p,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;font-size:13px;">
+      <span>${escapeHtml(p)}</span>
+      <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:3px 10px;" onclick="removePosition(${i})">删除</button>
+    </div>`).join('');
+}
+
+async function addPosition() {
+  const inp = document.getElementById('new-pos-input');
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) return;
+  if (positionsList.includes(name)) { toast('该岗位已存在', 'err'); return; }
+  positionsList.push(name);
+  inp.value = '';
+  renderPositionMgmtList();
+  await savePositionsList();
+}
+
+async function removePosition(idx) {
+  if (idx < 0 || idx >= positionsList.length) return;
+  positionsList.splice(idx, 1);
+  renderPositionMgmtList();
+  await savePositionsList();
+}
+
+// 保存岗位列表到 settings 表(upsert,与 feature_flags 同模式)
+async function savePositionsList() {
+  const headers = {
+    'apikey': SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates'
+  };
+  try {
+    const existRes = await sb(`cucina_settings?restaurant_id=eq.${REST_ID}&key=eq.positions&select=key`);
+    const exist = await existRes.json();
+    const valStr = JSON.stringify(positionsList);
+    if (exist && exist.length) {
+      await fetch(`${SB_URL}/rest/v1/cucina_settings?restaurant_id=eq.${REST_ID}&key=eq.positions`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({value: valStr})
+      });
+    } else {
+      await fetch(`${SB_URL}/rest/v1/cucina_settings`, {
+        method: 'POST', headers,
+        body: JSON.stringify({restaurant_id: REST_ID, key: 'positions', value: valStr})
+      });
+    }
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
@@ -7296,15 +7413,20 @@ async function saveStaff() {
   const p=document.getElementById('new-staff-pass').value.trim();
   const r=document.getElementById('new-staff-role').value||'staff';
   if(!n||!p){toast(t('fill_name_pwd'),'err');return;}
+  const positions = Array.from(document.querySelectorAll('.new-pos-cb'))
+    .filter(cb=>cb.checked).map(cb=>cb.value);
   const pHash = await sha256(p);
   try {
     const chk=await(await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(n),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})).json();
     if(chk.length>0){
+      // 已存在 = 重置密码场景, 不覆盖已有岗位/角色
       await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(n),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({password:pHash,role:r})});
+      if (chefs[n]) { chefs[n].hash=pHash; chefs[n].role=r; }
+      else chefs[n]={hash:pHash,role:r,positions:[]};
     } else {
-      await sb('cucina_chefs',{method:'POST',body:JSON.stringify({restaurant_id:REST_ID,name:n,password:pHash,role:r})});
+      await sb('cucina_chefs',{method:'POST',body:JSON.stringify({restaurant_id:REST_ID,name:n,password:pHash,role:r,positions})});
+      chefs[n]={hash:pHash,role:r,positions};
     }
-    chefs[n]={hash:pHash,role:r};
     populateLoginSelect();
     renderStaffList();
     toast(t('saved_colon')+n);
