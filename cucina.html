@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.98">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.99">
 </head>
 <body>
 
@@ -653,7 +653,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.98) -->
+<!-- 🧰 批量维护 Modal (v2.7.99) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -812,7 +812,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.98) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.99) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1300,18 +1300,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.98"></script>
+<script src="/i18n.js?v=v2.7.99"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.98"></script>
+<script src="/sortable.min.js?v=v2.7.99"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.98';
+const APP_VERSION = 'v2.7.99';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1444,7 +1444,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.98: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.99: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1673,7 +1673,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.98: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.99: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2014,7 +2014,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.98: 加载岗位列表
+    // v2.7.99: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2307,7 +2307,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.98: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.99: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2402,12 +2402,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.98: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.99: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.98: 新店首次引导
+// v2.7.99: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2628,7 +2628,14 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">暂无数据</td></tr>`;
+    // v2.7.99: 区分"完全没食材"和"筛选无结果",给不同引导
+    const hasAnyItem = items && items.length > 0;
+    const msg = hasAnyItem
+      ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
+      : (isAdmin
+          ? '还没有食材<br><span style="font-size:12px;">可在「批量维护」导入,或从「浏览供应商目录」添加</span>'
+          : '还没有食材<br><span style="font-size:12px;">请联系管理员添加食材</span>');
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px 20px;color:var(--text3);line-height:1.7;"><div style="font-size:36px;margin-bottom:8px;">📦</div>${msg}</td></tr>`;
     return;
   }
 
@@ -3110,7 +3117,23 @@ function renderOrderList() {
   } else {
     display = sorted;
   }
-  if (!display.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">无结果</div>'; return; }
+  if (!display.length) {
+    // v2.7.99: 区分几种空情况给不同引导
+    let msg;
+    if (_orderSearchQ) {
+      msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
+    } else if (!items.length) {
+      msg = isAdmin
+        ? '还没有食材<br><span style="font-size:12px;">先去「批量维护」或「浏览供应商目录」添加食材</span>'
+        : '还没有食材<br><span style="font-size:12px;">请联系管理员添加</span>';
+    } else if (_isOwnOnly && myItems.length === 0) {
+      msg = '还没有给你分配食材<br><span style="font-size:12px;">请管理员在「员工账号管理」里把食材分给你</span>';
+    } else {
+      msg = '当前没有需要订的食材 👍';
+    }
+    container.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text3);line-height:1.7;"><div style="font-size:40px;margin-bottom:10px;">🛒</div>${msg}</div>`;
+    return;
+  }
   container.innerHTML = display.map(item=>{
     const fc = calcForecast(item);
     const isLow = ff('low_stock_highlight') && fc > 0;  // 开关：库存不足是否高亮
@@ -4770,7 +4793,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.98: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.99: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4800,7 +4823,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.98: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.99: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -5753,7 +5776,7 @@ function renderOrders() {
 
   const container = document.getElementById('orders-list');
   if (!data.length) {
-    container.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>暂无订单记录</p></div>`;
+    container.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>还没有订单记录</p><p style="font-size:12px;color:var(--text3);margin-top:6px;">去「订货系统」挑选食材、提交订货后,记录会出现在这里</p></div>`;
     return;
   }
   container.innerHTML = data.map((o,idx)=>{
@@ -6204,7 +6227,7 @@ async function showSupplierModal() {
 function renderSupplierList() {
   const el = document.getElementById('supplier-list-ui');
   if (!el) return;
-  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:8px 0;text-align:center;">暂无供应商，请添加</p>'; return; }
+  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:20px 0;text-align:center;line-height:1.6;">还没有供应商<br><span style="font-size:12px;">在下方选择供应商 + 填 WhatsApp 号码,点「添加」</span></p>'; return; }
   const buyerNames = Object.entries(chefs).filter(([n,v])=>(v.role||'staff')==='buyer').map(([n])=>n);
   const allStaff = Object.keys(chefs);
   el.innerHTML = suppliers.map(s=>{
@@ -7293,7 +7316,7 @@ function renderStaffPanel() {
   if (positionsList.length) renderPositionStaffView();
 }
 
-// v2.7.98 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.99 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7534,7 +7557,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.98: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.99: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7612,7 +7635,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.98 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.99 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -8680,7 +8703,18 @@ function showFeatureFlagsModal() {
     }
   ];
 
-  const html = groups.map(g => `
+  const presetBar = `
+    <div style="background:var(--primary-light);border-radius:10px;padding:12px;margin-bottom:18px;">
+      <div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:4px;">⚡ 快速预设</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.4;">不确定怎么设?选一个模式,下面的开关会自动配好。之后还能单独微调。</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="flex:1;background:var(--surface);border:1px solid var(--primary);color:var(--primary);padding:8px 4px;font-size:12px;" onclick="applyFlagPreset('simple')">简单<br><span style="font-size:10px;color:var(--text3);">只订货</span></button>
+        <button class="btn btn-sm" style="flex:1;background:var(--surface);border:1px solid var(--primary);color:var(--primary);padding:8px 4px;font-size:12px;" onclick="applyFlagPreset('standard')">标准<br><span style="font-size:10px;color:var(--text3);">推荐</span></button>
+        <button class="btn btn-sm" style="flex:1;background:var(--surface);border:1px solid var(--primary);color:var(--primary);padding:8px 4px;font-size:12px;" onclick="applyFlagPreset('full')">完整<br><span style="font-size:10px;color:var(--text3);">全功能</span></button>
+      </div>
+    </div>`;
+
+  const html = presetBar + groups.map(g => `
     <div style="margin-bottom:18px;">
       <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;">${g.title}</div>
       ${g.flags.map(f => `
@@ -8700,6 +8734,40 @@ function showFeatureFlagsModal() {
 
   document.getElementById('feature-flags-content').innerHTML = html;
   openModal('modal-feature-flags');
+}
+
+// v2.7.99: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+function applyFlagPreset(preset) {
+  // 各预设对应的开关组合(true=开)
+  const presets = {
+    simple: {  // 简单:只要能订货,关掉所有需要维护库存数据的功能
+      show_stock: false, show_safety: false, auto_suggest_qty: false,
+      low_stock_highlight: false, stock_value_report: false,
+      show_recent_order: false, consume_track: false,
+      approve_orders: true, buyer_own_items_only: false,
+    },
+    standard: {  // 标准:即默认值
+      show_stock: true, show_safety: true, auto_suggest_qty: true,
+      low_stock_highlight: true, stock_value_report: true,
+      show_recent_order: false, consume_track: true,
+      approve_orders: true, buyer_own_items_only: false,
+    },
+    full: {  // 完整:全开
+      show_stock: true, show_safety: true, auto_suggest_qty: true,
+      low_stock_highlight: true, stock_value_report: true,
+      show_recent_order: true, consume_track: true,
+      approve_orders: true, buyer_own_items_only: true,
+    },
+  };
+  const cfg = presets[preset];
+  if (!cfg) return;
+  // 应用到界面上的复选框(不保存,让用户看到后自己点保存)
+  Object.keys(cfg).forEach(k => {
+    const el = document.getElementById('ff-' + k);
+    if (el) el.checked = cfg[k];
+  });
+  const label = {simple:'简单', standard:'标准', full:'完整'}[preset];
+  toast(`已套用「${label}」模式,确认后点保存`);
 }
 
 async function saveFeatureFlags() {
@@ -8759,12 +8827,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.98: 批量维护入口(合并三个批量工具)
+// v2.7.99: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.98: 管理员功能分组折叠
+// v2.7.99: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
