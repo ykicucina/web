@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.94">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.95">
 </head>
 <body>
 
@@ -818,7 +818,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.94) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.95) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1306,18 +1306,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.94"></script>
+<script src="/i18n.js?v=v2.7.95"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.94"></script>
+<script src="/sortable.min.js?v=v2.7.95"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.94';
+const APP_VERSION = 'v2.7.95';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1450,7 +1450,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.94: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.95: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1679,7 +1679,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.94: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.95: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2020,7 +2020,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.94: 加载岗位列表
+    // v2.7.95: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2313,7 +2313,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.94: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.95: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2408,12 +2408,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.94: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.95: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.94: 新店首次引导
+// v2.7.95: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -7247,11 +7247,14 @@ function showAdminPanel(type) {
 
 function renderStaffPanel() {
   const html = `
+    ${positionsList.length ? '<div id="pos-staff-view" style="margin-bottom:18px"></div>' : ''}
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">👥 全部员工</p>
     <div id="staff-list" style="margin-bottom:16px"></div>
     ${positionsList.length ? `
     <div style="background:var(--primary-light);border-radius:8px;padding:10px 12px;margin-bottom:14px;">
       <div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">🍽 按岗位分配食材</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">新店开通时,食材已按岗位带过来了。选岗位 + 选员工,把该岗位的食材一次性分给他。</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">把某个岗位的食材一次性分给某员工(用于一岗多人,或重新分配)。</div>
       <button class="btn btn-primary btn-sm" style="width:100%;" onclick="showAssignByPosition()">打开岗位分配 →</button>
     </div>` : ''}
     <div class="divider"></div>
@@ -7287,6 +7290,105 @@ function renderStaffPanel() {
   `;
   document.getElementById('admin-panel-content').innerHTML = html;
   renderStaffList();
+  if (positionsList.length) renderPositionStaffView();
+}
+
+// v2.7.95 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
+function renderPositionStaffView() {
+  const box = document.getElementById('pos-staff-view');
+  if (!box) return;
+  // 岗位 -> [员工名...] 反查
+  const posToStaff = {};
+  positionsList.forEach(p => { posToStaff[p] = []; });
+  Object.entries(chefs).forEach(([name, v]) => {
+    if (name === '__admin__') return;
+    (v.positions || []).forEach(p => {
+      if (posToStaff.hasOwnProperty(p)) posToStaff[p].push(name);
+    });
+  });
+
+  box.innerHTML = `
+    <p style="font-size:13px;font-weight:600;margin-bottom:4px">🪑 按岗位安排员工</p>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">
+      新店开通时,直接在每个岗位下填员工名+密码,点「创建」即可。<br>
+      创建后会自动把该岗位的食材分配给这个员工。一个岗位有多人时,第二人用下面「新增」,食材再手工分配。
+    </p>
+    ${positionsList.map((p, i) => {
+      const holders = posToStaff[p];
+      const itemCount = items.filter(it => it.position === p).length;
+      if (holders.length) {
+        // 已有人
+        return `
+          <div style="padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <span style="font-weight:600;font-size:13px;">${escapeHtml(p)}</span>
+                <span style="font-size:11px;color:var(--text3);margin-left:6px;">${itemCount} 个食材</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;">
+                ${holders.map(h=>`<span onclick="showStaffSetting('${h.replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;background:var(--surface);color:var(--primary);padding:3px 9px;border-radius:10px;border:1px solid var(--primary);">${escapeHtml(h)}</span>`).join('')}
+              </div>
+            </div>
+          </div>`;
+      } else {
+        // 空岗位 -> 可填人创建
+        return `
+          <div style="padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-weight:600;font-size:13px;">${escapeHtml(p)}</span>
+              <span style="font-size:11px;color:var(--text3);">${itemCount} 个食材</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;">
+              <input id="posname-${i}" class="form-control" style="padding:7px 9px;font-size:13px;" placeholder="员工名">
+              <input id="pospass-${i}" class="form-control" style="padding:7px 9px;font-size:13px;" placeholder="密码">
+              <button class="btn btn-primary btn-sm" style="white-space:nowrap;padding:7px 12px;" onclick="createStaffForPosition('${p.replace(/'/g,"\\'")}', ${i})">创建</button>
+            </div>
+          </div>`;
+      }
+    }).join('')}
+  `;
+}
+
+// 在某岗位下创建员工: 建账号 + 设该岗位 + 自动分配该岗位食材
+async function createStaffForPosition(pos, idx) {
+  const nameEl = document.getElementById('posname-' + idx);
+  const passEl = document.getElementById('pospass-' + idx);
+  if (!nameEl || !passEl) return;
+  const name = nameEl.value.trim();
+  const pass = passEl.value.trim();
+  if (!name) { toast('请填员工名', 'err'); return; }
+  if (!pass) { toast('请填密码', 'err'); return; }
+  if (chefs[name]) { toast('该员工名已存在,请用下面「新增」给已有员工加岗位', 'err'); return; }
+
+  const pHash = await sha256(pass);
+  try {
+    // 1. 建员工(staff 角色, 带该岗位)
+    await sb('cucina_chefs', {
+      method: 'POST',
+      body: JSON.stringify({ restaurant_id: REST_ID, name, password: pHash, role: 'staff', positions: [pos] })
+    });
+    chefs[name] = { hash: pHash, role: 'staff', can_add_stock: false, can_stocktake: false, can_receive: false, positions: [pos] };
+
+    // 2. 把该岗位的食材分配给他(批量 PATCH)
+    let assigned = 0;
+    const affected = items.filter(it => it.position === pos);
+    if (affected.length) {
+      const r = await fetch(
+        SB_URL + '/rest/v1/cucina_items?restaurant_id=eq.' + REST_ID + '&position=eq.' + encodeURIComponent(pos),
+        { method: 'PATCH',
+          headers: {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body: JSON.stringify({ chef: name }) }
+      );
+      if (r.ok) { affected.forEach(it => { it.chef = name; }); assigned = affected.length; }
+    }
+
+    populateLoginSelect();
+    toast(`✅ 已创建 ${name}（${pos}）${assigned ? '，并分配 '+assigned+' 个食材' : ''}`);
+    renderStaffPanel();  // 刷新整个面板
+  } catch (e) {
+    toast('创建失败: ' + (e.message || e), 'err');
+  }
 }
 
 function renderStaffList() {
@@ -7432,7 +7534,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.94: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.95: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7510,7 +7612,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.94 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.95 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
