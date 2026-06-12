@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.100">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.101">
 </head>
 <body>
 
@@ -644,7 +644,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.100) -->
+<!-- 🧰 批量维护 Modal (v2.7.101) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -803,7 +803,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.100) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.101) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1291,18 +1291,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.100"></script>
+<script src="/i18n.js?v=v2.7.101"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.100"></script>
+<script src="/sortable.min.js?v=v2.7.101"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.100';
+const APP_VERSION = 'v2.7.101';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1435,7 +1435,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.100: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.101: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1664,7 +1664,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.100: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.101: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2005,7 +2005,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.100: 加载岗位列表
+    // v2.7.101: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2298,7 +2298,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.100: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.101: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2393,12 +2393,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.100: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.101: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.100: 新店首次引导
+// v2.7.101: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2619,7 +2619,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.100: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.101: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -3109,7 +3109,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.100: 区分几种空情况给不同引导
+    // v2.7.101: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4784,7 +4784,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.100: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.101: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4814,7 +4814,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.100: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.101: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -7261,53 +7261,114 @@ function showAdminPanel(type) {
 
 function renderStaffPanel() {
   const html = `
-    ${positionsList.length ? '<div id="pos-staff-view" style="margin-bottom:18px"></div>' : ''}
-    <div class="divider"></div>
-    <p style="font-size:13px;font-weight:600;margin-bottom:8px">👥 全部员工</p>
-    <div id="staff-list" style="margin-bottom:16px"></div>
-    ${positionsList.length ? `
-    <div style="background:var(--primary-light);border-radius:8px;padding:10px 12px;margin-bottom:14px;">
-      <div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">🍽 按岗位分配食材</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">把某个岗位的食材一次性分给某员工(用于一岗多人,或重新分配)。</div>
-      <button class="btn btn-primary btn-sm" style="width:100%;" onclick="showAssignByPosition()">打开岗位分配 →</button>
-    </div>` : ''}
-    <div class="divider"></div>
-    <p style="font-size:13px;font-weight:600;margin-bottom:4px">新增 / 重置密码</p>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px">💡 员工忘记密码？输入同名 + 新密码，点保存即可重置</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <input id="new-staff-name" class="form-control" placeholder="员工姓名">
-      <input id="new-staff-pass" class="form-control" placeholder="密码">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <p style="font-size:14px;font-weight:600;margin:0;">👥 员工与岗位</p>
+      ${positionsList.length ? `<button class="btn btn-sm" style="background:var(--surface);color:var(--primary);padding:4px 11px;font-size:12px;border:1px solid var(--primary);" onclick="managePositions('')">⚙️ 管理岗位</button>` : ''}
     </div>
-    <select id="new-staff-role" class="form-control" style="margin-bottom:8px">
-      <option value="warehouse">仓库员（只记录消耗）</option>
-      <option value="staff">员工（订自己负责的货）</option>
-      <option value="supervisor">主管（看全部订单）</option>
-      <option value="buyer">采购员（发送给供应商）</option>
-    </select>
-    ${positionsList.length ? `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <p style="font-size:11px;color:var(--text3);margin:0;">岗位（可多选，可选填）</p>
-      <button class="btn btn-sm" style="background:var(--surface);color:var(--primary);padding:2px 9px;font-size:11px;border:1px solid var(--primary);white-space:nowrap;" onclick="managePositions('')">⚙️ 管理岗位</button>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-      ${positionsList.map(p=>`
-        <label style="display:flex;align-items:center;gap:5px;padding:5px 9px;background:var(--surface2);border-radius:8px;cursor:pointer;font-size:12px;">
-          <input type="checkbox" class="new-pos-cb" value="${escapeHtml(p)}" style="width:15px;height:15px;accent-color:var(--primary);">
-          <span>${escapeHtml(p)}</span>
-        </label>`).join('')}
-    </div>` : `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;">
-      <span style="font-size:12px;color:var(--text3);">还没有岗位可选</span>
-      <button class="btn btn-sm" style="background:var(--surface);color:var(--primary);padding:3px 10px;font-size:11px;border:1px solid var(--primary);white-space:nowrap;" onclick="managePositions('')">⚙️ 添加岗位</button>
-    </div>`}
-    <button class="btn btn-primary btn-sm" style="width:100%" onclick="saveStaff()">保存员工</button>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.5;">
+      每个岗位下填员工名+密码点「创建」即可,创建后该岗位的食材会自动分给他。<br>
+      同岗位要加第二人:先用「管理岗位」加一个新岗位(如"帮厨A"),再在新岗位下建人。
+    </p>
+    <div id="staff-by-position"></div>
+    <div class="divider" style="margin:16px 0;"></div>
+    <details style="margin-bottom:8px;">
+      <summary style="font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);">➕ 新增员工 / 重置密码（高级）</summary>
+      <div style="padding-top:10px;">
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">用于建不带岗位的员工(如采购员、BOSS),或给员工重置密码(输入同名+新密码即可)。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input id="new-staff-name" class="form-control" placeholder="员工姓名">
+          <input id="new-staff-pass" class="form-control" placeholder="密码">
+        </div>
+        <select id="new-staff-role" class="form-control" style="margin-bottom:8px">
+          <option value="warehouse">仓库员（只记录消耗）</option>
+          <option value="staff">员工（订自己负责的货）</option>
+          <option value="supervisor">主管（看全部订单）</option>
+          <option value="buyer">采购员（发送给供应商）</option>
+        </select>
+        <button class="btn btn-primary btn-sm" style="width:100%" onclick="saveStaff()">保存员工</button>
+      </div>
+    </details>
   `;
   document.getElementById('admin-panel-content').innerHTML = html;
-  renderStaffList();
-  if (positionsList.length) renderPositionStaffView();
+  renderStaffByPosition();
 }
 
-// v2.7.100 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.101: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+function renderStaffByPosition() {
+  const box = document.getElementById('staff-by-position');
+  if (!box) return;
+  const roleLabel = {warehouse:'仓库员', staff:'员工', supervisor:'主管', buyer:'采购员', admin:'管理员'};
+
+  // 岗位 -> 该岗位的员工名
+  const posToStaff = {};
+  positionsList.forEach(p => { posToStaff[p] = []; });
+  const assignedNames = new Set();  // 已归到某岗位的人
+  Object.entries(chefs).forEach(([name, v]) => {
+    if (name === '__admin__') return;
+    let matched = false;
+    (v.positions || []).forEach(p => {
+      if (posToStaff.hasOwnProperty(p)) { posToStaff[p].push(name); matched = true; }
+    });
+    if (matched) assignedNames.add(name);
+  });
+
+  // 小卡片:一个员工(可改密码/删除/点名进设置)
+  const staffChip = (name) => {
+    const v = chefs[name] || {};
+    const perms = [];
+    if (v.can_add_stock) perms.push('<span style="font-size:10px;color:#27ae60;">+库存</span>');
+    if (v.can_stocktake) perms.push('<span style="font-size:10px;color:#2980b9;">盘点</span>');
+    if (v.can_receive) perms.push('<span style="font-size:10px;color:#8e44ad;">收货员</span>');
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface);border-radius:8px;margin-top:6px;">
+        <span onclick="showStaffSetting('${name.replace(/'/g,"\\'")}')" style="cursor:pointer;flex:1;font-size:13px;">
+          <strong style="color:var(--primary);text-decoration:underline dotted;">${escapeHtml(name)}</strong>
+          <span style="font-size:10px;color:var(--text3);margin-left:6px;">${roleLabel[v.role||'staff']||v.role||''}</span>
+          ${perms.length?' '+perms.join(' '):''}
+        </span>
+        <button class="btn btn-sm" style="background:#e8f4fd;color:#2980b9;padding:3px 9px;font-size:11px;" onclick="adminChangeChefPass('${name.replace(/'/g,"\\'")}')">🔑</button>
+        <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:3px 9px;font-size:11px;" onclick="deleteStaff('${name.replace(/'/g,"\\'")}')">删除</button>
+      </div>`;
+  };
+
+  // 按岗位渲染
+  let html = positionsList.map((p, i) => {
+    const holders = posToStaff[p];
+    const itemCount = items.filter(it => it.position === p).length;
+    return `
+      <div style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:10px;border-left:4px solid var(--primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:700;font-size:14px;">${escapeHtml(p)}</span>
+          <span style="font-size:11px;color:var(--text3);">${itemCount} 个食材</span>
+        </div>
+        ${holders.length
+          ? holders.map(h => staffChip(h)).join('')
+          : `<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;margin-top:8px;">
+              <input id="posname-${i}" class="form-control" style="padding:7px 9px;font-size:13px;" placeholder="员工名">
+              <input id="pospass-${i}" class="form-control" style="padding:7px 9px;font-size:13px;" placeholder="密码">
+              <button class="btn btn-primary btn-sm" style="white-space:nowrap;padding:7px 12px;" onclick="createStaffForPosition('${p.replace(/'/g,"\\'")}', ${i})">创建</button>
+            </div>`}
+      </div>`;
+  }).join('');
+
+  // 其他员工(没归到任何岗位的人)
+  const others = Object.keys(chefs).filter(n => n !== '__admin__' && !assignedNames.has(n));
+  if (others.length) {
+    html += `
+      <div style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:10px;border-left:4px solid var(--text3);">
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px;">其他员工</div>
+        <div style="font-size:11px;color:var(--text3);">没有指定订货岗位(如采购员、管理等)</div>
+        ${others.map(n => staffChip(n)).join('')}
+      </div>`;
+  }
+
+  if (!positionsList.length && !others.length) {
+    html = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:20px 0;">还没有岗位和员工,点上方「管理岗位」先建岗位</p>';
+  }
+  box.innerHTML = html;
+}
+
+// v2.7.101 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7548,7 +7609,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.100: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.101: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7626,7 +7687,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.100 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.101 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -7712,7 +7773,7 @@ async function saveStaff() {
       chefs[n]={hash:pHash,role:r,positions};
     }
     populateLoginSelect();
-    renderStaffList();
+    renderStaffPanel();
     toast(t('saved_colon')+n);
   } catch(e){ toast(t('save_fail'),'err'); }
 }
@@ -7723,7 +7784,7 @@ async function deleteStaff(n) {
     await fetch(SB_URL+'/rest/v1/cucina_chefs?restaurant_id=eq.'+REST_ID+'&name=eq.'+encodeURIComponent(n),{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     delete chefs[n];
     populateLoginSelect();
-    renderStaffList();
+    renderStaffPanel();
     toast(t('deleted_short_colon')+n);
   } catch(e){ toast(t('delete_fail'),'err'); }
 }
@@ -8727,7 +8788,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.100: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.101: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -8818,12 +8879,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.100: 批量维护入口(合并三个批量工具)
+// v2.7.101: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.100: 管理员功能分组折叠
+// v2.7.101: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
