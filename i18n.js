@@ -6,7 +6,7 @@
 
 const i18n = {
   zh: {
-    tabs:['库存管理','订货系统','订单系统','报表分析','我的'],
+    tabs:['库存管理','订货系统','订单记录','报表分析','我的'],
     submit:'提交', pending:'待处理', done:'已完成', all:'全部',
     lowStock:'库存不足', ok:'正常', warn:'预警',
     // 登录
@@ -26,7 +26,7 @@ const i18n = {
     suggestQty:'建议订货量', orderQty:'订货数量', consume:'库存调整',
     consumeHint:'负数=消耗，正数=补货', todayTag:'今日',
     // 订单
-    ordersTitle:'订单系统', allOrders:'全部订单',
+    ordersTitle:'订单记录', allOrders:'全部订单',
     filterPending:'待处理', filterDone:'已完成', filterConsume:'消耗记录',
     filterSelected:'✓ 仅看已选', filterUnselected:'⚪ 仅看未选',
     exportBtn:'导出采购清单',
