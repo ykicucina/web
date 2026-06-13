@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.103">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.104">
 </head>
 <body>
 
@@ -195,7 +195,7 @@ function ridPickerGo() {
   <!-- TOP NAV -->
   <div class="top-nav" id="app-nav">
     <div class="nav-icon" onclick="showSideMenu()">☰</div>
-    <div class="nav-title" id="nav-title">库存管理</div>
+    <div class="nav-title" id="nav-title">食材库</div>
 
     <div class="nav-icon" id="nav-action">
       <select id="lang-select" class="lang-btn" onchange="changeLang(this.value)">
@@ -228,6 +228,7 @@ function ridPickerGo() {
     <!-- v2.7.80: admin 管理按钮组(替代原"物料管理"入口) -->
     <div id="inv-admin-actions" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
       <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#c9a961;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="openModal('modal-admin-panel');document.getElementById('admin-panel-title').textContent='新增食材';renderItemsPanel();">➕ 新增食材</button>
+      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showSupCatalogModal()">🔍 供应商目录</button>
       <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showImportModal()">📥 批量导入</button>
       <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="exportInventoryExcel()">📤 备份导出</button>
     </div>
@@ -594,7 +595,7 @@ function ridPickerGo() {
   <div class="bottom-nav">
     <div class="nav-item active" id="nav-inventory" onclick="switchTab('inventory')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      <span id="nav-lbl-inventory">库存管理</span>
+      <span id="nav-lbl-inventory">食材库</span>
     </div>
     <div class="nav-item" id="nav-order" onclick="switchTab('order')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -644,7 +645,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.103) -->
+<!-- 🧰 批量维护 Modal (v2.7.104) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -803,7 +804,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.103) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.104) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -825,7 +826,7 @@ function ridPickerGo() {
         <span style="font-size:20px;flex-shrink:0;">2️⃣</span>
         <div style="flex:1;">
           <div style="font-weight:600;font-size:14px;margin-bottom:2px;">分配食材给订货员</div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.5;">在库存管理里勾选食材,批量指定由哪个员工负责订货</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.5;">在食材库里勾选食材,批量指定由哪个员工负责订货</div>
           <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="welcomeGoInventory()">去分配食材 →</button>
         </div>
       </div>
@@ -1291,18 +1292,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.103"></script>
+<script src="/i18n.js?v=v2.7.104"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.103"></script>
+<script src="/sortable.min.js?v=v2.7.104"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.103';
+const APP_VERSION = 'v2.7.104';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1435,7 +1436,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.103: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.104: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1664,7 +1665,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.103: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.104: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2005,7 +2006,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.103: 加载岗位列表
+    // v2.7.104: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2298,7 +2299,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.103: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.104: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2393,12 +2394,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.103: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.104: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.103: 新店首次引导
+// v2.7.104: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2619,7 +2620,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.103: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.104: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -3109,7 +3110,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.103: 区分几种空情况给不同引导
+    // v2.7.104: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4784,7 +4785,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.103: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.104: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4814,7 +4815,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.103: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.104: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -7294,7 +7295,7 @@ function renderStaffPanel() {
   renderStaffByPosition();
 }
 
-// v2.7.103: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+// v2.7.104: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
 function renderStaffByPosition() {
   const box = document.getElementById('staff-by-position');
   if (!box) return;
@@ -7369,7 +7370,7 @@ function renderStaffByPosition() {
   box.innerHTML = html;
 }
 
-// v2.7.103 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.104 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7665,7 +7666,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.103: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.104: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7743,7 +7744,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.103 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.104 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -7917,7 +7918,7 @@ function renderItemsPanel() {
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value.trim();
   const nameZh = document.getElementById('ni-name').value.trim();
-  // v2.7.103: 中文名 或 意大利文 至少填一个(不再强制意文必填)
+  // v2.7.104: 中文名 或 意大利文 至少填一个(不再强制意文必填)
   if(!italian && !nameZh){ toast('请至少填写中文名或意大利文名称','err'); return; }
   // v2.7.81: 收集所有字段(对齐编辑表单)
   // 订货周期
@@ -7938,7 +7939,7 @@ async function saveNewItem() {
   const maxOrderRaw = document.getElementById('ni-max-order')?.value;
   const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
 
-  // v2.7.103: 重名/重码检测,防止建重复食材
+  // v2.7.104: 重名/重码检测,防止建重复食材
   const _code = (document.getElementById('ni-code').value||'').trim();
   const _zh = nameZh, _it = italian;
   const dup = items.find(it => {
@@ -8867,7 +8868,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.103: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.104: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -8958,12 +8959,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.103: 批量维护入口(合并三个批量工具)
+// v2.7.104: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.103: 管理员功能分组折叠
+// v2.7.104: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');

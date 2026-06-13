@@ -6,7 +6,7 @@
 
 const i18n = {
   zh: {
-    tabs:['库存管理','订货系统','订单记录','报表分析','我的'],
+    tabs:['食材库','订货系统','订单记录','报表分析','我的'],
     submit:'提交', pending:'待处理', done:'已完成', all:'全部',
     lowStock:'库存不足', ok:'正常', warn:'预警',
     // 登录
@@ -14,7 +14,7 @@ const i18n = {
     loginSelect:'名字', loginPass:'密码',
     loginBtn:'进入系统', loginErr:'密码错误，请重试',
     // 库存
-    invTitle:'库存管理', allFood:'全部食材', lowSafeStock:'低于安全库存',
+    invTitle:'食材库', allFood:'全部食材', lowSafeStock:'低于安全库存',
     totalVal:'总库存价值', searchFood:'搜索食材...',
     colFood:'食材', colStock:'当前库存', colSafe:'安全库存',
     colUnit:'单位', colStatus:'状态',
