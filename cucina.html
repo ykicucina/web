@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.105">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.106">
 </head>
 <body>
 
@@ -149,22 +149,22 @@ function ridPickerGo() {
       <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="side-user-role"></div>
     </div>
     <div id="side-sort-section" style="display:none;padding:16px 20px;border-bottom:1px solid var(--border);">
-      <div style="font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:10px;">排序方式</div>
+      <div id="ham-lbl-sortmethod" style="font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:10px;">排序方式</div>
       <select id="side-sort-select" onchange="applyOrderSort(this.value);hideSideMenu()"
         style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;background:var(--surface);color:var(--text);">
-        <option value="default">默认（今日优先)</option>
-        <option value="low">库存不足优先</option>
-        <option value="today">今日订货</option>
-        <option value="chef">按订货人</option>
-        <option value="supplier">按供货商</option>
-        <option value="custom">🖐 我的排序</option>
+        <option value="default" id="ham-sort-default">默认（今日优先)</option>
+        <option value="low" id="ham-sort-low">库存不足优先</option>
+        <option value="today" id="ham-sort-today">今日订货</option>
+        <option value="chef" id="ham-sort-chef">按订货人</option>
+        <option value="supplier" id="ham-sort-supplier">按供货商</option>
+        <option value="custom" id="ham-sort-custom">🖐 我的排序</option>
       </select>
       <button id="btn-sort-mode" onclick="toggleSortMode();hideSideMenu();"
         style="width:100%;margin-top:10px;padding:9px 12px;border:1.5px dashed var(--primary,#c9a961);border-radius:8px;background:transparent;color:var(--primary,#c9a961);font-size:13px;font-weight:500;cursor:pointer;">
         <span id="sort-mode-label">✏️ 编辑我的排序</span>
       </button>
       <!-- v2.7.78: 仅看已选/未选 移入侧边菜单 -->
-      <div style="font-size:11px;color:var(--text3);letter-spacing:1px;margin:14px 0 8px;">显示</div>
+      <div id="ham-lbl-display" style="font-size:11px;color:var(--text3);letter-spacing:1px;margin:14px 0 8px;">显示</div>
       <button id="btn-filter-selected"
         data-base-style="display:block;width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;margin-bottom:6px;transition:all .15s;"
         style="display:block;width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;margin-bottom:6px;background:transparent;color:var(--text2);"
@@ -181,31 +181,31 @@ function ridPickerGo() {
     <div style="padding:8px 0;">
       <!-- 👑 管理(仅管理员,显隐由 #ham-admin-menu 控制) -->
       <div id="ham-admin-menu" style="display:none;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;">
-        <div style="font-size:11px;color:var(--text3);letter-spacing:1px;padding:6px 20px 8px;">管理</div>
+        <div id="ham-lbl-manage" style="font-size:11px;color:var(--text3);letter-spacing:1px;padding:6px 20px 8px;">管理</div>
         <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showAdminPanel('pending');hideSideMenu()">
-          <span style="font-size:18px;">📋</span><span style="font-size:14px;">审批订单<span id="ham-pending-badge" style="margin-left:6px;font-size:11px;color:var(--danger);"></span></span>
+          <span style="font-size:18px;">📋</span><span style="font-size:14px;"><span id="ham-lbl-approve">审批订单</span><span id="ham-pending-badge" style="margin-left:6px;font-size:11px;color:var(--danger);"></span></span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showSupplierModal();hideSideMenu()">
-          <span style="font-size:18px;">📱</span><span style="font-size:14px;">供应商 WhatsApp</span>
+          <span style="font-size:18px;">📱</span><span id="ham-lbl-supplierwa" style="font-size:14px;">供应商 WhatsApp</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showAdminPanel('staff');hideSideMenu()">
-          <span style="font-size:18px;">👥</span><span style="font-size:14px;">员工与岗位</span>
+          <span style="font-size:18px;">👥</span><span id="ham-lbl-staff" style="font-size:14px;">员工与岗位</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="toggleAdminGroup('ham-grp-items')">
-          <span style="font-size:18px;">📦</span><span style="font-size:14px;">食材维护</span><span id="ham-grp-items-arrow" style="margin-left:auto;color:var(--text3);">›</span>
+          <span style="font-size:18px;">📦</span><span id="ham-lbl-itemmaint" style="font-size:14px;">食材维护</span><span id="ham-grp-items-arrow" style="margin-left:auto;color:var(--text3);">›</span>
         </div>
         <div id="ham-grp-items" style="display:none;background:var(--surface2);">
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSupCatalogModal();hideSideMenu()">🔍 供应商目录</div>
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSyncPricesModal();hideSideMenu()">💰 同步价格</div>
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showBatchToolsModal();hideSideMenu()">🧰 批量维护</div>
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showImportModal();hideSideMenu()">📥 批量导入</div>
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="exportInventoryExcel();hideSideMenu()">📤 备份导出</div>
+          <div id="ham-lbl-catalog" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSupCatalogModal();hideSideMenu()">🔍 供应商目录</div>
+          <div id="ham-lbl-syncprice" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSyncPricesModal();hideSideMenu()">💰 同步价格</div>
+          <div id="ham-lbl-batch" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showBatchToolsModal();hideSideMenu()">🧰 批量维护</div>
+          <div id="ham-lbl-import" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showImportModal();hideSideMenu()">📥 批量导入</div>
+          <div id="ham-lbl-export" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="exportInventoryExcel();hideSideMenu()">📤 备份导出</div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="toggleAdminGroup('ham-grp-settings')">
-          <span style="font-size:18px;">⚙️</span><span style="font-size:14px;">设置</span><span id="ham-grp-settings-arrow" style="margin-left:auto;color:var(--text3);">›</span>
+          <span style="font-size:18px;">⚙️</span><span id="ham-lbl-settings" style="font-size:14px;">设置</span><span id="ham-grp-settings-arrow" style="margin-left:auto;color:var(--text3);">›</span>
         </div>
         <div id="ham-grp-settings" style="display:none;background:var(--surface2);">
-          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showFeatureFlagsModal();hideSideMenu()">🎛️ 系统功能开关</div>
+          <div id="ham-lbl-flags" style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showFeatureFlagsModal();hideSideMenu()">🎛️ 系统功能开关</div>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ function ridPickerGo() {
       <div id="ham-push-wrap" style="display:none;border-bottom:1px solid var(--border);padding:6px 20px 12px;margin-bottom:4px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:18px;">🔔</span>
-          <span style="flex:1;min-width:0;font-size:14px;">推送通知<span id="ham-push-status" style="display:block;font-size:11px;color:var(--text3);">未开启</span></span>
+          <span style="flex:1;min-width:0;font-size:14px;"><span id="ham-lbl-push">推送通知</span><span id="ham-push-status" style="display:block;font-size:11px;color:var(--text3);">未开启</span></span>
           <button id="ham-push-btn" class="btn btn-primary" style="padding:5px 12px;font-size:12px;width:auto;flex:0 0 auto;white-space:nowrap;">开启</button>
         </div>
       </div>
@@ -221,17 +221,17 @@ function ridPickerGo() {
       <div onclick="showChangePass();hideSideMenu()"
         style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;">
         <span style="font-size:18px;">🔑</span>
-        <span style="font-size:14px;">修改密码</span>
+        <span id="ham-lbl-changepass" style="font-size:14px;">修改密码</span>
       </div>
       <div id="ham-change-admin-pass" onclick="showChangeAdminPass();hideSideMenu()"
         style="display:none;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;">
         <span style="font-size:18px;">🔐</span>
-        <span style="font-size:14px;">修改管理员密码</span>
+        <span id="ham-lbl-changeadminpass" style="font-size:14px;">修改管理员密码</span>
       </div>
       <div onclick="doLogout();hideSideMenu()"
         style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;color:var(--danger);">
         <span style="font-size:18px;">🚪</span>
-        <span style="font-size:14px;">退出登录</span>
+        <span id="ham-lbl-logout" style="font-size:14px;">退出登录</span>
       </div>
     </div>
   </div>
@@ -687,7 +687,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.105) -->
+<!-- 🧰 批量维护 Modal (v2.7.106) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -846,7 +846,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.105) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.106) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1334,18 +1334,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.105"></script>
+<script src="/i18n.js?v=v2.7.106"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.105"></script>
+<script src="/sortable.min.js?v=v2.7.106"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.105';
+const APP_VERSION = 'v2.7.106';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1478,7 +1478,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.105: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.106: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1579,14 +1579,14 @@ async function refreshPushSettingUI() {
   const wrap = document.getElementById('push-setting-wrap');
   const status = document.getElementById('push-setting-status');
   const btn = document.getElementById('push-setting-btn');
-  // v2.7.105: 汉堡里的推送 UI
+  // v2.7.106: 汉堡里的推送 UI
   const hamWrap = document.getElementById('ham-push-wrap');
   const hamStatus = document.getElementById('ham-push-status');
   const hamBtn = document.getElementById('ham-push-btn');
 
   const canSee = isAdmin || ['admin','buyer','supervisor'].includes(currentUserRole);
   if (hamWrap) hamWrap.style.display = canSee ? 'block' : 'none';
-  if (wrap) wrap.style.display = 'none';  // v2.7.105: 旧"我的"tab 的推送块已隐藏,汉堡接管
+  if (wrap) wrap.style.display = 'none';  // v2.7.106: 旧"我的"tab 的推送块已隐藏,汉堡接管
   if (!canSee) return;
 
   const supported = pushSupported();
@@ -1598,13 +1598,13 @@ async function refreshPushSettingUI() {
     if (!supported) { st.textContent = '此浏览器不支持'; bt.style.display = 'none'; return; }
     bt.style.display = '';
     if (sub) {
-      st.textContent = '✅ 已开启';
-      bt.textContent = '关闭';
+      st.textContent = t('hamPushOn')||'✅ 已开启';
+      bt.textContent = t('hamBtnDisable')||'关闭';
       bt.className = 'btn btn-ghost';
       bt.onclick = async () => { bt.disabled = true; await disablePush(); bt.disabled = false; refreshPushSettingUI(); };
     } else {
-      st.textContent = '未开启';
-      bt.textContent = '开启';
+      st.textContent = t('hamPushOff')||'未开启';
+      bt.textContent = t('hamBtnEnable')||'开启';
       bt.className = 'btn btn-primary';
       bt.onclick = async () => { bt.disabled = true; const ok = await enablePush(); bt.disabled = false; if (ok) refreshPushSettingUI(); };
     }
@@ -1703,7 +1703,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.105: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.106: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2044,7 +2044,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.105: 加载岗位列表
+    // v2.7.106: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2337,7 +2337,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.105: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.106: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2380,11 +2380,11 @@ function showApp() {
     admin: t('roleAdmin')||'管理员'
   };
   document.getElementById('profile-role').textContent = isAdmin ? (t('roleAdmin')||'管理员') : (roleLabel[currentUserRole]||t('roleStaff')||'员工');
-  // v2.7.105: 管理功能已移到汉堡菜单, "我的"tab 里的旧 admin-menu 始终隐藏
+  // v2.7.106: 管理功能已移到汉堡菜单, "我的"tab 里的旧 admin-menu 始终隐藏
   // (DOM 保留, 因为 i18n/角标等 JS 仍引用其中 id, 避免报错; 仅不再可见)
   const _oldAdminMenu = document.getElementById('admin-menu');
   if (_oldAdminMenu) _oldAdminMenu.style.display = 'none';
-  // v2.7.105: 汉堡菜单里的管理组 + 改管理员密码(复用 isAdmin)
+  // v2.7.106: 汉堡菜单里的管理组 + 改管理员密码(复用 isAdmin)
   const hamAdmin = document.getElementById('ham-admin-menu');
   if (hamAdmin) hamAdmin.style.display = isAdmin ? 'block' : 'none';
   const hamAdminPass = document.getElementById('ham-change-admin-pass');
@@ -2439,12 +2439,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.105: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.106: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.105: 新店首次引导
+// v2.7.106: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2665,7 +2665,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.105: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.106: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -3155,7 +3155,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.105: 区分几种空情况给不同引导
+    // v2.7.106: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4830,7 +4830,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.105: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.106: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4860,7 +4860,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.105: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.106: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -6457,7 +6457,7 @@ function updatePendingBadge() {
   const cnt = pending.length;
   const _pbt = document.getElementById('pending-badge-text');
   if (_pbt) _pbt.textContent = cnt>0 ? `${cnt} 条待处理订单` : '查看待处理订单';
-  // v2.7.105: 汉堡里审批订单的角标
+  // v2.7.106: 汉堡里审批订单的角标
   const _hpb = document.getElementById('ham-pending-badge');
   if (_hpb) _hpb.textContent = cnt>0 ? `(${cnt})` : '';
   // 底部导航角标
@@ -7258,6 +7258,31 @@ function changeLang(v) {
   // 订货页 已选/未选 过滤标签
   se('lbl-filter-selected', t('filterSelected')||'✓ 仅看已选');
   se('lbl-filter-unselected', t('filterUnselected')||'⚪ 仅看未选');
+  // v2.7.106: 汉堡菜单全部文本 i18n
+  se('ham-lbl-sortmethod', t('hamSortMethod'));
+  se('ham-lbl-display', t('hamDisplay'));
+  se('ham-sort-default', t('hamSortDefault'));
+  se('ham-sort-low', t('hamSortLow'));
+  se('ham-sort-today', t('hamSortToday'));
+  se('ham-sort-chef', t('hamSortChef'));
+  se('ham-sort-supplier', t('hamSortSupplier'));
+  se('ham-sort-custom', t('hamSortCustom'));
+  se('ham-lbl-manage', t('hamManage'));
+  se('ham-lbl-approve', t('hamApprove'));
+  se('ham-lbl-supplierwa', t('hamSupplierWA'));
+  se('ham-lbl-staff', t('hamStaff'));
+  se('ham-lbl-itemmaint', t('hamItemMaint'));
+  se('ham-lbl-catalog', t('hamCatalog'));
+  se('ham-lbl-syncprice', t('hamSyncPrice'));
+  se('ham-lbl-batch', t('hamBatch'));
+  se('ham-lbl-import', t('hamImport'));
+  se('ham-lbl-export', t('hamExport'));
+  se('ham-lbl-settings', t('hamSettings'));
+  se('ham-lbl-flags', t('hamFeatureFlags'));
+  se('ham-lbl-push', t('hamPush'));
+  se('ham-lbl-changepass', t('hamChangePass'));
+  se('ham-lbl-changeadminpass', t('hamChangeAdminPass'));
+  se('ham-lbl-logout', t('hamLogout'));
   // 底部导航Tab
   const tabs = t('tabs');
   ['nav-inventory','nav-order','nav-orders','nav-report','nav-profile'].forEach((id,i)=>{
@@ -7343,7 +7368,7 @@ function renderStaffPanel() {
   renderStaffByPosition();
 }
 
-// v2.7.105: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+// v2.7.106: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
 function renderStaffByPosition() {
   const box = document.getElementById('staff-by-position');
   if (!box) return;
@@ -7418,7 +7443,7 @@ function renderStaffByPosition() {
   box.innerHTML = html;
 }
 
-// v2.7.105 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.106 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7714,7 +7739,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.105: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.106: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7792,7 +7817,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.105 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.106 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -7966,7 +7991,7 @@ function renderItemsPanel() {
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value.trim();
   const nameZh = document.getElementById('ni-name').value.trim();
-  // v2.7.105: 中文名 或 意大利文 至少填一个(不再强制意文必填)
+  // v2.7.106: 中文名 或 意大利文 至少填一个(不再强制意文必填)
   if(!italian && !nameZh){ toast('请至少填写中文名或意大利文名称','err'); return; }
   // v2.7.81: 收集所有字段(对齐编辑表单)
   // 订货周期
@@ -7987,7 +8012,7 @@ async function saveNewItem() {
   const maxOrderRaw = document.getElementById('ni-max-order')?.value;
   const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
 
-  // v2.7.105: 重名/重码检测,防止建重复食材
+  // v2.7.106: 重名/重码检测,防止建重复食材
   const _code = (document.getElementById('ni-code').value||'').trim();
   const _zh = nameZh, _it = italian;
   const dup = items.find(it => {
@@ -8916,7 +8941,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.105: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.106: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -9007,12 +9032,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.105: 批量维护入口(合并三个批量工具)
+// v2.7.106: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.105: 管理员功能分组折叠
+// v2.7.106: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
