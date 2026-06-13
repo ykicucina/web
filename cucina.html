@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.104">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.105">
 </head>
 <body>
 
@@ -179,10 +179,54 @@ function ridPickerGo() {
       </button>
     </div>
     <div style="padding:8px 0;">
+      <!-- 👑 管理(仅管理员,显隐由 #ham-admin-menu 控制) -->
+      <div id="ham-admin-menu" style="display:none;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;">
+        <div style="font-size:11px;color:var(--text3);letter-spacing:1px;padding:6px 20px 8px;">管理</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showAdminPanel('pending');hideSideMenu()">
+          <span style="font-size:18px;">📋</span><span style="font-size:14px;">审批订单<span id="ham-pending-badge" style="margin-left:6px;font-size:11px;color:var(--danger);"></span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showSupplierModal();hideSideMenu()">
+          <span style="font-size:18px;">📱</span><span style="font-size:14px;">供应商 WhatsApp</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="showAdminPanel('staff');hideSideMenu()">
+          <span style="font-size:18px;">👥</span><span style="font-size:14px;">员工与岗位</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="toggleAdminGroup('ham-grp-items')">
+          <span style="font-size:18px;">📦</span><span style="font-size:14px;">食材维护</span><span id="ham-grp-items-arrow" style="margin-left:auto;color:var(--text3);">›</span>
+        </div>
+        <div id="ham-grp-items" style="display:none;background:var(--surface2);">
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSupCatalogModal();hideSideMenu()">🔍 供应商目录</div>
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showSyncPricesModal();hideSideMenu()">💰 同步价格</div>
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showBatchToolsModal();hideSideMenu()">🧰 批量维护</div>
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showImportModal();hideSideMenu()">📥 批量导入</div>
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="exportInventoryExcel();hideSideMenu()">📤 备份导出</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;" onclick="toggleAdminGroup('ham-grp-settings')">
+          <span style="font-size:18px;">⚙️</span><span style="font-size:14px;">设置</span><span id="ham-grp-settings-arrow" style="margin-left:auto;color:var(--text3);">›</span>
+        </div>
+        <div id="ham-grp-settings" style="display:none;background:var(--surface2);">
+          <div style="display:flex;align-items:center;padding:11px 20px 11px 44px;cursor:pointer;font-size:13px;" onclick="showFeatureFlagsModal();hideSideMenu()">🎛️ 系统功能开关</div>
+        </div>
+      </div>
+
+      <!-- 🔔 通知(仅管理员/采购/主管,显隐由 #ham-push-wrap 控制) -->
+      <div id="ham-push-wrap" style="display:none;border-bottom:1px solid var(--border);padding:6px 20px 12px;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔔</span>
+          <span style="flex:1;min-width:0;font-size:14px;">推送通知<span id="ham-push-status" style="display:block;font-size:11px;color:var(--text3);">未开启</span></span>
+          <button id="ham-push-btn" class="btn btn-primary" style="padding:5px 12px;font-size:12px;width:auto;flex:0 0 auto;white-space:nowrap;">开启</button>
+        </div>
+      </div>
+
       <div onclick="showChangePass();hideSideMenu()"
         style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;">
         <span style="font-size:18px;">🔑</span>
         <span style="font-size:14px;">修改密码</span>
+      </div>
+      <div id="ham-change-admin-pass" onclick="showChangeAdminPass();hideSideMenu()"
+        style="display:none;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;">
+        <span style="font-size:18px;">🔐</span>
+        <span style="font-size:14px;">修改管理员密码</span>
       </div>
       <div onclick="doLogout();hideSideMenu()"
         style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;color:var(--danger);">
@@ -227,10 +271,8 @@ function ridPickerGo() {
 
     <!-- v2.7.80: admin 管理按钮组(替代原"物料管理"入口) -->
     <div id="inv-admin-actions" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#c9a961;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="openModal('modal-admin-panel');document.getElementById('admin-panel-title').textContent='新增食材';renderItemsPanel();">➕ 新增食材</button>
-      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showSupCatalogModal()">🔍 供应商目录</button>
-      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showImportModal()">📥 批量导入</button>
-      <button class="btn btn-sm" style="flex:1;min-width:90px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="exportInventoryExcel()">📤 备份导出</button>
+      <button class="btn btn-sm" style="flex:1;min-width:120px;background:#fff5f5;color:#c9a961;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="openModal('modal-admin-panel');document.getElementById('admin-panel-title').textContent='新增食材';renderItemsPanel();">➕ 新增食材</button>
+      <button class="btn btn-sm" style="flex:1;min-width:120px;background:#fff5f5;color:#8a7858;border:1px solid #e8dec5;padding:8px;font-size:13px;" onclick="showSupCatalogModal()">🔍 供应商目录</button>
     </div>
 
     <!-- Search -->
@@ -645,7 +687,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.104) -->
+<!-- 🧰 批量维护 Modal (v2.7.105) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -804,7 +846,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.104) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.105) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1292,18 +1334,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.104"></script>
+<script src="/i18n.js?v=v2.7.105"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.104"></script>
+<script src="/sortable.min.js?v=v2.7.105"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.104';
+const APP_VERSION = 'v2.7.105';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1436,7 +1478,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.104: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.105: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1537,42 +1579,38 @@ async function refreshPushSettingUI() {
   const wrap = document.getElementById('push-setting-wrap');
   const status = document.getElementById('push-setting-status');
   const btn = document.getElementById('push-setting-btn');
-  if (!wrap || !status || !btn) return;
+  // v2.7.105: 汉堡里的推送 UI
+  const hamWrap = document.getElementById('ham-push-wrap');
+  const hamStatus = document.getElementById('ham-push-status');
+  const hamBtn = document.getElementById('ham-push-btn');
 
-  // 仅 admin/buyer/supervisor 角色显示
   const canSee = isAdmin || ['admin','buyer','supervisor'].includes(currentUserRole);
-  wrap.style.display = canSee ? 'block' : 'none';
+  if (hamWrap) hamWrap.style.display = canSee ? 'block' : 'none';
+  if (wrap) wrap.style.display = 'none';  // v2.7.105: 旧"我的"tab 的推送块已隐藏,汉堡接管
   if (!canSee) return;
 
-  if (!pushSupported()) {
-    status.textContent = '此浏览器不支持';
-    btn.style.display = 'none';
-    return;
-  }
+  const supported = pushSupported();
+  const sub = supported ? await getCurrentPushSubscription() : null;
 
-  const sub = await getCurrentPushSubscription();
-  if (sub) {
-    status.textContent = '✅ 已开启';
-    btn.textContent = '关闭';
-    btn.className = 'btn btn-ghost';
-    btn.onclick = async () => {
-      btn.disabled = true;
-      await disablePush();
-      btn.disabled = false;
-      refreshPushSettingUI();
-    };
-  } else {
-    status.textContent = '未开启';
-    btn.textContent = '开启';
-    btn.className = 'btn btn-primary';
-    btn.onclick = async () => {
-      btn.disabled = true;
-      const ok = await enablePush();
-      btn.disabled = false;
-      if (ok) refreshPushSettingUI();
-    };
-  }
-  btn.style.display = '';
+  // 统一设置一对 (status, btn)
+  const apply = (st, bt) => {
+    if (!st || !bt) return;
+    if (!supported) { st.textContent = '此浏览器不支持'; bt.style.display = 'none'; return; }
+    bt.style.display = '';
+    if (sub) {
+      st.textContent = '✅ 已开启';
+      bt.textContent = '关闭';
+      bt.className = 'btn btn-ghost';
+      bt.onclick = async () => { bt.disabled = true; await disablePush(); bt.disabled = false; refreshPushSettingUI(); };
+    } else {
+      st.textContent = '未开启';
+      bt.textContent = '开启';
+      bt.className = 'btn btn-primary';
+      bt.onclick = async () => { bt.disabled = true; const ok = await enablePush(); bt.disabled = false; if (ok) refreshPushSettingUI(); };
+    }
+  };
+  apply(status, btn);       // 原"我的"tab 那套(若还在)
+  apply(hamStatus, hamBtn); // 汉堡那套
 }
 
 /** SheetJS：首屏不加载，导入/导出/孤儿对比前再拉取 */
@@ -1665,7 +1703,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.104: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.105: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2006,7 +2044,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.104: 加载岗位列表
+    // v2.7.105: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2299,7 +2337,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.104: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.105: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2342,8 +2380,15 @@ function showApp() {
     admin: t('roleAdmin')||'管理员'
   };
   document.getElementById('profile-role').textContent = isAdmin ? (t('roleAdmin')||'管理员') : (roleLabel[currentUserRole]||t('roleStaff')||'员工');
-  if (isAdmin) document.getElementById('admin-menu').style.display='block';
-  else document.getElementById('admin-menu').style.display='none';
+  // v2.7.105: 管理功能已移到汉堡菜单, "我的"tab 里的旧 admin-menu 始终隐藏
+  // (DOM 保留, 因为 i18n/角标等 JS 仍引用其中 id, 避免报错; 仅不再可见)
+  const _oldAdminMenu = document.getElementById('admin-menu');
+  if (_oldAdminMenu) _oldAdminMenu.style.display = 'none';
+  // v2.7.105: 汉堡菜单里的管理组 + 改管理员密码(复用 isAdmin)
+  const hamAdmin = document.getElementById('ham-admin-menu');
+  if (hamAdmin) hamAdmin.style.display = isAdmin ? 'block' : 'none';
+  const hamAdminPass = document.getElementById('ham-change-admin-pass');
+  if (hamAdminPass) hamAdminPass.style.display = isAdmin ? 'flex' : 'none';
   // v2.7.80: 库存管理顶部 admin 操作按钮组(替代原"物料管理"菜单入口)
   const invAdminActions = document.getElementById('inv-admin-actions');
   if (invAdminActions) invAdminActions.style.display = isAdmin ? 'flex' : 'none';
@@ -2394,12 +2439,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.104: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.105: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.104: 新店首次引导
+// v2.7.105: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2620,7 +2665,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.104: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.105: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -3110,7 +3155,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.104: 区分几种空情况给不同引导
+    // v2.7.105: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4785,7 +4830,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.104: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.105: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4815,7 +4860,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.104: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.105: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -6410,8 +6455,11 @@ function updatePendingBadge() {
   }
 
   const cnt = pending.length;
-  document.getElementById('pending-badge-text').textContent =
-    cnt>0 ? `${cnt} 条待处理订单` : '查看待处理订单';
+  const _pbt = document.getElementById('pending-badge-text');
+  if (_pbt) _pbt.textContent = cnt>0 ? `${cnt} 条待处理订单` : '查看待处理订单';
+  // v2.7.105: 汉堡里审批订单的角标
+  const _hpb = document.getElementById('ham-pending-badge');
+  if (_hpb) _hpb.textContent = cnt>0 ? `(${cnt})` : '';
   // 底部导航角标
   const badge = document.getElementById('orders-badge');
   if (badge) {
@@ -7295,7 +7343,7 @@ function renderStaffPanel() {
   renderStaffByPosition();
 }
 
-// v2.7.104: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+// v2.7.105: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
 function renderStaffByPosition() {
   const box = document.getElementById('staff-by-position');
   if (!box) return;
@@ -7370,7 +7418,7 @@ function renderStaffByPosition() {
   box.innerHTML = html;
 }
 
-// v2.7.104 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.105 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7666,7 +7714,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.104: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.105: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7744,7 +7792,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.104 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.105 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -7918,7 +7966,7 @@ function renderItemsPanel() {
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value.trim();
   const nameZh = document.getElementById('ni-name').value.trim();
-  // v2.7.104: 中文名 或 意大利文 至少填一个(不再强制意文必填)
+  // v2.7.105: 中文名 或 意大利文 至少填一个(不再强制意文必填)
   if(!italian && !nameZh){ toast('请至少填写中文名或意大利文名称','err'); return; }
   // v2.7.81: 收集所有字段(对齐编辑表单)
   // 订货周期
@@ -7939,7 +7987,7 @@ async function saveNewItem() {
   const maxOrderRaw = document.getElementById('ni-max-order')?.value;
   const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
 
-  // v2.7.104: 重名/重码检测,防止建重复食材
+  // v2.7.105: 重名/重码检测,防止建重复食材
   const _code = (document.getElementById('ni-code').value||'').trim();
   const _zh = nameZh, _it = italian;
   const dup = items.find(it => {
@@ -8868,7 +8916,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.104: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.105: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -8959,12 +9007,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.104: 批量维护入口(合并三个批量工具)
+// v2.7.105: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.104: 管理员功能分组折叠
+// v2.7.105: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
