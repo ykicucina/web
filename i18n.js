@@ -52,6 +52,7 @@ const i18n = {
     apCurrent:'当前管理员密码', apCurrentPh:'当前密码',
     apNew:'新密码', apNewPh:'新密码', apConfirm:'确认新密码', apConfirmPh:'再次输入新密码',
     apSave:'保存', apCancel:'取消',
+    emergencyMode:'🚨 紧急模式（忽略订货周期限制）', mergePreviewHint:'勾选待处理订单后，点"合并发送"', mergeSendWA:'📱 按供应商合并发送 WhatsApp', orderSelAll:'全选', orderExport:'⬇ 导出',
     exportBtn:'导出采购清单',
     allDate:'全部日期', today:'今天', yesterday:'昨天', custom:'自定义',
     allStaff:'全部员工', selected:'已选', selectAll:'全选',
@@ -313,6 +314,7 @@ const i18n = {
     apCurrent:'Password admin attuale', apCurrentPh:'Password attuale',
     apNew:'Nuova password', apNewPh:'Nuova password', apConfirm:'Conferma nuova password', apConfirmPh:'Ripeti nuova password',
     apSave:'Salva', apCancel:'Annulla',
+    emergencyMode:'🚨 Modalità urgente (ignora i cicli)', mergePreviewHint:'Seleziona gli ordini, poi "Invia uniti"', mergeSendWA:'📱 Invia uniti per fornitore (WhatsApp)', orderSelAll:'Tutti', orderExport:'⬇ Esporta',
     exportBtn:'Esporta lista acquisti',
     reportTitle:'Report', overview:'Panoramica',
     invAnalysis:'Inventario', consumeAnalysis:'Consumo',
@@ -634,6 +636,7 @@ const i18n = {
     apCurrent:'বর্তমান অ্যাডমিন পাসওয়ার্ড', apCurrentPh:'বর্তমান পাসওয়ার্ড',
     apNew:'নতুন পাসওয়ার্ড', apNewPh:'নতুন পাসওয়ার্ড', apConfirm:'নতুন পাসওয়ার্ড নিশ্চিত করুন', apConfirmPh:'আবার নতুন পাসওয়ার্ড',
     apSave:'সংরক্ষণ', apCancel:'বাতিল',
+    emergencyMode:'🚨 জরুরি মোড (অর্ডার চক্র উপেক্ষা)', mergePreviewHint:'অর্ডার নির্বাচন করে "একসাথে পাঠান" চাপুন', mergeSendWA:'📱 সরবরাহকারী অনুযায়ী একসাথে পাঠান (WhatsApp)', orderSelAll:'সব নির্বাচন', orderExport:'⬇ এক্সপোর্ট',
     orderDate:'তারিখ', orderBy:'অপারেটর',
     days:['','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি','রবি'],
     // ── i18n Phase 1: 30 个高频 toast ──
