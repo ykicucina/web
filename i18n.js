@@ -53,6 +53,7 @@ const i18n = {
     apNew:'新密码', apNewPh:'新密码', apConfirm:'确认新密码', apConfirmPh:'再次输入新密码',
     apSave:'保存', apCancel:'取消',
     emergencyMode:'🚨 紧急模式（忽略订货周期限制）', mergePreviewHint:'勾选待处理订单后，点"合并发送"', mergeSendWA:'📱 按供应商合并发送 WhatsApp', orderSelAll:'全选', orderExport:'⬇ 导出',
+    sortDragHint:'📌 拖动调整顺序，完成后点 "✓ 完成排序" 保存', sortByLastOrder:'📋 按最近订单重排（选一张）', sortSaveCurrent:'💾 保存当前排序', sortMySaved:'📂 我保存的排序', sortByCat:'📁 按分类排', sortAllTogether:'☰ 全部一起排',
     exportBtn:'导出采购清单',
     allDate:'全部日期', today:'今天', yesterday:'昨天', custom:'自定义',
     allStaff:'全部员工', selected:'已选', selectAll:'全选',
@@ -315,6 +316,7 @@ const i18n = {
     apNew:'Nuova password', apNewPh:'Nuova password', apConfirm:'Conferma nuova password', apConfirmPh:'Ripeti nuova password',
     apSave:'Salva', apCancel:'Annulla',
     emergencyMode:'🚨 Modalità urgente (ignora i cicli)', mergePreviewHint:'Seleziona gli ordini, poi "Invia uniti"', mergeSendWA:'📱 Invia uniti per fornitore (WhatsApp)', orderSelAll:'Tutti', orderExport:'⬇ Esporta',
+    sortDragHint:'📌 Trascina per ordinare, poi "✓ Fatto" per salvare', sortByLastOrder:'📋 Riordina come ultimo ordine (scegli)', sortSaveCurrent:'💾 Salva ordine attuale', sortMySaved:'📂 Ordini salvati', sortByCat:'📁 Per categoria', sortAllTogether:'☰ Tutti insieme',
     exportBtn:'Esporta lista acquisti',
     reportTitle:'Report', overview:'Panoramica',
     invAnalysis:'Inventario', consumeAnalysis:'Consumo',
@@ -637,6 +639,7 @@ const i18n = {
     apNew:'নতুন পাসওয়ার্ড', apNewPh:'নতুন পাসওয়ার্ড', apConfirm:'নতুন পাসওয়ার্ড নিশ্চিত করুন', apConfirmPh:'আবার নতুন পাসওয়ার্ড',
     apSave:'সংরক্ষণ', apCancel:'বাতিল',
     emergencyMode:'🚨 জরুরি মোড (অর্ডার চক্র উপেক্ষা)', mergePreviewHint:'অর্ডার নির্বাচন করে "একসাথে পাঠান" চাপুন', mergeSendWA:'📱 সরবরাহকারী অনুযায়ী একসাথে পাঠান (WhatsApp)', orderSelAll:'সব নির্বাচন', orderExport:'⬇ এক্সপোর্ট',
+    sortDragHint:'📌 টেনে সাজান, শেষে "✓ সম্পন্ন" চাপুন', sortByLastOrder:'📋 সর্বশেষ অর্ডার অনুযায়ী সাজান', sortSaveCurrent:'💾 বর্তমান সাজানো সংরক্ষণ', sortMySaved:'📂 সংরক্ষিত সাজানো', sortByCat:'📁 শ্রেণী অনুযায়ী', sortAllTogether:'☰ সব একসাথে',
     orderDate:'তারিখ', orderBy:'অপারেটর',
     days:['','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি','রবি'],
     // ── i18n Phase 1: 30 个高频 toast ──
