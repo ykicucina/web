@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.102">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.103">
 </head>
 <body>
 
@@ -644,7 +644,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.102) -->
+<!-- 🧰 批量维护 Modal (v2.7.103) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -803,7 +803,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.102) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.103) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1259,7 +1259,7 @@ function ridPickerGo() {
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">📥 导入食材数据</div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">支持 Excel (.xlsx, .xls) 或 CSV，格式：货物号 / 意大利文 / 中文名 / 规格 / 价格 / 进货单位 / 型号 / 使用单位 / 类别 / 订货人</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">支持 Excel (.xlsx, .xls) 或 CSV，格式：货物号 / 意大利文 / 中文名 / 规格 / 价格 / 供应商 / 型号 / 使用单位 / 类别 / 订货人</p>
     <input type="file" id="import-file" accept=".xlsx,.xls,.csv" class="form-control" onchange="handleImport(this)" style="padding:8px">
     <div id="import-preview" style="display:none;margin-top:12px">
       <p id="import-preview-msg" style="font-size:13px;color:var(--text2);margin-bottom:10px"></p>
@@ -1291,18 +1291,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.102"></script>
+<script src="/i18n.js?v=v2.7.103"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.102"></script>
+<script src="/sortable.min.js?v=v2.7.103"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.102';
+const APP_VERSION = 'v2.7.103';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1435,7 +1435,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.102: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.103: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1664,7 +1664,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.102: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.103: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -2005,7 +2005,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.102: 加载岗位列表
+    // v2.7.103: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2298,7 +2298,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.102: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.103: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2393,12 +2393,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.102: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.103: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.102: 新店首次引导
+// v2.7.103: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2619,7 +2619,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.102: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.103: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -2753,7 +2753,7 @@ function showItemDetail(id) {
     <div class="form-group"><label class="form-label">规格</label><input class="form-control" id="ei-spec" value="${item.spec}"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">价格 (€)</label><input class="form-control" id="ei-price" type="number" step="0.01" value="${item.price}"></div>
-      <div class="form-group"><label class="form-label">进货单位</label><input class="form-control" id="ei-supplier" value="${item.supplier}"></div>
+      <div class="form-group"><label class="form-label">供应商</label><input class="form-control" id="ei-supplier" value="${item.supplier}"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">当前库存</label><input class="form-control" id="ei-stock" type="number" step="0.1" value="${item.stock}"></div>
@@ -3109,7 +3109,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.102: 区分几种空情况给不同引导
+    // v2.7.103: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4784,7 +4784,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.102: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.103: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4814,7 +4814,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.102: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.103: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -7294,7 +7294,7 @@ function renderStaffPanel() {
   renderStaffByPosition();
 }
 
-// v2.7.102: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+// v2.7.103: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
 function renderStaffByPosition() {
   const box = document.getElementById('staff-by-position');
   if (!box) return;
@@ -7369,7 +7369,7 @@ function renderStaffByPosition() {
   box.innerHTML = html;
 }
 
-// v2.7.102 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.103 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7665,7 +7665,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.102: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.103: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7743,7 +7743,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.102 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.103 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -7852,65 +7852,73 @@ function renderItemsPanel() {
       <div class="form-group"><label class="form-label">货物号</label><input class="form-control" id="ni-code" placeholder="001"></div>
       <div class="form-group"><label class="form-label">材料类型</label><input class="form-control" id="ni-cat" placeholder="salsa"></div>
     </div>
-    <div class="form-group"><label class="form-label">意大利文名称 *</label><input class="form-control" id="ni-italian" required placeholder="Involtino primavera"></div>
+    <div class="form-group"><label class="form-label">意大利文名称</label><input class="form-control" id="ni-italian" placeholder="Involtino primavera"></div>
     <div class="form-group"><label class="form-label">中文名称</label><input class="form-control" id="ni-name" placeholder="春卷"></div>
+    <p style="font-size:11px;color:var(--text3);margin:-6px 0 10px;">💡 中文名和意大利文,至少填一个</p>
     <div class="form-group"><label class="form-label">规格</label><input class="form-control" id="ni-spec" placeholder="10x900G"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">价格 (€)</label><input class="form-control" id="ni-price" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="form-group"><label class="form-label">进货单位</label><input class="form-control" id="ni-supplier" placeholder="jfc"></div>
+      <div class="form-group"><label class="form-label">供应商</label><input class="form-control" id="ni-supplier" placeholder="jfc"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">当前库存</label><input class="form-control" id="ni-stock" type="number" step="0.1" placeholder="0"></div>
       <div class="form-group"><label class="form-label">安全库存(默认)</label><input class="form-control" id="ni-safety" type="number" step="0.1" placeholder="1"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">最大订货量（留空=不限制）</label>
-      <input class="form-control" id="ni-max-order" type="number" step="1" min="0" placeholder="不限制">
-    </div>
-    <div class="form-group">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <label class="form-label" style="margin:0;">安全库存（按星期）</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2);">
-          <span id="ni-sbd-toggle-lbl">关闭</span>
-          <input type="checkbox" id="ni-sbd-toggle"
-            onchange="document.getElementById('ni-sbd-grid').style.display=this.checked?'grid':'none';document.getElementById('ni-sbd-toggle-lbl').textContent=this.checked?'开启':'关闭';"
-            style="width:18px;height:18px;accent-color:var(--primary);">
-        </label>
-      </div>
-      <div id="ni-sbd-grid" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;">
-        ${['一','二','三','四','五','六','日'].map((d,i)=>{
-          const key=String(i+1);
-          return `<div style="text-align:center;"><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">周${d}</div>
-          <input type="number" min="0" step="0.1" value="0" id="ni-sbd-${key}"
-            style="width:100%;border:1px solid #ddd;border-radius:4px;padding:3px;font-size:12px;text-align:center;"></div>`;
-        }).join('')}
-      </div>
     </div>
     <div class="form-group"><label class="form-label">${t('editChef')}</label>
     <select class="form-control" id="ni-chef">
       <option value="">-- 选择订货人 --</option>
       ${Object.keys(chefs).map(n=>`<option value="${n}">${n}</option>`).join('')}
     </select></div>
-    <div class="form-group">
-      <label class="form-label">订货周期</label>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;">
-        ${['一','二','三','四','五','六','日'].map((d,i)=>{
-          const dayName='星期'+d;
-          return `<label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;">
-            <span style="font-size:11px;color:var(--text3);">周${d}</span>
-            <input type="checkbox" value="${dayName}" id="ni-cycle-${i+1}"
-              style="width:18px;height:18px;accent-color:var(--primary);">
-          </label>`;
-        }).join('')}
+    <details style="margin-bottom:8px;">
+      <summary style="font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);padding:6px 0;">⚙️ 高级设置（最大订货量 / 按星期安全库存 / 订货周期）</summary>
+      <div style="padding-top:8px;">
+        <div class="form-group">
+          <label class="form-label">最大订货量（留空=不限制）</label>
+          <input class="form-control" id="ni-max-order" type="number" step="1" min="0" placeholder="不限制">
+        </div>
+        <div class="form-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" style="margin:0;">安全库存（按星期）</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2);">
+              <span id="ni-sbd-toggle-lbl">关闭</span>
+              <input type="checkbox" id="ni-sbd-toggle"
+                onchange="document.getElementById('ni-sbd-grid').style.display=this.checked?'grid':'none';document.getElementById('ni-sbd-toggle-lbl').textContent=this.checked?'开启':'关闭';"
+                style="width:18px;height:18px;accent-color:var(--primary);">
+            </label>
+          </div>
+          <div id="ni-sbd-grid" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;">
+            ${['一','二','三','四','五','六','日'].map((d,i)=>{
+              const key=String(i+1);
+              return `<div style="text-align:center;"><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">周${d}</div>
+              <input type="number" min="0" step="0.1" value="0" id="ni-sbd-${key}"
+                style="width:100%;border:1px solid #ddd;border-radius:4px;padding:3px;font-size:12px;text-align:center;"></div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">订货周期</label>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;">
+            ${['一','二','三','四','五','六','日'].map((d,i)=>{
+              const dayName='星期'+d;
+              return `<label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;">
+                <span style="font-size:11px;color:var(--text3);">周${d}</span>
+                <input type="checkbox" value="${dayName}" id="ni-cycle-${i+1}"
+                  style="width:18px;height:18px;accent-color:var(--primary);">
+              </label>`;
+            }).join('')}
+          </div>
+        </div>
       </div>
-    </div>
+    </details>
     <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="saveNewItem()">➕ 添加到物料库</button>
   `;
 }
 
 async function saveNewItem() {
-  const italian = document.getElementById('ni-italian').value;
-  if(!italian){toast(t('fill_italian'),'err');return;}
+  const italian = document.getElementById('ni-italian').value.trim();
+  const nameZh = document.getElementById('ni-name').value.trim();
+  // v2.7.103: 中文名 或 意大利文 至少填一个(不再强制意文必填)
+  if(!italian && !nameZh){ toast('请至少填写中文名或意大利文名称','err'); return; }
   // v2.7.81: 收集所有字段(对齐编辑表单)
   // 订货周期
   const cycle = [];
@@ -7929,6 +7937,21 @@ async function saveNewItem() {
   // 最大订货量
   const maxOrderRaw = document.getElementById('ni-max-order')?.value;
   const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
+
+  // v2.7.103: 重名/重码检测,防止建重复食材
+  const _code = (document.getElementById('ni-code').value||'').trim();
+  const _zh = nameZh, _it = italian;
+  const dup = items.find(it => {
+    if (it.discontinued) return false;
+    const codeMatch = _code && (it.item_code||'').trim().toLowerCase() === _code.toLowerCase();
+    const zhMatch = _zh && (it.name||'').trim().toLowerCase() === _zh.toLowerCase();
+    const itMatch = _it && (it.italian||'').trim().toLowerCase() === _it.toLowerCase();
+    return codeMatch || zhMatch || itMatch;
+  });
+  if (dup) {
+    const dupDesc = `${dup.name||dup.italian}${dup.item_code?'（'+dup.item_code+'）':''}`;
+    if (!confirm(`已有相似食材:${dupDesc}\n\n确定还要新建一个?`)) return;
+  }
 
   const newItem = {
     restaurant_id:REST_ID,
@@ -8844,7 +8867,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.102: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.103: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -8935,12 +8958,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.102: 批量维护入口(合并三个批量工具)
+// v2.7.103: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.102: 管理员功能分组折叠
+// v2.7.103: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
@@ -10042,7 +10065,7 @@ async function handleImport(input) {
     pendingImport=[];
     for(let i=1;i<rows.length;i++){
       const r=rows[i]; if(!r||!r.length)continue;
-      // A=货物号 B=意文 C=中文 D=规格 E=价格 F=进货单位 G=使用单位 H=当前库存 I=安全库存 J=最大订货量 K=材料类型 L=订货员 M=订货周期 N=WA
+      // A=货物号 B=意文 C=中文 D=规格 E=价格 F=供应商 G=使用单位 H=当前库存 I=安全库存 J=最大订货量 K=材料类型 L=订货员 M=订货周期 N=WA
       const priceVal=r[4];
       const price=typeof priceVal==='number'?priceVal.toFixed(2):parseFloat((priceVal||'').toString().replace(',','.'))||0;
       const deptRaw=r[6]||'';
