@@ -184,13 +184,20 @@ body {
 .cat-tab:focus-visible { outline: none; box-shadow: var(--ring); }
 
 /* ── INVENTORY TABLE ── */
-.inv-table { width: 100%; border-collapse: collapse; }
+.inv-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .inv-table th {
   font-size: 11px; color: var(--text3); font-weight: 500;
-  padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border);
-  background: var(--surface2);
+  padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--border);
+  background: var(--surface2); white-space: nowrap;
 }
-.inv-table td { padding: 11px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.inv-table td { padding: 11px 6px; font-size: 13px; border-bottom: 1px solid var(--border); }
+/* 列宽:复选框 / 食材名(自适应) / 现有 / 安全 / 状态 */
+.inv-table th:nth-child(1), .inv-table td:nth-child(1) { width: 30px; padding-left: 8px; padding-right: 2px; }
+.inv-table th:nth-child(2), .inv-table td:nth-child(2) { width: auto; }
+.inv-table th:nth-child(3), .inv-table td:nth-child(3) { width: 42px; text-align: center; }
+.inv-table th:nth-child(4), .inv-table td:nth-child(4) { width: 42px; text-align: center; }
+.inv-table th:nth-child(5), .inv-table td:nth-child(5) { width: 52px; text-align: center; padding-right: 8px; }
+.item-name-cell { word-break: break-word; }
 .inv-table tr:last-child td { border-bottom: none; }
 .inv-table tr { cursor: pointer; transition: background 0.15s; }
 .inv-table tr:hover td { background: var(--surface2); }
@@ -200,7 +207,7 @@ body {
 /* ── STATUS BADGES ── */
 .badge {
   display: inline-flex; align-items: center;
-  font-size: 11px; font-weight: 600; padding: 3px 8px;
+  font-size: 10px; font-weight: 600; padding: 3px 6px;
   border-radius: 20px; white-space: nowrap;
 }
 .badge-ok   { background: var(--ok-light); color: var(--ok); }
