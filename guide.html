@@ -1,1220 +1,334 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>使用教程 — YKI Supply Hub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="YKI Supply Hub 使用教程 / Guida d'uso">
-<link rel="icon" href="/logo.png" type="image/png">
+<title>YKI Supply Hub — 使用教程 / Guida</title>
 <style>
-:root {
-  --bg: #faf6ed;
-  --bg2: #f0e8d4;
-  --surface: #fff;
-  --primary: #c9a961;
-  --primary-dark: #b3924c;
-  --text: #2c2418;
-  --text2: #5a4f3a;
-  --text3: #8a7858;
-  --border: #e8dec5;
-  --code-bg: #2d2a24;
-  --accent: #25d366;
-  --danger: #e74c3c;
-  --info-bg: #eaf3fb;
-  --info-border: #3498db;
-  --tip-bg: #fef6e7;
-  --tip-border: #f39c12;
-  --warn-bg: #fdecec;
-  --warn-border: #e74c3c;
+:root{
+  --copper:#c9a961; --copper-deep:#a8893f; --bark:#1f1610; --bark-soft:#3a2c1f;
+  --cream:#f7f2e8; --cream-card:#fffdf8; --ink:#2a2018; --ink-soft:#6b5d4d;
+  --line:#e8dec5; --ok:#27ae60; --danger:#c0392b;
+  --shadow:0 8px 30px rgba(31,22,16,.12);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; scroll-padding-top: 70px; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
-  min-height: 100vh; color: var(--text); line-height: 1.7;
-  -webkit-font-smoothing: antialiased;
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--cream); color:var(--ink); line-height:1.6;
+  -webkit-font-smoothing:antialiased;
 }
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
 
-/* ── Top bar ── */
-.topbar {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
-  display: flex; align-items: center; gap: 10px;
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(135deg,var(--bark),var(--bark-soft));
+  color:#fff; padding:54px 0 60px; position:relative; overflow:hidden;
 }
-.topbar-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.topbar-logo { height: 26px; flex-shrink: 0; }
-.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-title .sub { color: var(--text3); font-weight: 400; font-size: 13px; }
-.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.lang-toggle { display: flex; background: rgba(255,255,255,0.6); border-radius: 8px; border: 1px solid var(--border); padding: 2px; }
-.lang-btn { background: transparent; border: none; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text3); border-radius: 6px; font-family: inherit; }
-.lang-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
-.home-link {
-  font-size: 13px; color: var(--text3); text-decoration: none;
-  padding: 5px 10px; border-radius: 6px; transition: background 0.15s;
-  white-space: nowrap;
+.hero::after{
+  content:''; position:absolute; right:-80px; top:-80px; width:320px; height:320px;
+  background:radial-gradient(circle,rgba(201,169,97,.35),transparent 70%); border-radius:50%;
 }
-.home-link:hover { background: var(--bg); color: var(--text); }
-
-/* 汉堡按钮(只在手机显示) */
-.menu-btn {
-  display: none;
-  background: transparent; border: none;
-  font-size: 22px; cursor: pointer; padding: 4px 8px;
-  color: var(--text2); font-family: inherit;
+.hero .wrap{position:relative;z-index:1}
+.hero .logo{font-size:13px;letter-spacing:3px;color:var(--copper);font-weight:700;margin-bottom:14px}
+.hero h1{font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-1px;line-height:1.1}
+.hero h1 .it{display:block;font-size:.5em;font-weight:500;color:var(--copper);letter-spacing:.5px;margin-top:8px}
+.hero p{margin-top:18px;font-size:16px;color:rgba(255,255,255,.8);max-width:560px}
+.hero .langbar{margin-top:26px;display:flex;gap:10px}
+.hero .langbar button{
+  border:1px solid rgba(201,169,97,.5);background:transparent;color:var(--copper);
+  padding:7px 18px;border-radius:30px;font-size:13px;cursor:pointer;font-weight:600;transition:.2s;
 }
-.menu-btn:hover { color: var(--text); }
-
-/* 手机端 topbar 紧凑 */
-@media (max-width: 900px) {
-  .topbar { padding: 10px 12px; gap: 6px; }
-  .menu-btn { display: block; }
-  .topbar-title .sub { display: none; }
-  .topbar-title { font-size: 14px; }
-  .home-link { padding: 5px 6px; font-size: 12px; }
-  .lang-btn { padding: 5px 9px; }
-}
-
-/* ── Layout ── */
-.container {
-  max-width: 1080px; margin: 0 auto; padding: 30px 20px 80px;
-  display: grid; grid-template-columns: 240px 1fr; gap: 40px;
-}
-@media (max-width: 900px) {
-  .container { grid-template-columns: 1fr; gap: 20px; padding: 20px 16px 60px; }
-}
-
-/* TOC 遮罩(手机抽屉打开时显示) */
-.toc-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 199;
-  opacity: 0; transition: opacity 0.2s;
-}
-.toc-overlay.show {
-  display: block;
-  opacity: 1;
-}
+.hero .langbar button.on{background:var(--copper);color:var(--bark);border-color:var(--copper)}
 
 /* ── TOC ── */
-.toc {
-  position: sticky; top: 70px;
-  align-self: start;
-  max-height: calc(100vh - 90px); overflow-y: auto;
-  background: var(--surface); border-radius: 14px;
-  border: 1px solid var(--border);
-  padding: 18px 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:-32px auto 0;position:relative;z-index:2}
+.toc a{
+  background:var(--cream-card);border:1px solid var(--line);border-radius:14px;padding:16px;
+  text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:.2s;display:block;
 }
-.toc-close-btn {
-  display: none; background: transparent; border: none;
-  font-size: 22px; cursor: pointer; color: var(--text3);
-  position: absolute; top: 12px; right: 12px; padding: 4px 10px;
-  font-family: inherit;
-}
-.toc-title { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text3); margin: 0 0 10px; }
-.toc ol { list-style: none; padding: 0; }
-.toc ol > li { margin-bottom: 4px; }
-.toc a {
-  display: block; padding: 6px 10px; border-radius: 6px;
-  color: var(--text2); text-decoration: none; font-size: 13px;
-  border-left: 2px solid transparent; transition: all 0.15s;
-}
-.toc a:hover { background: var(--bg); color: var(--text); }
-.toc a.active { background: var(--bg); color: var(--primary-dark); border-left-color: var(--primary); font-weight: 500; }
-.toc .toc-chapter { font-weight: 600; color: var(--text); margin: 12px 0 4px; padding: 0 10px; font-size: 13px; }
-.toc .toc-chapter:first-child { margin-top: 0; }
+.toc a:hover{transform:translateY(-3px);border-color:var(--copper)}
+.toc .n{font-size:12px;color:var(--copper-deep);font-weight:700}
+.toc .t{font-weight:700;margin-top:4px;font-size:14px}
+.toc .t-it{font-size:11px;color:var(--ink-soft);margin-top:2px}
 
-/* 手机端:TOC 变成左侧抽屉 */
-@media (max-width: 900px) {
-  .toc {
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    width: 280px; max-width: 80vw;
-    max-height: 100vh;
-    border-radius: 0;
-    border-right: 1px solid var(--border);
-    border-top: none; border-bottom: none; border-left: none;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease-out;
-    z-index: 200;
-    padding: 50px 14px 18px;
-    overflow-y: auto;
-  }
-  .toc.open {
-    transform: translateX(0);
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-  }
-  .toc-close-btn { display: block; }
+/* ── SECTION ── */
+section.step{padding:54px 0 10px;border-bottom:1px solid var(--line)}
+.step-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.step-head .num{
+  font-size:40px;font-weight:800;color:var(--copper);line-height:1;
+  font-variant-numeric:tabular-nums;
 }
+.step-head h2{font-size:24px;font-weight:800}
+.step-head h2 .it{display:block;font-size:14px;font-weight:500;color:var(--ink-soft);margin-top:2px}
+.step-body{display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start;margin-top:24px}
+@media(max-width:760px){.step-body{grid-template-columns:1fr;gap:28px}}
 
-/* ── Content ── */
-.content { min-width: 0; }
-.content h1 {
-  font-size: 30px; font-weight: 700; color: var(--text);
-  margin-bottom: 8px;
+/* steps list */
+.howto{list-style:none}
+.howto li{
+  position:relative;padding:14px 0 14px 44px;border-bottom:1px dashed var(--line);
 }
-.content .lead {
-  font-size: 15px; color: var(--text3); margin-bottom: 30px;
-  padding-bottom: 20px; border-bottom: 1px solid var(--border);
+.howto li:last-child{border-bottom:none}
+.howto li .bullet{
+  position:absolute;left:0;top:12px;width:30px;height:30px;border-radius:50%;
+  background:var(--copper);color:var(--bark);font-weight:800;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
 }
-.content h2 {
-  font-size: 22px; font-weight: 600; color: var(--text);
-  margin-top: 48px; margin-bottom: 6px;
-  padding-top: 12px;
-}
-.content h2:first-of-type { margin-top: 24px; }
-.content h2 .num {
-  display: inline-block; color: var(--primary);
-  font-size: 14px; font-weight: 600; letter-spacing: 1px;
-  vertical-align: middle; margin-right: 8px;
-  background: var(--bg); padding: 4px 10px; border-radius: 6px;
-}
-.content h3 {
-  font-size: 17px; font-weight: 600; color: var(--text);
-  margin-top: 24px; margin-bottom: 10px;
-}
-.content p { margin-bottom: 12px; color: var(--text2); }
-.content ol, .content ul { margin-bottom: 14px; padding-left: 24px; color: var(--text2); }
-.content ol li, .content ul li { margin-bottom: 6px; }
-.content strong { color: var(--text); font-weight: 600; }
-.content code {
-  background: var(--bg); padding: 2px 6px; border-radius: 4px;
-  font-family: 'Menlo', 'Consolas', monospace; font-size: 0.92em;
-  color: var(--primary-dark);
-}
-.content a { color: var(--primary-dark); }
+.howto li .zh{font-weight:600;font-size:15px}
+.howto li .it{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.howto li .tip{font-size:12.5px;color:var(--copper-deep);margin-top:6px;background:#fbf6e9;padding:6px 10px;border-radius:8px;display:inline-block}
 
-/* ── Boxes ── */
-.box {
-  background: var(--info-bg); border-left: 3px solid var(--info-border);
-  padding: 12px 16px; margin: 14px 0; border-radius: 6px;
-  font-size: 14px; color: var(--text2);
-}
-.box.tip { background: var(--tip-bg); border-left-color: var(--tip-border); }
-.box.warn { background: var(--warn-bg); border-left-color: var(--warn-border); }
-.box-title { font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: 13px; }
+/* lang toggle visibility */
+body.lang-zh .it{display:none !important}
+body.lang-zh .howto li .it{display:block !important;font-size:12px;color:var(--ink-soft);opacity:.7}
+body.lang-it .zh-only{display:none}
 
-/* ── Screenshot with annotations ── */
-.shot {
-  position: relative; display: inline-block;
-  margin: 14px 0; max-width: 100%;
-  border-radius: 10px; overflow: hidden;
-  background: var(--bg); border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+/* ── PHONE DEMO ── */
+.demo-wrap{position:sticky;top:20px}
+.phone{
+  width:300px;max-width:100%;margin:0 auto;background:var(--bark);border-radius:34px;
+  padding:10px;box-shadow:var(--shadow);
 }
-.shot img { display: block; max-width: 100%; height: auto; }
-.shot.placeholder {
-  width: 100%; height: 200px;
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 8px;
-  color: var(--text3); font-size: 13px;
-  background: repeating-linear-gradient(45deg, #f5efde, #f5efde 10px, #faf6ed 10px, #faf6ed 20px);
-  border: 2px dashed var(--border);
+.phone-screen{background:var(--cream);border-radius:26px;overflow:hidden;height:540px;position:relative}
+.phone-topbar{
+  background:linear-gradient(135deg,#a8893f,#c9a961);height:42px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 16px;color:#fff;font-size:13px;font-weight:600;
 }
-.shot.placeholder .ph-icon { font-size: 32px; opacity: 0.5; }
+.phone-stage{position:relative;height:498px;overflow:hidden}
+.demo-controls{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.demo-controls button{
+  border:1px solid var(--copper);background:var(--cream-card);color:var(--copper-deep);
+  padding:8px 18px;border-radius:30px;font-size:13px;cursor:pointer;font-weight:600;transition:.2s;
+}
+.demo-controls button:hover{background:var(--copper);color:#fff}
+.demo-caption{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:10px;min-height:18px}
 
-/* 标注:数字气泡(用绝对定位 + percentage) */
-.mark {
-  position: absolute;
-  width: 28px; height: 28px;
-  background: var(--danger); color: #fff;
-  border-radius: 50%; border: 2.5px solid #fff;
-  font-weight: 700; font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(231,76,60,0.4);
-  z-index: 2;
+/* tap pulse */
+.tap{
+  position:absolute;width:34px;height:34px;border-radius:50%;
+  border:3px solid var(--copper);background:rgba(201,169,97,.25);
+  transform:translate(-50%,-50%);pointer-events:none;opacity:0;z-index:50;
 }
-/* 标注:红框 */
-.mark-rect {
-  position: absolute; z-index: 1;
-  border: 2.5px solid var(--danger);
-  border-radius: 6px;
-  box-shadow: 0 0 0 4px rgba(231,76,60,0.18);
-  pointer-events: none;
-}
+.tap.show{animation:tapPulse .8s ease-out}
+@keyframes tapPulse{0%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.7)}}
 
-.shot-caption {
-  font-size: 12px; color: var(--text3); margin-top: 6px; text-align: center;
-  font-style: italic;
-}
+/* fake UI atoms inside phone */
+.fk-screen{position:absolute;inset:0;padding:14px;opacity:0;transition:opacity .35s;pointer-events:none}
+.fk-screen.active{opacity:1;pointer-events:auto}
+.fk-row{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:13px;display:flex;align-items:center;gap:8px}
+.fk-row.hl{outline:2px solid var(--copper);outline-offset:1px;background:#fdf8ec}
+.fk-btn{background:var(--copper);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;width:100%;text-align:center}
+.fk-btn.ghost{background:#fff;color:var(--copper-deep);border:1px solid var(--copper)}
+.fk-input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;flex:1}
+.fk-title{font-weight:700;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.fk-ham{font-size:20px}
+.fk-tag{font-size:11px;background:#f3ead2;color:var(--copper-deep);padding:2px 8px;border-radius:10px;margin-left:auto}
 
-/* ── Step list ── */
-.steps {
-  counter-reset: step;
-  list-style: none; padding-left: 0;
-}
-.steps > li {
-  counter-increment: step;
-  position: relative; padding-left: 40px; margin-bottom: 16px;
-  color: var(--text2);
-}
-.steps > li::before {
-  content: counter(step);
-  position: absolute; left: 0; top: 0;
-  width: 28px; height: 28px;
-  background: var(--primary); color: #fff;
-  border-radius: 50%; font-weight: 700; font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* ── Footer ── */
-.foot {
-  text-align: center; padding: 30px 20px;
-  border-top: 1px solid var(--border); margin-top: 60px;
-  color: var(--text3); font-size: 13px;
-}
-.foot a { color: var(--primary-dark); text-decoration: none; }
-
-/* ── i18n ── */
-/* 默认状态(无 JS 时显示中文) */
-.lang-zh { display: inline; }
-.lang-it { display: none; }
-/* JS 切换走 hidden 属性,不用 class */
+footer{padding:40px 0 60px;text-align:center;color:var(--ink-soft);font-size:13px}
+footer .v{color:var(--copper-deep);font-weight:600}
 </style>
 </head>
-<body>
+<body class="lang-zh">
 
-<!-- Topbar -->
-<div class="topbar">
-  <button class="menu-btn" onclick="toggleToc()" aria-label="目录">≡</button>
-  <div class="topbar-left">
-    <img class="topbar-logo" src="/logo.png" alt="YKI">
-    <div class="topbar-title">
-      <span class="lang-zh">使用教程</span><span class="lang-it">Guida d'uso</span>
-      <span class="sub">· YKI Supply Hub</span>
+<header class="hero">
+  <div class="wrap">
+    <div class="logo">YKI SUPPLY HUB</div>
+    <h1>新手上路<span class="it">Guida rapida per iniziare</span></h1>
+    <p class="zh-only">五个核心操作,看完就能上手:建员工、分食材、改供应商电话、加减食材、批量导入。</p>
+    <p style="display:none" class="it-p">Cinque operazioni base: crea il personale, assegna gli alimenti, modifica i numeri WhatsApp dei fornitori, aggiungi o rimuovi alimenti, importa in blocco.</p>
+    <div class="langbar">
+      <button class="on" onclick="setLang('zh')">中文</button>
+      <button onclick="setLang('it')">Italiano</button>
     </div>
   </div>
-  <div class="topbar-right">
-    <a href="/" class="home-link">
-      <span class="lang-zh">← 首页</span><span class="lang-it">← Home</span>
-    </a>
-    <div class="lang-toggle">
-      <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中</button>
-      <button class="lang-btn" id="btn-it" onclick="setLang('it')">IT</button>
-    </div>
-  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc">
+    <a href="#s1"><div class="n">01</div><div class="t">创建员工</div><div class="t-it">Crea personale</div></a>
+    <a href="#s2"><div class="n">02</div><div class="t">分配食材</div><div class="t-it">Assegna alimenti</div></a>
+    <a href="#s3"><div class="n">03</div><div class="t">供应商 WhatsApp</div><div class="t-it">WhatsApp fornitori</div></a>
+    <a href="#s4"><div class="n">04</div><div class="t">增减食材</div><div class="t-it">Aggiungi / rimuovi</div></a>
+    <a href="#s5"><div class="n">05</div><div class="t">批量导入</div><div class="t-it">Importa in blocco</div></a>
+  </nav>
 </div>
 
-<!-- TOC 遮罩 -->
-<div class="toc-overlay" id="toc-overlay" onclick="toggleToc(false)"></div>
-
-<div class="container">
-
-  <!-- ═══════════════ 目录 ═══════════════ -->
-  <aside class="toc" id="toc">
-    <button class="toc-close-btn" onclick="toggleToc(false)" aria-label="关闭">×</button>
-    <div class="toc-title">
-      <span class="lang-zh">目录</span><span class="lang-it">INDICE</span>
-    </div>
-    <ol>
-        <li class="toc-chapter">
-          <span class="lang-zh">第 1 章 餐厅老板入门</span>
-          <span class="lang-it">Cap. 1 — Per il ristoratore</span>
-        </li>
-        <li><a href="#sec-1-1"><span class="lang-zh">1.1 注册餐厅</span><span class="lang-it">1.1 Registrazione</span></a></li>
-        <li><a href="#sec-1-2"><span class="lang-zh">1.2 审批与登录</span><span class="lang-it">1.2 Approvazione e accesso</span></a></li>
-        <li><a href="#sec-1-3"><span class="lang-zh">1.3 第一次设置</span><span class="lang-it">1.3 Prima configurazione</span></a></li>
-        <li><a href="#sec-1-4"><span class="lang-zh">1.4 添加员工</span><span class="lang-it">1.4 Aggiungi dipendenti</span></a></li>
-        <li><a href="#sec-1-5"><span class="lang-zh">1.5 设置供应商</span><span class="lang-it">1.5 Configurare fornitori</span></a></li>
-
-        <li class="toc-chapter">
-          <span class="lang-zh">第 2 章 餐厅日常管理</span>
-          <span class="lang-it">Cap. 2 — Gestione quotidiana</span>
-        </li>
-        <li><a href="#sec-2-1"><span class="lang-zh">2.1 物料管理</span><span class="lang-it">2.1 Gestione articoli</span></a></li>
-        <li><a href="#sec-2-2"><span class="lang-zh">2.2 改员工密码</span><span class="lang-it">2.2 Password dipendenti</span></a></li>
-        <li><a href="#sec-2-3"><span class="lang-zh">2.3 报表分析</span><span class="lang-it">2.3 Report</span></a></li>
-        <li><a href="#sec-2-4"><span class="lang-zh">2.4 收货确认</span><span class="lang-it">2.4 Conferma ricezione</span></a></li>
-        <li><a href="#sec-2-5"><span class="lang-zh">2.5 订单系统</span><span class="lang-it">2.5 Sistema ordini</span></a></li>
-        <li><a href="#sec-2-7"><span class="lang-zh">2.7 功能开关</span><span class="lang-it">2.7 Funzionalità</span></a></li>
-
-        <li class="toc-chapter">
-          <span class="lang-zh">第 3 章 订货员/采购员</span>
-          <span class="lang-it">Cap. 3 — Per dipendenti e buyer</span>
-        </li>
-        <li><a href="#sec-3-1"><span class="lang-zh">3.1 登录</span><span class="lang-it">3.1 Accesso</span></a></li>
-        <li><a href="#sec-3-2"><span class="lang-zh">3.2 订货操作</span><span class="lang-it">3.2 Ordinare</span></a></li>
-        <li><a href="#sec-3-3"><span class="lang-zh">3.3 库存调整</span><span class="lang-it">3.3 Aggiornare scorta</span></a></li>
-        <li><a href="#sec-3-4"><span class="lang-zh">3.4 提交订单</span><span class="lang-it">3.4 Invio ordine</span></a></li>
-        <li><a href="#sec-3-5"><span class="lang-zh">3.5 排序筛选</span><span class="lang-it">3.5 Ordinamento</span></a></li>
-        <li><a href="#sec-3-6"><span class="lang-zh">3.6 自定义排序</span><span class="lang-it">3.6 Ordine personale</span></a></li>
-
-        <li class="toc-chapter">
-          <span class="lang-zh">第 4 章 供应商使用</span>
-          <span class="lang-it">Cap. 4 — Per il fornitore</span>
-        </li>
-        <li><a href="#sec-4-1"><span class="lang-zh">4.1 注册供应商</span><span class="lang-it">4.1 Registrazione</span></a></li>
-        <li><a href="#sec-4-2"><span class="lang-zh">4.2 上传产品目录</span><span class="lang-it">4.2 Caricare il catalogo</span></a></li>
-        <li><a href="#sec-4-3"><span class="lang-zh">4.3 上传图片</span><span class="lang-it">4.3 Caricare foto</span></a></li>
-        <li><a href="#sec-4-4"><span class="lang-zh">4.4 接收订单</span><span class="lang-it">4.4 Ricevere ordini</span></a></li>
-        <li><a href="#sec-4-5"><span class="lang-zh">4.5 公开开关</span><span class="lang-it">4.5 Visibilità</span></a></li>
-
-        <li class="toc-chapter">
-          <span class="lang-zh">附录</span>
-          <span class="lang-it">Appendici</span>
-        </li>
-        <li><a href="#faq"><span class="lang-zh">常见问题 FAQ</span><span class="lang-it">FAQ</span></a></li>
-        <li><a href="#support"><span class="lang-zh">联系支持</span><span class="lang-it">Supporto</span></a></li>
-      </ol>
-  </aside>
-
-  <!-- ═══════════════ 正文 ═══════════════ -->
-  <main class="content">
-
-    <h1>
-      <span class="lang-zh">YKI Supply Hub 使用教程</span>
-      <span class="lang-it">Guida d'uso — YKI Supply Hub</span>
-    </h1>
-    <div class="lead">
-      <span class="lang-zh">从注册到上手,一步一步带你熟悉系统的每个功能。建议先看完<strong>第 1 章</strong>,完成基本设置后再按需查阅。</span>
-      <span class="lang-it">Dalla registrazione all'uso quotidiano, una guida passo passo. Consigliamo di leggere prima il <strong>Capitolo 1</strong> per la configurazione iniziale.</span>
-    </div>
-
-    <!-- ════════════════════════════════════════
-         CHAPTER 1 — 餐厅老板入门
-         ════════════════════════════════════════ -->
-    <h2 id="sec-1-1"><span class="num">1.1</span>
-      <span class="lang-zh">注册餐厅</span>
-      <span class="lang-it">Registrazione del ristorante</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">在浏览器打开 <a href="https://yki.it/">yki.it</a>,点击金色按钮 <strong>「开始使用」</strong>,会跳到注册页。</span>
-      <span class="lang-it">Apri <a href="https://yki.it/">yki.it</a> nel browser e clicca il bottone dorato <strong>«Inizia ora»</strong> per andare alla pagina di registrazione.</span>
-    </p>
-
-    <div class="shot" data-fallback="yki.it 首页"><img src="/images/guide-1-home.jpg" alt="yki.it 首页" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h3><span class="lang-zh">填写注册表单</span><span class="lang-it">Compila il modulo</span></h3>
-    <ol class="steps">
-      <li>
-        <strong><span class="lang-zh">餐厅代号</span><span class="lang-it">Codice ristorante</span></strong>:
-        <span class="lang-zh">英文小写 + 数字 + 下划线,2-20 个字符。这是登录时用的短代号,例如 <code>carpi</code>、<code>roma01</code>。</span>
-        <span class="lang-it">solo lettere minuscole, numeri e <code>_</code>, 2-20 caratteri. È il codice breve per accedere, es. <code>carpi</code>, <code>roma01</code>.</span>
-      </li>
-      <li>
-        <strong><span class="lang-zh">餐厅名称</span><span class="lang-it">Nome ristorante</span></strong>:
-        <span class="lang-zh">完整名称,例如 "Ristorante Carpi"。</span>
-        <span class="lang-it">il nome completo, es. "Ristorante Carpi".</span>
-      </li>
-      <li>
-        <strong><span class="lang-zh">管理员密码</span><span class="lang-it">Password admin</span></strong>:
-        <span class="lang-zh">至少 8 位。这是<strong>管理员登录</strong>用的密码,务必记牢。</span>
-        <span class="lang-it">almeno 8 caratteri. È la password dell'<strong>amministratore</strong>, da ricordare bene.</span>
-      </li>
-      <li>
-        <strong><span class="lang-zh">联系方式</span><span class="lang-it">Contatto</span></strong>:
-        <span class="lang-zh">邮箱 / WhatsApp。审批通过后我们用这个通知你。</span>
-        <span class="lang-it">email o WhatsApp. Ti contatteremo dopo l'approvazione.</span>
-      </li>
-      <li>
-        <span class="lang-zh">勾选验证码,点 <strong>「提交注册」</strong>。</span>
-        <span class="lang-it">spunta il captcha e clicca <strong>«Invia registrazione»</strong>.</span>
-      </li>
-    </ol>
-
-    <div class="shot" data-fallback="register.html 注册表单"><img src="/images/guide-2-register.jpg" alt="register.html 注册表单" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
-      <span class="lang-zh">代号选短的、好记的、跟餐厅名相关的。一旦设置就不能改。</span>
-      <span class="lang-it">Scegli un codice breve, facile da ricordare e legato al nome del ristorante. Non si può modificare dopo.</span>
-    </div>
-
-    <h2 id="sec-1-2"><span class="num">1.2</span>
-      <span class="lang-zh">审批与登录</span>
-      <span class="lang-it">Approvazione e accesso</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">提交后,你会进入 "<strong>账户审核中</strong>" 状态。我们通常 <strong>24 小时内</strong>审批完毕,通过后会用你填的联系方式通知。</span>
-      <span class="lang-it">Dopo l'invio entri nello stato <strong>"In revisione"</strong>. Di solito l'approvazione avviene entro <strong>24 ore</strong> e ti contatteremo al recapito indicato.</span>
-    </p>
-
-    <div class="shot" data-fallback="审核中页面"><img src="/images/guide-3-pending.jpg" alt="审核中页面" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h3><span class="lang-zh">通过后登录</span><span class="lang-it">Accesso dopo l'approvazione</span></h3>
-    <ol class="steps">
-      <li>
-        <span class="lang-zh">访问 <code>yki.it/cucina.html?r=你的代号</code>(例如 <code>yki.it/cucina.html?r=carpi</code>)。</span>
-        <span class="lang-it">Vai a <code>yki.it/cucina.html?r=tuocodice</code> (es. <code>yki.it/cucina.html?r=carpi</code>).</span>
-      </li>
-      <li>
-        <span class="lang-zh">第一次会显示登录界面。输入<strong>员工名</strong>填 <code>admin</code>,<strong>密码</strong>填你注册时设的管理员密码。</span>
-        <span class="lang-it">Apparirà la schermata di login. Per <strong>nome dipendente</strong> scrivi <code>admin</code>, per <strong>password</strong> usa quella scelta in registrazione.</span>
-      </li>
-    </ol>
-
-    <div class="shot" data-fallback="cucina 登录界面"><img src="/images/guide-4-login.jpg" alt="cucina 登录界面" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
-      <span class="lang-zh">登录成功后,把页面"添加到主屏幕"(Android Chrome 菜单 → 添加到主屏幕 / iPhone Safari → 分享 → 添加到主屏幕),以后点图标即可,跟 App 一样。</span>
-      <span class="lang-it">Dopo l'accesso, aggiungi la pagina alla schermata Home (Android Chrome → menu → "Aggiungi alla schermata Home" / iPhone Safari → Condividi → "Aggiungi alla schermata Home"). Poi si apre come un'app.</span>
-    </div>
-
-    <h2 id="sec-1-3"><span class="num">1.3</span>
-      <span class="lang-zh">第一次设置 — 导入食材</span>
-      <span class="lang-it">Prima configurazione — Importa articoli</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">新餐厅默认是空的(模板餐厅 carpi 的数据除外)。先把食材清单导入,后面才能订货。</span>
-      <span class="lang-it">Un nuovo ristorante parte vuoto (eccetto i ristoranti template come carpi). Importa prima l'elenco degli articoli per poter ordinare.</span>
-    </p>
-
-    <h3><span class="lang-zh">方式 A:从 Excel 导入(推荐)</span><span class="lang-it">Opzione A: Importa da Excel (consigliato)</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">底部 tab 切到 <strong>「库存管理」</strong>。</span>
-          <span class="lang-it">Tab inferiore: vai a <strong>«Magazzino»</strong>.</span></li>
-      <li><span class="lang-zh">点右上角菜单 → <strong>「Excel 导入」</strong>。</span>
-          <span class="lang-it">Menu in alto a destra → <strong>«Importa Excel»</strong>.</span></li>
-      <li><span class="lang-zh">下载示例模板,按格式填好(中文名、意大利文名、规格、供应商、订货周期等列)。</span>
-          <span class="lang-it">Scarica il modello, compila secondo il formato (nome cinese, nome italiano, formato, fornitore, frequenza ordine, ecc.).</span></li>
-      <li><span class="lang-zh">上传 Excel → 预览 → 点 <strong>「确认导入」</strong>。</span>
-          <span class="lang-it">Carica l'Excel → anteprima → <strong>«Conferma importazione»</strong>.</span></li>
-    </ol>
-
-    <div class="shot" data-fallback="Excel 导入对话框"><img src="/images/guide-5-import.jpg" alt="Excel 导入对话框" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h3><span class="lang-zh">方式 B:手动添加</span><span class="lang-it">Opzione B: Aggiungi manualmente</span></h3>
-    <p>
-      <span class="lang-zh">库存管理页右下角的 <strong>「+」</strong> 按钮 → 填写食材信息 → 保存。适合零散补充。</span>
-      <span class="lang-it">Bottone <strong>«+»</strong> in basso a destra nella pagina Magazzino → compila i campi → salva. Adatto per aggiunte occasionali.</span>
-    </p>
-
-    <div class="box warn">
-      <div class="box-title">⚠️ <span class="lang-zh">注意</span><span class="lang-it">Attenzione</span></div>
-      <span class="lang-zh">规格用 <code>spec</code> 字段(例如 "5L"、"800g"),系统会用它判断同类大小排序。</span>
-      <span class="lang-it">Usa il campo <code>spec</code> per il formato (es. "5L", "800g"). Il sistema lo userà per ordinare gli articoli della stessa famiglia.</span>
-    </div>
-
-    <h2 id="sec-1-4"><span class="num">1.4</span>
-      <span class="lang-zh">添加员工 + 分配角色</span>
-      <span class="lang-it">Aggiungi dipendenti + ruoli</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">每位员工有独立账号,不同角色看到的内容不一样。</span>
-      <span class="lang-it">Ogni dipendente ha un account proprio; ogni ruolo vede contenuti diversi.</span>
-    </p>
-
-    <h3><span class="lang-zh">四种角色</span><span class="lang-it">I quattro ruoli</span></h3>
-    <ul>
-      <li><strong><span class="lang-zh">仓库员 (warehouse)</span><span class="lang-it">Magazziniere</span></strong>:
-          <span class="lang-zh">只能记录库存消耗,不能下单。</span>
-          <span class="lang-it">solo registrazione consumi, non può ordinare.</span></li>
-      <li><strong><span class="lang-zh">员工 (staff)</span><span class="lang-it">Dipendente</span></strong>:
-          <span class="lang-zh">订自己负责的食材。看不到别人的。</span>
-          <span class="lang-it">ordina solo i propri articoli, non vede quelli altrui.</span></li>
-      <li><strong><span class="lang-zh">主管 (supervisor)</span><span class="lang-it">Responsabile</span></strong>:
-          <span class="lang-zh">看全部订单(只读),不能发供应商。</span>
-          <span class="lang-it">vede tutti gli ordini (sola lettura), non può inviare ai fornitori.</span></li>
-      <li><strong><span class="lang-zh">采购员 (buyer)</span><span class="lang-it">Buyer</span></strong>:
-          <span class="lang-zh">汇总订单 + 通过 WhatsApp 发给供应商。</span>
-          <span class="lang-it">consolida gli ordini e li invia ai fornitori tramite WhatsApp.</span></li>
-    </ul>
-
-    <h3><span class="lang-zh">添加员工</span><span class="lang-it">Come aggiungere</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">点 <strong>「我的」</strong> → <strong>「员工账号管理」</strong>。</span>
-          <span class="lang-it">Tab <strong>«Io»</strong> → <strong>«Gestione account dipendenti»</strong>.</span></li>
-      <li><span class="lang-zh">点 <strong>「+ 新增员工」</strong>,填员工名(中文或意文都行)+ 临时密码(至少 4 位)。</span>
-          <span class="lang-it">Clicca <strong>«+ Nuovo dipendente»</strong>, inserisci nome (cinese o italiano) e password temporanea (almeno 4 caratteri).</span></li>
-      <li><span class="lang-zh">点员工名进入设置 → 选角色 + 勾权限。</span>
-          <span class="lang-it">Clicca sul nome → seleziona ruolo e permessi.</span></li>
-      <li><span class="lang-zh">把临时密码告诉员工,让 ta 登录后改自己的密码(他自己改不了的话,你可以用员工列表里的 <strong>「🔑 改密码」</strong> 重置)。</span>
-          <span class="lang-it">Comunica la password temporanea al dipendente; dopo il primo accesso può cambiarla. Se non riesce, puoi resettarla con <strong>«🔑 Reset password»</strong>.</span></li>
-    </ol>
-
-    <div class="shot" data-fallback="员工账号管理"><img src="/images/guide-6-staff.jpg" alt="员工账号管理" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h2 id="sec-1-5"><span class="num">1.5</span>
-      <span class="lang-zh">设置供应商</span>
-      <span class="lang-it">Configurare fornitori</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">食材绑定供应商,采购员才能把订单"按供应商"分组,通过 WhatsApp 发出去。</span>
-      <span class="lang-it">Gli articoli vanno associati ai fornitori: solo così il buyer può raggrupparli e inviare gli ordini via WhatsApp.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">「我的」 → 「供应商管理」 → 「+ 新增」。</span>
-          <span class="lang-it">«Io» → «Fornitori» → «+ Nuovo».</span></li>
-      <li><span class="lang-zh">填名称、WhatsApp 电话、订货截止时间(默认 19:00)、WhatsApp 模板语言(中/意/孟)。</span>
-          <span class="lang-it">Compila nome, telefono WhatsApp, ora limite ordine (default 19:00), lingua del messaggio (cinese/italiano/bengalese).</span></li>
-      <li><span class="lang-zh">保存。然后在每个食材里指定它的供应商。</span>
-          <span class="lang-it">Salva. Poi, in ogni articolo, indica il fornitore corrispondente.</span></li>
-    </ol>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">关于"订货截止时间"</span><span class="lang-it">Sull'orario limite</span></div>
-      <span class="lang-zh">这是供应商接受订单的最晚时间。例如设 18:00,系统会从 <strong>15:00</strong>(提前 3 小时)开始提醒员工"该订货了"。</span>
-      <span class="lang-it">È l'ultimo orario in cui il fornitore accetta ordini. Se impostato alle 18:00, il sistema inizierà a ricordare ai dipendenti di ordinare già dalle <strong>15:00</strong> (3 ore prima).</span>
-    </div>
-
-
-
-    <!-- ════════════════════════════════════════
-         CHAPTER 2 — 餐厅日常管理
-         ════════════════════════════════════════ -->
-    <h2 id="sec-2-1"><span class="num">2.1</span>
-      <span class="lang-zh">物料管理</span>
-      <span class="lang-it">Gestione articoli</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">「库存管理」标签是食材的<strong>主控制台</strong>。每条食材都能改名称、规格、供应商、订货周期、上传图片等。</span>
-      <span class="lang-it">Il tab <strong>«Magazzino»</strong> è la console principale degli articoli. Per ogni articolo puoi modificare nome, formato, fornitore, frequenza di ordinazione, foto, ecc.</span>
-    </p>
-
-    <h3><span class="lang-zh">关键字段</span><span class="lang-it">Campi principali</span></h3>
-    <ul>
-      <li><strong><span class="lang-zh">中文名 / 意大利文名</span><span class="lang-it">Nome cinese / italiano</span></strong>:
-          <span class="lang-zh">两者任填其一即可,系统按当前语言显示;两个都填则按用户偏好显示。</span>
-          <span class="lang-it">Puoi compilarne anche solo uno; il sistema mostra in base alla lingua dell'utente.</span></li>
-      <li><strong><span class="lang-zh">规格 (spec)</span><span class="lang-it">Formato (spec)</span></strong>:
-          <span class="lang-zh">例如 "5L"、"800g"。用于排序和发货单显示。</span>
-          <span class="lang-it">es. "5L", "800g". Usato per ordinamento e nei buoni di consegna.</span></li>
-      <li><strong><span class="lang-zh">订货周期</span><span class="lang-it">Frequenza ordine</span></strong>:
-          <span class="lang-zh">勾选每周哪几天可以订(例如 周一/周四),其他日子卡片会显示 🔒 不可订。</span>
-          <span class="lang-it">spunta i giorni della settimana in cui ordinare (es. Lun/Gio); negli altri giorni la scheda mostrerà 🔒 non ordinabile.</span></li>
-      <li><strong><span class="lang-zh">负责员工 (chef)</span><span class="lang-it">Dipendente responsabile (chef)</span></strong>:
-          <span class="lang-zh">分配给某个员工后,只有他和管理员能看到/订这个食材。</span>
-          <span class="lang-it">una volta assegnato, solo lui e l'admin possono vederlo/ordinarlo.</span></li>
-      <li><strong><span class="lang-zh">安全库存</span><span class="lang-it">Scorta di sicurezza</span></strong>:
-          <span class="lang-zh">低于这个数,卡片会变蓝色提醒"该订了"。</span>
-          <span class="lang-it">sotto questo valore la scheda si colora di blu per ricordare "ordina ora".</span></li>
-    </ul>
-
-    <div class="shot" data-fallback="食材编辑表单"><img src="/images/guide-7-item-edit.jpg" alt="食材编辑表单" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h3><span class="lang-zh">绑定供应商目录(高级)</span><span class="lang-it">Aggancia al catalogo fornitore (avanzato)</span></h3>
-    <p>
-      <span class="lang-zh">如果你的供应商也用 YKI 上传了产品目录,可以在食材编辑里点 <strong>「找对应」</strong>,把这条食材绑到供应商目录的具体条目上。绑定后:</span>
-      <span class="lang-it">Se anche il tuo fornitore usa YKI con il suo catalogo, nell'articolo puoi cliccare <strong>«Trova corrispondenza»</strong> per agganciarlo a una voce del catalogo. Una volta agganciato:</span>
-    </p>
-    <ul>
-      <li><span class="lang-zh">供应商改价 → 一键同步到你这边</span>
-          <span class="lang-it">cambio prezzo del fornitore → sincronizzazione con un clic</span></li>
-      <li><span class="lang-zh">供应商图片自动显示</span>
-          <span class="lang-it">la foto del fornitore appare automaticamente</span></li>
-    </ul>
-
-    <h2 id="sec-2-2"><span class="num">2.2</span>
-      <span class="lang-zh">修改员工密码</span>
-      <span class="lang-it">Modificare password dipendenti</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">员工忘了密码或新加员工设临时密码,管理员都能直接重置。</span>
-      <span class="lang-it">Sia che un dipendente dimentichi la password, sia per impostarne una temporanea, l'admin può resettarla.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">「我的」 → 「员工账号管理」。</span>
-          <span class="lang-it">«Io» → «Gestione dipendenti».</span></li>
-      <li><span class="lang-zh">在员工列表里,每条右边有 <strong>「🔑 改密码」</strong> 按钮。</span>
-          <span class="lang-it">A destra di ogni dipendente trovi il bottone <strong>«🔑 Reset password»</strong>.</span></li>
-      <li><span class="lang-zh">输入新密码(至少 4 位)→ 确认 → 把新密码告诉员工。</span>
-          <span class="lang-it">Inserisci la nuova password (almeno 4 caratteri) → conferma → comunicala al dipendente.</span></li>
-    </ol>
-
-    <div class="box warn">
-      <div class="box-title">⚠️ <span class="lang-zh">注意</span><span class="lang-it">Attenzione</span></div>
-      <span class="lang-zh">不要用 WhatsApp 公开群里发密码,推荐私聊或当面告知。</span>
-      <span class="lang-it">Non condividere password nei gruppi WhatsApp pubblici: meglio in privato o a voce.</span>
-    </div>
-
-    <h2 id="sec-2-3"><span class="num">2.3</span>
-      <span class="lang-zh">报表分析</span>
-      <span class="lang-it">Report</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">「报表分析」标签可以查看:</span>
-      <span class="lang-it">Nel tab <strong>«Report»</strong> puoi consultare:</span>
-    </p>
-    <ul>
-      <li><span class="lang-zh"><strong>订货统计</strong>:每个员工/供应商在指定时间段内的订货量/金额</span>
-          <span class="lang-it"><strong>Statistiche ordini</strong>: quantità/importo per dipendente o fornitore nel periodo</span></li>
-      <li><span class="lang-zh"><strong>食材排行</strong>:某段时间订得最多的前 N 个食材</span>
-          <span class="lang-it"><strong>Articoli più ordinati</strong>: i Top N in un periodo</span></li>
-      <li><span class="lang-zh"><strong>消耗记录</strong>(若启用了"库存调整"):库存进出记录</span>
-          <span class="lang-it"><strong>Consumi</strong> (se attivo «Aggiorna scorta»): movimenti di magazzino</span></li>
-    </ul>
-
-    <div class="shot" data-fallback="报表分析页"><img src="/images/guide-8-report.jpg" alt="报表分析页" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h2 id="sec-2-4"><span class="num">2.4</span>
-      <span class="lang-zh">收货确认</span>
-      <span class="lang-it">Conferma ricezione</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">订单发出去后,供应商送货来,在底部 tab <strong>「收货」</strong> 里逐条确认。</span>
-      <span class="lang-it">Dopo l'invio dell'ordine, quando arriva la merce, vai al tab <strong>«Ricezione»</strong> per confermare voce per voce.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">「收货」→ 看到所有"已发送"的订单。</span>
-          <span class="lang-it">«Ricezione» → vedi tutti gli ordini «inviati».</span></li>
-      <li><span class="lang-zh">点订单展开 → 对照实物,勾对的、改不对的数量。</span>
-          <span class="lang-it">Espandi l'ordine → confronta con la merce, spunta o correggi le quantità.</span></li>
-      <li><span class="lang-zh">点 <strong>「确认收货」</strong> → 订单状态变为"已收货"。</span>
-          <span class="lang-it">Clicca <strong>«Conferma ricezione»</strong> → lo stato passa a «Ricevuto».</span></li>
-    </ol>
-
-    <h2 id="sec-2-5"><span class="num">2.5</span>
-      <span class="lang-zh">订单系统</span>
-      <span class="lang-it">Sistema ordini</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">「订单系统」标签查看历史订单。可以筛选状态、撤回、查详情。</span>
-      <span class="lang-it">Il tab <strong>«Ordini»</strong> mostra lo storico. Puoi filtrare per stato, annullare o vedere i dettagli.</span>
-    </p>
-
-    <h3><span class="lang-zh">订单状态</span><span class="lang-it">Stati dell'ordine</span></h3>
-    <ul>
-      <li><strong><span class="lang-zh">待处理</span><span class="lang-it">In attesa</span></strong>:
-          <span class="lang-zh">员工已提交,采购员还没发出去</span>
-          <span class="lang-it">il dipendente ha inviato, ma il buyer non l'ha ancora trasmesso</span></li>
-      <li><strong><span class="lang-zh">已发送</span><span class="lang-it">Inviato</span></strong>:
-          <span class="lang-zh">采购员已发给供应商</span>
-          <span class="lang-it">il buyer l'ha inviato al fornitore</span></li>
-      <li><strong><span class="lang-zh">已收货</span><span class="lang-it">Ricevuto</span></strong>:
-          <span class="lang-zh">货已到、已确认</span>
-          <span class="lang-it">merce arrivata e confermata</span></li>
-    </ul>
-
-    <h3><span class="lang-zh">撤回订单</span><span class="lang-it">Annullare un ordine</span></h3>
-    <p>
-      <span class="lang-zh">如果发现订错了,可以点订单详情里的 <strong>「撤回」</strong>。撤回后回到"待处理"状态,可以修改后重新发。</span>
-      <span class="lang-it">Se ti accorgi di un errore, clicca <strong>«Annulla»</strong> nel dettaglio. Torna in stato «In attesa» per modificarlo e rinviarlo.</span>
-    </p>
-
-    <h2 id="sec-2-7"><span class="num">2.7</span>
-      <span class="lang-zh">功能开关</span>
-      <span class="lang-it">Funzionalità configurabili</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">不同餐厅习惯不一样。「我的」→「功能开关」可以关闭用不到的功能。</span>
-      <span class="lang-it">Ogni ristorante ha abitudini diverse. In «Io» → «Funzionalità» puoi disabilitare ciò che non usi.</span>
-    </p>
-
-    <ul>
-      <li><strong><span class="lang-zh">显示当前库存数字</span><span class="lang-it">Mostra scorta attuale</span></strong>:
-          <span class="lang-zh">不维护库存可关。</span>
-          <span class="lang-it">disattiva se non gestisci scorte.</span></li>
-      <li><strong><span class="lang-zh">显示安全库存</span><span class="lang-it">Mostra scorta di sicurezza</span></strong>:
-          <span class="lang-zh">不需要"自动提醒"可关。</span>
-          <span class="lang-it">disattiva se non vuoi avvisi automatici.</span></li>
-      <li><strong><span class="lang-zh">库存调整 +/-</span><span class="lang-it">Aggiornamento scorta +/-</span></strong>:
-          <span class="lang-zh">不记消耗可关。关了之后卡片更简洁。</span>
-          <span class="lang-it">disattiva se non registri consumi. La scheda diventa più pulita.</span></li>
-      <li><strong><span class="lang-zh">显示"上次订货"信息</span><span class="lang-it">Mostra «ultimo ordine»</span></strong>:
-          <span class="lang-zh">不需要回顾历史可关。</span>
-          <span class="lang-it">disattiva se non serve.</span></li>
-    </ul>
-
-
-
-    <!-- ════════════════════════════════════════
-         CHAPTER 3 — 订货员/采购员
-         ════════════════════════════════════════ -->
-    <h2 id="sec-3-1"><span class="num">3.1</span>
-      <span class="lang-zh">登录 cucina</span>
-      <span class="lang-it">Accedere a cucina</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">餐厅管理员会告诉你<strong>餐厅代号</strong> + 你的<strong>员工名</strong> + <strong>临时密码</strong>。</span>
-      <span class="lang-it">L'admin del ristorante ti darà il <strong>codice ristorante</strong>, il tuo <strong>nome dipendente</strong> e una <strong>password temporanea</strong>.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">浏览器打开 <code>yki.it/cucina.html</code>(没带代号会先让你输代号)。</span>
-          <span class="lang-it">Apri <code>yki.it/cucina.html</code> (se non hai il codice in URL, te lo chiederà).</span></li>
-      <li><span class="lang-zh">输入餐厅代号(例如 <code>carpi</code>),系统会记住,下次免输。</span>
-          <span class="lang-it">Inserisci il codice (es. <code>carpi</code>): verrà memorizzato per la prossima volta.</span></li>
-      <li><span class="lang-zh">输员工名 + 密码 → 登录。</span>
-          <span class="lang-it">Nome dipendente + password → accedi.</span></li>
-      <li><span class="lang-zh">登录后立即去 <strong>「我的」→「修改密码」</strong> 改成自己记得住的密码。</span>
-          <span class="lang-it">Subito dopo, vai a <strong>«Io» → «Cambia password»</strong> e impostane una tua.</span></li>
-    </ol>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
-      <span class="lang-zh">登录后强烈建议"添加到主屏幕",像 App 一样用,而且能收到推送通知。</span>
-      <span class="lang-it">Dopo l'accesso, aggiungi alla schermata Home: si usa come un'app e ricevi notifiche push.</span>
-    </div>
-
-    <h2 id="sec-3-2"><span class="num">3.2</span>
-      <span class="lang-zh">订货界面操作</span>
-      <span class="lang-it">Schermata di ordinazione</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">底部 tab 切到 <strong>「订货系统」</strong>。每个卡片代表一个食材。</span>
-      <span class="lang-it">Tab inferiore <strong>«Ordini»</strong>. Ogni scheda è un articolo.</span>
-    </p>
-
-    <h3><span class="lang-zh">卡片上的信息</span><span class="lang-it">Informazioni sulla scheda</span></h3>
-    <ul>
-      <li><span class="lang-zh">左上 — 食材图片 + 货号</span>
-          <span class="lang-it">Alto a sinistra — foto e codice</span></li>
-      <li><span class="lang-zh">名称 + 👤 负责员工</span>
-          <span class="lang-it">Nome + 👤 responsabile</span></li>
-      <li><span class="lang-zh">✅ 今日可订 / 🔒 周X 可订 + 分类 + 供应商</span>
-          <span class="lang-it">✅ Ordinabile oggi / 🔒 Solo lun/gio + categoria + fornitore</span></li>
-      <li><span class="lang-zh">📅 上次订货量 + 多少天前</span>
-          <span class="lang-it">📅 Ultimo ordine: quantità e quanti giorni fa</span></li>
-      <li><span class="lang-zh">右上 — 选中复选框</span>
-          <span class="lang-it">Alto a destra — checkbox</span></li>
-      <li><span class="lang-zh">右下 — 订货数量 [−][数字][+]</span>
-          <span class="lang-it">Basso a destra — quantità [−][numero][+]</span></li>
-    </ul>
-
-    <div class="shot" data-fallback="订货卡片"><img src="/images/guide-9-order-card.jpg" alt="订货卡片" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;ph-icon&quot;>📷</div><div>'+this.parentNode.dataset.fallback+'</div>';this.parentNode.classList.add('placeholder');"></div>
-
-    <h3><span class="lang-zh">改订货数量</span><span class="lang-it">Modificare la quantità</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">点 <strong>+</strong> 加 1,<strong>−</strong> 减 1。</span>
-          <span class="lang-it">Tocca <strong>+</strong> per aggiungere 1, <strong>−</strong> per togliere 1.</span></li>
-      <li><span class="lang-zh">点中间的数字 → 弹出键盘,可以输入大数字(例如 10、25)。</span>
-          <span class="lang-it">Tocca il numero al centro → si apre una tastiera per inserire numeri grandi (es. 10, 25).</span></li>
-      <li><span class="lang-zh">数量改了之后,复选框自动打勾。</span>
-          <span class="lang-it">Modificando la quantità, la spunta si attiva da sola.</span></li>
-    </ol>
-
-    <h2 id="sec-3-3"><span class="num">3.3</span>
-      <span class="lang-zh">库存调整(消耗记录)</span>
-      <span class="lang-it">Aggiornare scorta (consumi)</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">如果你的餐厅开启了"库存调整"功能,卡片底部会多一行 <strong>「库存调整: [−] [0] [+]」</strong>。</span>
-      <span class="lang-it">Se il tuo ristorante ha attivato «Aggiorna scorta», vedrai sulla scheda una riga <strong>«Aggiornamento: [−] [0] [+]»</strong>.</span>
-    </p>
-
-    <p>
-      <span class="lang-zh">这里填的是"<strong>消耗了多少</strong>",负数表示用掉/出库,正数表示补回/入库(只有有"+库存"权限的员工才能加)。提交订单时,这些消耗会一起记录。</span>
-      <span class="lang-it">Inserisci quanto è stato <strong>consumato</strong>: numeri negativi = uscita, positivi = entrata (solo per chi ha il permesso «+ scorta»). I consumi vengono registrati insieme all'invio dell'ordine.</span>
-    </p>
-
-    <h2 id="sec-3-4"><span class="num">3.4</span>
-      <span class="lang-zh">提交订单</span>
-      <span class="lang-it">Invio dell'ordine</span>
-    </h2>
-
-    <ol class="steps">
-      <li><span class="lang-zh">勾选所有要订的食材(或调整数量,系统会自动勾上)。</span>
-          <span class="lang-it">Spunta gli articoli da ordinare (la spunta si attiva anche modificando la quantità).</span></li>
-      <li><span class="lang-zh">如果有特殊说明,点 <strong>📝</strong> 按钮加备注。</span>
-          <span class="lang-it">Per note speciali, tocca il bottone <strong>📝</strong>.</span></li>
-      <li><span class="lang-zh">点右下角绿色 <strong>「提交」</strong> 按钮。</span>
-          <span class="lang-it">Tocca il bottone verde <strong>«Invia»</strong> in basso a destra.</span></li>
-      <li><span class="lang-zh">订单进入"<strong>待处理</strong>"状态,采购员会看到。</span>
-          <span class="lang-it">L'ordine va in stato <strong>«In attesa»</strong>; il buyer lo riceverà.</span></li>
-    </ol>
-
-    <h3><span class="lang-zh">采购员怎么发给供应商</span><span class="lang-it">Come il buyer invia ai fornitori</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">采购员在「订单系统」看到所有员工的"待处理"订单。</span>
-          <span class="lang-it">Il buyer trova tutti gli ordini «In attesa» nel tab «Ordini».</span></li>
-      <li><span class="lang-zh">点 <strong>「按供应商合并」</strong> → 系统把所有员工的订单按供应商分组、合并相同食材的数量。</span>
-          <span class="lang-it">Tocca <strong>«Unisci per fornitore»</strong> → il sistema raggruppa per fornitore e somma le quantità degli articoli uguali.</span></li>
-      <li><span class="lang-zh">每个供应商一个 <strong>「WhatsApp 发送」</strong> 按钮 → 自动打开 WhatsApp,文本已经填好。</span>
-          <span class="lang-it">Per ogni fornitore appare il bottone <strong>«Invia WhatsApp»</strong>: si apre WhatsApp con il testo già pronto.</span></li>
-      <li><span class="lang-zh">点发送 → 订单变为"<strong>已发送</strong>"。</span>
-          <span class="lang-it">Premi invia → l'ordine passa a <strong>«Inviato»</strong>.</span></li>
-    </ol>
-
-    <h2 id="sec-3-5"><span class="num">3.5</span>
-      <span class="lang-zh">排序与筛选</span>
-      <span class="lang-it">Ordinamento e filtri</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">点左上角 <strong>☰</strong> 打开侧边菜单,有<strong>排序方式</strong>和<strong>显示</strong>两个区:</span>
-      <span class="lang-it">Tocca <strong>☰</strong> in alto a sinistra per aprire il menu laterale: <strong>Ordinamento</strong> e <strong>Visualizzazione</strong>.</span>
-    </p>
-
-    <h3><span class="lang-zh">排序方式</span><span class="lang-it">Ordinamento</span></h3>
-    <ul>
-      <li><strong><span class="lang-zh">默认</span><span class="lang-it">Default</span></strong>:
-          <span class="lang-zh">今日订货 + 库存不足优先,同名同类紧挨着</span>
-          <span class="lang-it">priorità a oggi + scorta bassa, articoli simili vicini</span></li>
-      <li><strong><span class="lang-zh">库存不足优先</span><span class="lang-it">Scorta bassa</span></strong>:
-          <span class="lang-zh">该订的在最上面</span>
-          <span class="lang-it">da ordinare in cima</span></li>
-      <li><strong><span class="lang-zh">今日订货</span><span class="lang-it">Oggi</span></strong>:
-          <span class="lang-zh">只突出周期匹配今天的</span>
-          <span class="lang-it">solo articoli ordinabili oggi</span></li>
-      <li><strong><span class="lang-zh">按订货人</span><span class="lang-it">Per dipendente</span></strong>:
-          <span class="lang-zh">同一个员工的食材分组</span>
-          <span class="lang-it">articoli dello stesso dipendente raggruppati</span></li>
-      <li><strong><span class="lang-zh">按供货商</span><span class="lang-it">Per fornitore</span></strong>:
-          <span class="lang-zh">同一供应商的食材分组</span>
-          <span class="lang-it">articoli dello stesso fornitore raggruppati</span></li>
-    </ul>
-
-    <h3><span class="lang-zh">显示</span><span class="lang-it">Visualizzazione</span></h3>
-    <ul>
-      <li><strong><span class="lang-zh">仅看已选</span><span class="lang-it">Solo selezionati</span></strong>:
-          <span class="lang-zh">只看你勾选的食材(订完前检查用)</span>
-          <span class="lang-it">vedi solo gli articoli spuntati (utile per controllare prima di inviare)</span></li>
-      <li><strong><span class="lang-zh">仅看未选</span><span class="lang-it">Solo non selezionati</span></strong>:
-          <span class="lang-zh">隐藏已勾选的,只看还没下决定的</span>
-          <span class="lang-it">nasconde gli spuntati, mostra solo i restanti</span></li>
-    </ul>
-
-    <h2 id="sec-3-6"><span class="num">3.6</span>
-      <span class="lang-zh">自定义排序(拖拽)</span>
-      <span class="lang-it">Ordine personale (drag &amp; drop)</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">如果你希望按自己的逻辑排食材(例如把厨房常用的放最上),可以用"自定义排序"。</span>
-      <span class="lang-it">Se vuoi ordinare gli articoli secondo la tua logica (es. i più usati in cucina in cima), usa l'ordine personale.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">侧边菜单 → <strong>「✏️ 编辑我的排序」</strong>。</span>
-          <span class="lang-it">Menu laterale → <strong>«✏️ Modifica ordine»</strong>.</span></li>
-      <li><span class="lang-zh">长按拖动每条食材到你想要的位置。</span>
-          <span class="lang-it">Tieni premuto e trascina ogni articolo dove vuoi.</span></li>
-      <li><span class="lang-zh">点 <strong>「完成」</strong> 保存。</span>
-          <span class="lang-it">Tocca <strong>«Fine»</strong> per salvare.</span></li>
-      <li><span class="lang-zh">回到订货页,排序方式选 <strong>「🖐 我的排序」</strong>。</span>
-          <span class="lang-it">Torna agli ordini e seleziona <strong>«🖐 Ordine personale»</strong>.</span></li>
-    </ol>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">小贴士</span><span class="lang-it">Suggerimento</span></div>
-      <span class="lang-zh">自定义排序只对"chef = 你"的食材生效。你的同事各自有各自的排序。</span>
-      <span class="lang-it">L'ordine personale si applica solo agli articoli «chef = te». Ogni collega ha il proprio.</span>
-    </div>
-
-
-
-    <!-- ════════════════════════════════════════
-         CHAPTER 4 — 供应商使用
-         ════════════════════════════════════════ -->
-    <h2 id="sec-4-1"><span class="num">4.1</span>
-      <span class="lang-zh">注册供应商账号</span>
-      <span class="lang-it">Registrare account fornitore</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">供应商也能注册 YKI,免费使用。注册后可以管理自己的产品目录、看到餐厅发来的订单。</span>
-      <span class="lang-it">Anche i fornitori possono registrarsi su YKI gratuitamente. Possono gestire il proprio catalogo e ricevere gli ordini dei ristoranti.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">浏览器访问 <a href="https://yki.it/register.html?kind=supplier">yki.it/register.html?kind=supplier</a>(或在 yki.it 首页底部点"供应商注册")。</span>
-          <span class="lang-it">Vai a <a href="https://yki.it/register.html?kind=supplier">yki.it/register.html?kind=supplier</a> (o "Registra fornitore" in fondo alla home).</span></li>
-      <li><span class="lang-zh">填供应商代号(英文小写)、公司名、管理员密码、联系方式。</span>
-          <span class="lang-it">Inserisci codice (minuscolo), nome azienda, password admin, contatto.</span></li>
-      <li><span class="lang-zh">勾选验证码 → 提交 → 等待 YKI 团队审批(通常 24 小时内)。</span>
-          <span class="lang-it">Spunta il captcha → invia → attendi l'approvazione (di solito entro 24 ore).</span></li>
-      <li><span class="lang-zh">通过后,登录 <a href="https://yki.it/supplier.html">yki.it/supplier.html</a>。</span>
-          <span class="lang-it">Dopo l'approvazione, accedi a <a href="https://yki.it/supplier.html">yki.it/supplier.html</a>.</span></li>
-    </ol>
-
-    <h2 id="sec-4-2"><span class="num">4.2</span>
-      <span class="lang-zh">上传产品目录</span>
-      <span class="lang-it">Caricare il catalogo</span>
-    </h2>
-
-    <h3><span class="lang-zh">从 Excel 批量导入</span><span class="lang-it">Importazione massiva da Excel</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">登录后切到 <strong>「产品」</strong> 标签。</span>
-          <span class="lang-it">Dopo l'accesso vai al tab <strong>«Prodotti»</strong>.</span></li>
-      <li><span class="lang-zh">点 <strong>「📥 导入」</strong>。</span>
-          <span class="lang-it">Clicca <strong>«📥 Importa»</strong>.</span></li>
-      <li><span class="lang-zh">下载示例 Excel,按格式填好。<strong>关键字段:</strong> 货号 / 中文名 / 意大利文名 / 规格 / 单价 / 分类。</span>
-          <span class="lang-it">Scarica il modello e compilalo. <strong>Campi chiave:</strong> codice / nome cinese / nome italiano / formato / prezzo / categoria.</span></li>
-      <li><span class="lang-zh">上传 → 预览 → 确认导入。</span>
-          <span class="lang-it">Carica → anteprima → conferma.</span></li>
-    </ol>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">价格小数点</span><span class="lang-it">Decimale del prezzo</span></div>
-      <span class="lang-zh">Excel 里用意式逗号(35,20)或英式点(35.20)都行,系统会自动转换。</span>
-      <span class="lang-it">In Excel puoi usare virgola (35,20) o punto (35.20): il sistema converte automaticamente.</span>
-    </div>
-
-    <h3><span class="lang-zh">手动添加单个产品</span><span class="lang-it">Aggiungere prodotti manualmente</span></h3>
-    <p>
-      <span class="lang-zh">产品页右上角 <strong>「+ 新增」</strong> → 填表单 → 保存。</span>
-      <span class="lang-it">Bottone <strong>«+ Nuovo»</strong> in alto → compila → salva.</span>
-    </p>
-
-    <h2 id="sec-4-3"><span class="num">4.3</span>
-      <span class="lang-zh">上传图片</span>
-      <span class="lang-it">Caricare foto</span>
-    </h2>
-
-    <h3><span class="lang-zh">单张上传</span><span class="lang-it">Caricamento singolo</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">在产品列表点某个产品 → 进入编辑页。</span>
-          <span class="lang-it">Tocca un prodotto nell'elenco → pagina di modifica.</span></li>
-      <li><span class="lang-zh">在"图片"区域点 <strong>「📷 上传图片」</strong>。</span>
-          <span class="lang-it">Nella sezione «Immagine», tocca <strong>«📷 Carica»</strong>.</span></li>
-      <li><span class="lang-zh">手机:选择"拍照"或"从相册选"。电脑:选文件。</span>
-          <span class="lang-it">Cellulare: scegli «scatta foto» o «dalla galleria». PC: seleziona file.</span></li>
-      <li><span class="lang-zh">系统自动压缩(250px / WebP / ~30KB),即时显示预览。</span>
-          <span class="lang-it">Il sistema comprime in automatico (250px / WebP / ~30KB), anteprima immediata.</span></li>
-    </ol>
-
-    <h3><span class="lang-zh">批量上传(按文件名匹配)</span><span class="lang-it">Caricamento in blocco (per nome file)</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">在产品页头部点 <strong>「📷 图片」</strong> 按钮。</span>
-          <span class="lang-it">In testa alla pagina prodotti, tocca <strong>«📷 Foto»</strong>.</span></li>
-      <li><span class="lang-zh">选一堆图片(支持多选)。文件名要等于<strong>货号 / 中文名 / 意大利文名</strong>之一。</span>
-          <span class="lang-it">Seleziona più foto. Il nome file deve corrispondere a <strong>codice / nome cinese / nome italiano</strong>.</span></li>
-      <li><span class="lang-zh">系统自动匹配 → 显示"已匹配 X 张 / 未匹配 Y 张"。</span>
-          <span class="lang-it">Il sistema abbina automaticamente → mostra «X abbinati / Y non abbinati».</span></li>
-      <li><span class="lang-zh">点 <strong>「开始上传」</strong> → 看进度条。</span>
-          <span class="lang-it">Tocca <strong>«Carica»</strong> → segui la barra di avanzamento.</span></li>
-    </ol>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">文件名规则</span><span class="lang-it">Regole nome file</span></div>
-      <span class="lang-zh">例如:<code>HD001.jpg</code>(匹配货号 HD001)、<code>茄子.jpg</code>(匹配中文名)、<code>Melanzana.png</code>(匹配意大利文名,大小写不敏感)。</span>
-      <span class="lang-it">Es.: <code>HD001.jpg</code> (codice), <code>茄子.jpg</code> (nome cinese), <code>Melanzana.png</code> (nome italiano, case-insensitive).</span>
-    </div>
-
-    <h2 id="sec-4-4"><span class="num">4.4</span>
-      <span class="lang-zh">接收订单 + 合并视图</span>
-      <span class="lang-it">Ricevere ordini + Vista consolidata</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">餐厅采购员发出订单后,你会在 <strong>「订单」</strong> 标签看到。但餐厅可能有多个员工各自下单,加起来一天会有很多张。<strong>「合并视图」</strong> 帮你把同一天的所有订单按餐厅汇总成一张采购清单。</span>
-      <span class="lang-it">Quando un buyer invia un ordine, lo vedrai nel tab <strong>«Ordini»</strong>. Ma un ristorante può avere più dipendenti che ordinano: ne arrivano molti al giorno. La <strong>«Vista consolidata»</strong> ti aggrega tutto in un'unica lista di acquisto per ristorante.</span>
-    </p>
-
-    <h3><span class="lang-zh">使用合并视图</span><span class="lang-it">Usare la vista consolidata</span></h3>
-    <ol class="steps">
-      <li><span class="lang-zh">订单页右上角点 <strong>「合并」</strong>。</span>
-          <span class="lang-it">In alto a destra nel tab Ordini, tocca <strong>«Consolida»</strong>.</span></li>
-      <li><span class="lang-zh">选时间范围(默认今天)+ 餐厅(可多选)+ 状态(已发送/已收货)。</span>
-          <span class="lang-it">Scegli intervallo (default: oggi) + ristoranti (selezione multipla) + stato (inviato/ricevuto).</span></li>
-      <li><span class="lang-zh">系统自动按"相同食材"合并数量。例如 carpi 餐厅 5 个员工各订了 2 公斤茄子 → 显示总数 10 公斤。</span>
-          <span class="lang-it">Il sistema somma le quantità degli stessi articoli. Es. 5 dipendenti di carpi ordinano 2 kg di melanzane ciascuno → totale 10 kg.</span></li>
-      <li><span class="lang-zh">点 <strong>「📥 导出 Excel」</strong> 下载,每个餐厅一个工作表。</span>
-          <span class="lang-it">Tocca <strong>«📥 Esporta Excel»</strong>: ogni ristorante ha un foglio.</span></li>
-    </ol>
-
-    <div class="box">
-      <div class="box-title">📋 <span class="lang-zh">合并视图的限制</span><span class="lang-it">Limiti della vista consolidata</span></div>
-      <ul style="margin-bottom:0;padding-left:18px;">
-        <li><span class="lang-zh">最长 90 天范围</span><span class="lang-it">massimo 90 giorni</span></li>
-        <li><span class="lang-zh">最多 5000 条订单(超过会提示)</span><span class="lang-it">massimo 5000 ordini (oltre, appare un avviso)</span></li>
-      </ul>
-    </div>
-
-    <h2 id="sec-4-5"><span class="num">4.5</span>
-      <span class="lang-zh">公开开关(目录可见性)</span>
-      <span class="lang-it">Visibilità del catalogo</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">你可以决定餐厅能不能浏览你的产品目录,以及能不能看到价格。</span>
-      <span class="lang-it">Puoi decidere se i ristoranti possono vedere il tuo catalogo e i prezzi.</span>
-    </p>
-
-    <ol class="steps">
-      <li><span class="lang-zh">「我的」→「目录设置」。</span>
-          <span class="lang-it">«Io» → «Impostazioni catalogo».</span></li>
-      <li><span class="lang-zh">两个独立开关:</span>
-          <span class="lang-it">Due interruttori indipendenti:</span>
-        <ul style="margin-top:6px;">
-          <li><strong><span class="lang-zh">目录公开</span><span class="lang-it">Catalogo pubblico</span></strong>:
-              <span class="lang-zh">关掉 → 没有餐厅能浏览你的产品</span>
-              <span class="lang-it">disattivato → nessun ristorante vede i prodotti</span></li>
-          <li><strong><span class="lang-zh">价格可见</span><span class="lang-it">Prezzi visibili</span></strong>:
-              <span class="lang-zh">关掉 → 餐厅能看产品但看不到价格</span>
-              <span class="lang-it">disattivato → i prodotti sono visibili, i prezzi no</span></li>
-        </ul>
-      </li>
-    </ol>
-
-
-
-    <!-- ════════════════════════════════════════
-         APPENDIX — FAQ + 支持
-         ════════════════════════════════════════ -->
-    <h2 id="faq"><span class="num">FAQ</span>
-      <span class="lang-zh">常见问题</span>
-      <span class="lang-it">Domande frequenti</span>
-    </h2>
-
-    <h3><span class="lang-zh">Q1: 餐厅代号填错了怎么办?</span><span class="lang-it">Q1: Codice ristorante sbagliato?</span></h3>
-    <p>
-      <span class="lang-zh">如果在登录页填错(看到"餐厅账户不存在"页),点 <strong>「🔄 重新输入代号」</strong> 按钮即可。</span>
-      <span class="lang-it">Se vedi la pagina «Account ristorante non trovato», clicca <strong>«🔄 Reinserisci codice»</strong>.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q2: 员工忘了密码?</span><span class="lang-it">Q2: Dipendente ha dimenticato la password?</span></h3>
-    <p>
-      <span class="lang-zh">管理员去「员工账号管理」→ 点该员工旁的 <strong>「🔑 改密码」</strong> 重置(详见 <a href="#sec-2-2">2.2</a>)。</span>
-      <span class="lang-it">L'admin va in «Gestione dipendenti» e clicca <strong>«🔑 Reset password»</strong> a fianco del dipendente (vedi <a href="#sec-2-2">2.2</a>).</span>
-    </p>
-
-    <h3><span class="lang-zh">Q3: 为什么我看不到某些食材?</span><span class="lang-it">Q3: Perché non vedo alcuni articoli?</span></h3>
-    <p>
-      <span class="lang-zh">普通员工(staff)只能看到"<strong>chef = 自己</strong>"的食材。管理员要去食材编辑里把"负责员工"填上。</span>
-      <span class="lang-it">I dipendenti (staff) vedono solo articoli con «<strong>chef = se stessi</strong>». L'admin deve assegnare il «responsabile» nell'articolo.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q4: 怎么停售一个食材?</span><span class="lang-it">Q4: Come sospendere un articolo?</span></h3>
-    <p>
-      <span class="lang-zh">在食材编辑里点 <strong>「停售」</strong>(不是删除!)。停售后订货页看不到,但历史订单和图片都保留,需要时可以重新启用。</span>
-      <span class="lang-it">Nell'articolo, clicca <strong>«Sospendi»</strong> (non eliminare!). Non sarà più visibile negli ordini, ma storico e foto restano. Puoi riattivarlo quando vuoi.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q5: 推送通知收不到?</span><span class="lang-it">Q5: Non ricevo notifiche?</span></h3>
-    <p>
-      <span class="lang-zh">需要:① "添加到主屏幕"为 PWA 应用;② 在浏览器/系统设置里允许通知。<strong>iPhone</strong> 必须从主屏幕图标打开才会收到。普通员工(staff)目前不发送推送(只有 admin/supervisor/buyer 收新订单)。</span>
-      <span class="lang-it">Serve: ① "Aggiungi alla schermata Home" come PWA; ② autorizzare le notifiche. Su <strong>iPhone</strong> devi aprire dall'icona, non da Safari. Al momento solo admin/supervisor/buyer ricevono notifiche di nuovi ordini, non i dipendenti staff.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q6: 数据安全吗?会丢吗?</span><span class="lang-it">Q6: I dati sono sicuri? Si possono perdere?</span></h3>
-    <p>
-      <span class="lang-zh">数据存在 Supabase 云数据库,HTTPS 全程加密。后台会定期备份,你不用操心。</span>
-      <span class="lang-it">I dati sono su Supabase con HTTPS. I backup vengono gestiti dall'amministratore: non devi preoccupartene.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q7: 多个员工同时改一条订单会冲突吗?</span><span class="lang-it">Q7: Più dipendenti modificano lo stesso ordine?</span></h3>
-    <p>
-      <span class="lang-zh">每条食材的"负责员工"是唯一的 — 一般情况下不会冲突。如果两个人同时改同一条,系统采用"<strong>最后保存的覆盖之前的</strong>"策略。</span>
-      <span class="lang-it">Ogni articolo ha un solo «responsabile» — di norma non ci sono conflitti. Se due persone modificano lo stesso articolo in contemporanea, vale <strong>«ultimo salvataggio vince»</strong>.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q8: 试用期多久?之后多少钱?</span><span class="lang-it">Q8: Periodo di prova? Costo dopo?</span></h3>
-    <p>
-      <span class="lang-zh">餐厅注册后默认 <strong>60 天免费试用</strong>。试用结束后 <strong>€15/月</strong>。</span>
-      <span class="lang-it">Per i ristoranti la prova è di <strong>60 giorni gratuiti</strong>. Dopo la prova, <strong>€15/mese</strong>.</span>
-    </p>
-
-    <h3><span class="lang-zh">Q9: 能在电脑上用吗?</span><span class="lang-it">Q9: Si può usare al PC?</span></h3>
-    <p>
-      <span class="lang-zh">完全可以。所有功能在桌面浏览器和手机都能用。供应商端推荐用电脑(目录管理批量操作更方便)。</span>
-      <span class="lang-it">Sì. Tutte le funzioni sono disponibili sia su desktop che mobile. Per i fornitori consigliamo il PC (gestione catalogo più comoda).</span>
-    </p>
-
-    <h3><span class="lang-zh">Q10: 我有功能建议,怎么提?</span><span class="lang-it">Q10: Ho un suggerimento, come lo invio?</span></h3>
-    <p>
-      <span class="lang-zh">直接发邮件 <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a> 或 WhatsApp。我们很愿意听用户反馈。</span>
-      <span class="lang-it">Scrivi a <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a> o WhatsApp. Siamo sempre disponibili al feedback.</span>
-    </p>
-
-    <h2 id="support"><span class="num">📞</span>
-      <span class="lang-zh">联系支持</span>
-      <span class="lang-it">Contatti supporto</span>
-    </h2>
-
-    <p>
-      <span class="lang-zh">问题没在 FAQ 里?直接联系我们,通常 24 小时内回复。</span>
-      <span class="lang-it">La tua domanda non è nelle FAQ? Contattaci, di solito rispondiamo entro 24 ore.</span>
-    </p>
-
-    <ul>
-      <li>📧 Email: <a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a></li>
-      <li>💬 WhatsApp: <a href="https://wa.me/393520203031" target="_blank">+39 352 020 3031</a></li>
-    </ul>
-
-    <div class="box tip">
-      <div class="box-title">💡 <span class="lang-zh">求助时请告诉我们</span><span class="lang-it">Quando chiedi aiuto, indica</span></div>
-      <ul style="margin-bottom:0;padding-left:18px;">
-        <li><span class="lang-zh">餐厅代号 + 你的角色</span><span class="lang-it">il codice del ristorante e il tuo ruolo</span></li>
-        <li><span class="lang-zh">操作的页面 + 想做什么</span><span class="lang-it">la pagina e cosa stavi facendo</span></li>
-        <li><span class="lang-zh">看到的错误信息(截图最好)</span><span class="lang-it">l'eventuale errore (meglio screenshot)</span></li>
-      </ul>
-    </div>
-
-
-
-  </main>
-</div>
-
-<div class="foot">
-  <span class="lang-zh">教程持续更新中 · 有问题?</span>
-  <span class="lang-it">Guida in aggiornamento · Domande?</span>
-  &nbsp;<a href="mailto:ykicucina@gmail.com">ykicucina@gmail.com</a>
-  &nbsp;·&nbsp;
-  <a href="https://wa.me/393520203031" target="_blank">WhatsApp</a>
-</div>
+<main class="wrap" id="sections"></main>
+
+<footer>
+  YKI Supply Hub · <span class="v">使用教程</span> · Guida · v2.7.117
+</footer>
 
 <script>
-const LANG_KEY = 'yki_lang';
-// 手机端 TOC 抽屉
-function toggleToc(force) {
-  const toc = document.getElementById('toc');
-  const overlay = document.getElementById('toc-overlay');
-  if (!toc || !overlay) return;
-  const willOpen = (force === undefined) ? !toc.classList.contains('open') : !!force;
-  toc.classList.toggle('open', willOpen);
-  overlay.classList.toggle('show', willOpen);
-  document.body.style.overflow = willOpen ? 'hidden' : '';
+function setLang(l){
+  document.body.className='lang-'+l;
+  document.querySelectorAll('.langbar button').forEach(b=>b.classList.remove('on'));
+  if(window.event&&event.target) event.target.classList.add('on');
+  document.querySelector('.zh-only').style.display = l==='zh'?'block':'none';
+  const itp=document.querySelector('.it-p'); if(itp) itp.style.display = l==='it'?'block':'none';
 }
-// 点目录链接后自动关闭抽屉(只在手机端)
-document.querySelectorAll('.toc a').forEach(a => {
-  a.addEventListener('click', () => {
-    if (window.innerWidth <= 900) toggleToc(false);
-  });
+
+// ───────── 教程数据 ─────────
+const STEPS = [
+  {
+    id:'s1', num:'01', zh:'创建员工', it:'Creare il personale',
+    howto:[
+      {zh:'点左上角 ☰ 菜单', it:'Tocca il menu ☰ in alto a sinistra'},
+      {zh:'选「员工与岗位」', it:'Scegli "Personale e ruoli"'},
+      {zh:'在岗位下填员工名 + 密码', it:'Sotto il ruolo, scrivi nome e password'},
+      {zh:'点「创建」即可', it:'Tocca "Crea"', tip:'填好多个岗位可点"一次创建全部"'},
+    ],
+    frames:[
+      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl"><span class="fk-ham">☰</span> 打开菜单</div>`,
+      `<div class="fk-title">☰ 菜单</div><div class="fk-row">📋 审批订单</div><div class="fk-row">📱 供应商 WhatsApp</div><div class="fk-row hl">👥 员工与岗位</div>`,
+      `<div class="fk-title">👥 员工与岗位</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">帮厨 <span class="fk-tag">25 食材</span></div><input class="fk-input hl" value="TARAK"><input class="fk-input" value="••••"><button class="fk-btn">创建</button></div>`,
+      `<div class="fk-title">👥 员工与岗位</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">帮厨 <span class="fk-tag">25 食材</span></div><input class="fk-input" value="TARAK"><input class="fk-input" value="••••"><button class="fk-btn hl">创建 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 已创建 TARAK,自动分配 25 个食材</div>`,
+    ],
+    taps:[ {x:38,y:30}, {x:150,y:150}, {x:150,y:300}, {x:150,y:230} ],
+    caps:['点开汉堡菜单','选员工与岗位','填名字和密码','点创建,食材自动分配'],
+    capsIt:['Apri il menu','Personale e ruoli','Nome e password','Crea: alimenti assegnati']
+  },
+  {
+    id:'s2', num:'02', zh:'分配食材', it:'Assegnare gli alimenti',
+    howto:[
+      {zh:'创建员工时,该岗位的食材会自动分给他', it:'Creando il personale, gli alimenti del ruolo gli vengono assegnati', tip:'这是最省事的方式'},
+      {zh:'要手动调整:进「食材库」', it:'Per modificare manualmente: vai in "Magazzino"'},
+      {zh:'勾选食材,底部选「批量改订货员」', it:'Seleziona gli alimenti, poi "Cambia addetto"'},
+      {zh:'选人 → 点「确认修改」', it:'Scegli la persona → "Conferma"'},
+    ],
+    frames:[
+      `<div class="fk-title">📦 食材库</div><div class="fk-row hl"><input type="checkbox" checked> 花生酱 <span class="fk-tag">HD</span></div><div class="fk-row hl"><input type="checkbox" checked> 寿司米 <span class="fk-tag">HD</span></div><div class="fk-row"><input type="checkbox"> 黑米 <span class="fk-tag">METRO</span></div>`,
+      `<div class="fk-title">📦 食材库</div><div class="fk-row"><input type="checkbox" checked> 花生酱</div><div class="fk-row"><input type="checkbox" checked> 寿司米</div><div style="background:#fbf6e9;border-radius:8px;padding:10px;margin-top:6px"><div style="font-size:12px;color:var(--copper-deep);margin-bottom:6px">已选 2 条</div><select class="fk-input hl" style="width:100%">批量改订货员: TARAK</select><button class="fk-btn" style="margin-top:8px">确认修改</button></div>`,
+      `<div class="fk-title">📦 食材库</div><div style="background:#fbf6e9;border-radius:8px;padding:10px"><select class="fk-input" style="width:100%">订货员: TARAK</select><button class="fk-btn hl" style="margin-top:8px">确认修改 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 2 个食材已改为 TARAK 负责</div>`,
+    ],
+    taps:[ {x:30,y:65}, {x:150,y:240}, {x:150,y:175} ],
+    caps:['勾选要分配的食材','选订货员','确认,改完了'],
+    capsIt:['Seleziona gli alimenti','Scegli addetto','Conferma']
+  },
+  {
+    id:'s3', num:'03', zh:'供应商 WhatsApp', it:'WhatsApp dei fornitori',
+    howto:[
+      {zh:'点左上角 ☰ 菜单', it:'Tocca il menu ☰ in alto a sinistra'},
+      {zh:'选「供应商 WhatsApp」', it:'Scegli "WhatsApp fornitori"'},
+      {zh:'找到供应商,填或改 WhatsApp 号码', it:'Trova il fornitore, scrivi o modifica il numero'},
+      {zh:'保存即可', it:'Salva', tip:'号码带国家区号,如 +39…'},
+    ],
+    frames:[
+      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl"><span class="fk-ham">☰</span> 打开菜单</div>`,
+      `<div class="fk-title">☰ 菜单</div><div class="fk-row">📋 审批订单</div><div class="fk-row hl">📱 供应商 WhatsApp</div><div class="fk-row">👥 员工与岗位</div>`,
+      `<div class="fk-title">📱 供应商 WhatsApp</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">HD</div><input class="fk-input hl" value="+39 351 234 5678"><button class="fk-btn">保存</button></div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">METRO</div><input class="fk-input" value="+39 ..."></div>`,
+      `<div class="fk-title">📱 供应商 WhatsApp</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">HD</div><input class="fk-input" value="+39 351 234 5678"><button class="fk-btn hl">保存 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ HD 的 WhatsApp 已更新</div>`,
+    ],
+    taps:[ {x:38,y:30}, {x:150,y:150}, {x:150,y:200}, {x:150,y:230} ],
+    caps:['点开汉堡菜单','选供应商 WhatsApp','填 WhatsApp 号码','保存'],
+    capsIt:['Apri il menu','WhatsApp fornitori','Scrivi il numero','Salva']
+  },
+  {
+    id:'s4', num:'04', zh:'增减食材', it:'Aggiungere o rimuovere alimenti',
+    howto:[
+      {zh:'加食材:进「食材库」,点顶部「➕ 新增食材」', it:'Aggiungere: in "Magazzino", tocca "➕ Nuovo alimento"'},
+      {zh:'填名称、规格、价格、供应商', it:'Scrivi nome, formato, prezzo, fornitore', tip:'中文名或意大利文,填一个就行'},
+      {zh:'减食材:在列表找到它 → 编辑 → 停用', it:'Rimuovere: trova alimento → modifica → sospendi'},
+      {zh:'停用的不在订货里出现,但保留记录', it:'I sospesi spariscono dagli ordini ma restano in archivio'},
+    ],
+    frames:[
+      `<div class="fk-title">📦 食材库</div><div style="display:flex;gap:6px;margin-bottom:8px"><button class="fk-btn ghost hl" style="flex:1">➕ 新增食材</button><button class="fk-btn ghost" style="flex:1">🔍 供应商目录</button></div><div class="fk-row">花生酱</div><div class="fk-row">寿司米</div>`,
+      `<div class="fk-title">➕ 新增食材</div><input class="fk-input hl" style="width:100%;margin-bottom:8px" value="意大利文 / 中文名"><input class="fk-input" style="width:100%;margin-bottom:8px" placeholder="规格 10x900G"><input class="fk-input" style="width:100%;margin-bottom:8px" placeholder="价格 €"><input class="fk-input" style="width:100%" placeholder="供应商"><button class="fk-btn" style="margin-top:10px">添加</button>`,
+      `<div class="fk-title">➕ 新增食材</div><input class="fk-input" style="width:100%;margin-bottom:8px" value="春卷 Involtino"><input class="fk-input" style="width:100%;margin-bottom:8px" value="10x900G"><button class="fk-btn hl" style="margin-top:10px">添加 ✓</button><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 已加入食材库</div>`,
+    ],
+    taps:[ {x:75,y:50}, {x:150,y:60}, {x:150,y:210} ],
+    caps:['点新增食材','填名称、规格、价格','添加完成'],
+    capsIt:['Nuovo alimento','Nome, formato, prezzo','Aggiunto']
+  },
+  {
+    id:'s5', num:'05', zh:'批量导入', it:'Importare in blocco',
+    howto:[
+      {zh:'最简单:用供应商目录', it:'Più facile: dal catalogo del fornitore'},
+      {zh:'食材库顶部点「🔍 供应商目录」', it:'In "Magazzino" tocca "🔍 Catalogo fornitori"'},
+      {zh:'勾选要用的食材 → 一键导入', it:'Seleziona gli alimenti → importa'},
+      {zh:'或用「批量导入」上传 Excel', it:'Oppure carica un Excel da "Importa in blocco"', tip:'菜单 → 食材维护 → 批量导入'},
+    ],
+    frames:[
+      `<div class="fk-title">📦 食材库</div><div style="display:flex;gap:6px;margin-bottom:8px"><button class="fk-btn ghost" style="flex:1">➕ 新增食材</button><button class="fk-btn ghost hl" style="flex:1">🔍 供应商目录</button></div>`,
+      `<div class="fk-title">🔍 HD 供应商目录</div><div class="fk-row hl"><input type="checkbox" checked> 花生酱 12x350g</div><div class="fk-row hl"><input type="checkbox" checked> 寿司米 20kg</div><div class="fk-row"><input type="checkbox"> 幸运饼干</div><button class="fk-btn" style="margin-top:8px">导入选中 (2)</button>`,
+      `<div class="fk-title">🔍 HD 供应商目录</div><div class="fk-row"><input type="checkbox" checked> 花生酱</div><div class="fk-row"><input type="checkbox" checked> 寿司米</div><button class="fk-btn hl" style="margin-top:8px">导入选中 (2) ✓</button><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 2 个食材已导入</div>`,
+    ],
+    taps:[ {x:225,y:50}, {x:150,y:230}, {x:150,y:175} ],
+    caps:['点供应商目录','勾选要用的食材','一键导入'],
+    capsIt:['Catalogo fornitori','Seleziona gli alimenti','Importa']
+  },
+];
+
+// ───────── 渲染各节 ─────────
+const cont = document.getElementById('sections');
+STEPS.forEach(s=>{
+  const sec = document.createElement('section');
+  sec.className='step'; sec.id=s.id;
+  const lis = s.howto.map((h,i)=>`
+    <li><span class="bullet">${i+1}</span>
+      <div class="zh">${h.zh}</div>
+      <div class="it">${h.it}</div>
+      ${h.tip?`<div class="tip"><span class="zh">${h.tip}</span><span class="it">💡</span></div>`:''}
+    </li>`).join('');
+  sec.innerHTML = `
+    <div class="step-head">
+      <span class="num">${s.num}</span>
+      <h2><span class="zh">${s.zh}</span><span class="it" style="display:block">${s.it}</span></h2>
+    </div>
+    <div class="step-body">
+      <ul class="howto">${lis}</ul>
+      <div class="demo-wrap">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-topbar"><span>YKI</span><span>9:41</span></div>
+            <div class="phone-stage" id="stage-${s.id}">
+              ${s.frames.map((f,i)=>`<div class="fk-screen ${i===0?'active':''}" data-fr="${i}">${f}</div>`).join('')}
+              <div class="tap" id="tap-${s.id}"></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-controls">
+          <button onclick="playDemo('${s.id}')"><span class="zh">▶ 播放演示</span><span class="it">▶ Riproduci</span></button>
+        </div>
+        <div class="demo-caption" id="cap-${s.id}"></div>
+      </div>
+    </div>`;
+  cont.appendChild(sec);
 });
 
-function setLang(lang) {
-  const isIt = lang === 'it';
-  // 直接遍历所有 lang-zh / lang-it 元素,用 inline style 控制 display
-  // 这样彻底绕过 CSS class 选择器,避免浏览器渲染 bug
-  const zhEls = document.querySelectorAll('.lang-zh');
-  const itEls = document.querySelectorAll('.lang-it');
-  for (let i = 0; i < zhEls.length; i++) {
-    zhEls[i].style.display = isIt ? 'none' : 'inline';
-  }
-  for (let i = 0; i < itEls.length; i++) {
-    itEls[i].style.display = isIt ? 'inline' : 'none';
-  }
-  // 按钮高亮
-  document.getElementById('btn-zh').classList.toggle('active', !isIt);
-  document.getElementById('btn-it').classList.toggle('active', isIt);
-  // 记忆 + html lang
-  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
-  document.documentElement.lang = isIt ? 'it' : 'zh-CN';
-}
-(function() {
-  let lang = '';
-  try { lang = localStorage.getItem(LANG_KEY) || ''; } catch(e) {}
-  if (!lang) {
-    const nav = (navigator.language || '').toLowerCase();
-    lang = nav.startsWith('it') ? 'it' : 'zh';
-  }
-  setLang(lang);
-})();
-// Scrollspy: 高亮当前可见的目录项
-const tocLinks = document.querySelectorAll('.toc a');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(en => {
-    if (en.isIntersecting) {
-      const id = en.target.id;
-      tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+// ───────── 演示播放 ─────────
+const players={};
+function playDemo(id){
+  const s = STEPS.find(x=>x.id===id);
+  const stage = document.getElementById('stage-'+id);
+  const tap = document.getElementById('tap-'+id);
+  const cap = document.getElementById('cap-'+id);
+  const frames = stage.querySelectorAll('.fk-screen');
+  const isIt = document.body.classList.contains('lang-it');
+  if(players[id]) { players[id].forEach(t=>clearTimeout(t)); }
+  players[id]=[];
+  let fr=0;
+  const show=(n)=>{ frames.forEach(f=>f.classList.remove('active')); frames[n].classList.add('active'); };
+  show(0);
+  const seq=()=>{
+    if(fr>=s.taps.length){
+      players[id].push(setTimeout(()=>{ show(0); cap.textContent=''; }, 1800));
+      return;
     }
-  });
-}, { rootMargin: '-30% 0px -60% 0px' });
-document.querySelectorAll('h2[id]').forEach(h => observer.observe(h));
+    const t=s.taps[fr];
+    tap.style.left=t.x+'px'; tap.style.top=t.y+'px';
+    tap.classList.remove('show'); void tap.offsetWidth; tap.classList.add('show');
+    cap.textContent = (isIt? (s.capsIt&&s.capsIt[fr]) : s.caps[fr]) || '';
+    players[id].push(setTimeout(()=>{
+      if(fr+1 < frames.length) show(fr+1);
+      fr++;
+      players[id].push(setTimeout(seq, 1100));
+    }, 700));
+  };
+  players[id].push(setTimeout(seq, 300));
+}
+
 </script>
 </body>
 </html>
