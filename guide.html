@@ -180,10 +180,21 @@ const STEPS = [
       {zh:'点「创建」即可', it:'Tocca "Crea"', tip:'填好多个岗位可点"一次创建全部"'},
     ],
     frames:[
-      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl"><span class="fk-ham">☰</span> 打开菜单</div>`,
-      `<div class="fk-title">☰ 菜单</div><div class="fk-row">📋 审批订单</div><div class="fk-row">📱 供应商 WhatsApp</div><div class="fk-row hl">👥 员工与岗位</div>`,
-      `<div class="fk-title">👥 员工与岗位</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">帮厨 <span class="fk-tag">25 食材</span></div><input class="fk-input hl" value="TARAK"><input class="fk-input" value="••••"><button class="fk-btn">创建</button></div>`,
-      `<div class="fk-title">👥 员工与岗位</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">帮厨 <span class="fk-tag">25 食材</span></div><input class="fk-input" value="TARAK"><input class="fk-input" value="••••"><button class="fk-btn hl">创建 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 已创建 TARAK,自动分配 25 个食材</div>`,
+      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl" style="margin-top:6px"><span class="fk-ham">☰</span> <span style="margin-left:4px">点这里打开菜单</span></div>`,
+      `<div class="fk-title">☰ 菜单</div><div class="fk-row" style="font-size:12px">📋 审批订单</div><div class="fk-row" style="font-size:12px">📱 供应商 WhatsApp</div><div class="fk-row hl" style="font-size:12px">👥 员工与岗位</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">👥 员工与岗位</div>
+       <div style="background:#fffdf8;border-left:4px solid var(--copper);border-radius:8px;padding:10px;margin-bottom:8px">
+         <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span>帮厨</span><span style="color:var(--ink-soft);font-weight:400;font-size:11px">25 个食材</span></div>
+         <input class="fk-input hl" style="width:100%;margin-top:8px;font-size:12px" value="TARAK">
+         <input class="fk-input" style="width:100%;margin-top:6px;font-size:12px" value="••••">
+         <button class="fk-btn" style="margin-top:8px;font-size:12px">创建</button>
+       </div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">👥 员工与岗位</div>
+       <div style="background:#fffdf8;border-left:4px solid var(--copper);border-radius:8px;padding:10px">
+         <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span>帮厨</span><span style="color:var(--ink-soft);font-weight:400;font-size:11px">25 个食材</span></div>
+         <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px;font-size:12px"><b style="color:var(--copper-deep);text-decoration:underline dotted">TARAK</b> <span style="color:var(--ink-soft)">员工</span></div>
+       </div>
+       <div style="text-align:center;color:var(--ok);font-size:12px;margin-top:10px">✅ 已创建 TARAK,自动分配 25 个食材</div>`,
     ],
     taps:[ {x:38,y:30}, {x:150,y:150}, {x:150,y:300}, {x:150,y:230} ],
     caps:['点开汉堡菜单','选员工与岗位','填名字和密码','点创建,食材自动分配'],
@@ -198,9 +209,25 @@ const STEPS = [
       {zh:'选人 → 点「确认修改」', it:'Scegli la persona → "Conferma"'},
     ],
     frames:[
-      `<div class="fk-title">📦 食材库</div><div class="fk-row hl"><input type="checkbox" checked> 花生酱 <span class="fk-tag">HD</span></div><div class="fk-row hl"><input type="checkbox" checked> 寿司米 <span class="fk-tag">HD</span></div><div class="fk-row"><input type="checkbox"> 黑米 <span class="fk-tag">METRO</span></div>`,
-      `<div class="fk-title">📦 食材库</div><div class="fk-row"><input type="checkbox" checked> 花生酱</div><div class="fk-row"><input type="checkbox" checked> 寿司米</div><div style="background:#fbf6e9;border-radius:8px;padding:10px;margin-top:6px"><div style="font-size:12px;color:var(--copper-deep);margin-bottom:6px">已选 2 条</div><select class="fk-input hl" style="width:100%">批量改订货员: TARAK</select><button class="fk-btn" style="margin-top:8px">确认修改</button></div>`,
-      `<div class="fk-title">📦 食材库</div><div style="background:#fbf6e9;border-radius:8px;padding:10px"><select class="fk-input" style="width:100%">订货员: TARAK</select><button class="fk-btn hl" style="margin-top:8px">确认修改 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 2 个食材已改为 TARAK 负责</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📦 食材库</div>
+       <div style="display:flex;gap:6px;font-size:11px;margin-bottom:8px;color:var(--ink-soft)"><span>现有</span><span style="margin-left:auto">安全</span><span style="margin-left:8px">状态</span></div>
+       <div class="fk-row hl" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"><div><div style="font-size:10px;color:var(--ink-soft)">95</div>MAIONESE</div><span style="margin-left:auto;font-weight:700">19</span></div>
+       <div class="fk-row hl" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"><div><div style="font-size:10px;color:var(--ink-soft)">206</div>芒果汁水</div><span style="margin-left:auto;font-weight:700">15</span></div>
+       <div class="fk-row" style="font-size:12px"><input type="checkbox" style="margin-right:6px"><div>黑米</div></div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📦 食材库</div>
+       <div style="background:#fbf6e9;border-radius:8px;padding:10px">
+         <div style="font-size:11px;color:var(--copper-deep);margin-bottom:8px">已选 <b>2</b> 条</div>
+         <div style="font-size:11px;margin-bottom:4px">批量改订货员:</div>
+         <select class="fk-input hl" style="width:100%;font-size:12px"> TARAK </select>
+         <button class="fk-btn" style="margin-top:8px;font-size:12px">确认修改</button>
+       </div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📦 食材库</div>
+       <div style="background:#fbf6e9;border-radius:8px;padding:10px">
+         <div style="font-size:11px;margin-bottom:4px">批量改订货员:</div>
+         <select class="fk-input" style="width:100%;font-size:12px"> TARAK </select>
+         <button class="fk-btn hl" style="margin-top:8px;font-size:12px">确认修改 ✓</button>
+       </div>
+       <div style="text-align:center;color:var(--ok);font-size:12px;margin-top:10px">✅ 2 个食材已改为 TARAK 负责</div>`,
     ],
     taps:[ {x:30,y:65}, {x:150,y:240}, {x:150,y:175} ],
     caps:['勾选要分配的食材','选订货员','确认,改完了'],
@@ -215,10 +242,27 @@ const STEPS = [
       {zh:'保存即可', it:'Salva', tip:'号码带国家区号,如 +39…'},
     ],
     frames:[
-      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl"><span class="fk-ham">☰</span> 打开菜单</div>`,
-      `<div class="fk-title">☰ 菜单</div><div class="fk-row">📋 审批订单</div><div class="fk-row hl">📱 供应商 WhatsApp</div><div class="fk-row">👥 员工与岗位</div>`,
-      `<div class="fk-title">📱 供应商 WhatsApp</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">HD</div><input class="fk-input hl" value="+39 351 234 5678"><button class="fk-btn">保存</button></div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">METRO</div><input class="fk-input" value="+39 ..."></div>`,
-      `<div class="fk-title">📱 供应商 WhatsApp</div><div class="fk-row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="font-weight:700">HD</div><input class="fk-input" value="+39 351 234 5678"><button class="fk-btn hl">保存 ✓</button></div><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ HD 的 WhatsApp 已更新</div>`,
+      `<div class="fk-title"><span class="fk-ham">☰</span> 食材库</div><div class="fk-row hl" style="margin-top:6px"><span class="fk-ham">☰</span> <span style="margin-left:4px">点这里打开菜单</span></div>`,
+      `<div class="fk-title">☰ 菜单</div><div class="fk-row" style="font-size:12px">📋 审批订单</div><div class="fk-row hl" style="font-size:12px">📱 供应商 WhatsApp</div><div class="fk-row" style="font-size:12px">👥 员工与岗位</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📱 供应商 WhatsApp</div>
+       <div style="background:#fffdf8;border-left:4px solid var(--copper);border-radius:8px;padding:10px">
+         <div style="font-weight:700;font-size:13px">📦 HD</div>
+         <div style="font-size:11px;color:var(--ink-soft);margin-top:6px">📱 WhatsApp 号码</div>
+         <input class="fk-input hl" style="width:100%;margin-top:4px;font-size:12px" value="3512345678">
+         <div style="background:#fbf6e9;border-radius:6px;padding:8px;margin-top:8px">
+           <div style="font-size:10px;color:var(--ink-soft);margin-bottom:4px">🌐 默认发送语言</div>
+           <span style="background:var(--copper);color:#fff;font-size:10px;padding:3px 8px;border-radius:6px">🇨🇳 中文</span>
+           <span style="font-size:10px;padding:3px 8px;border:1px solid var(--line);border-radius:6px">🇮🇹 Italiano</span>
+         </div>
+         <button class="fk-btn" style="margin-top:8px;font-size:12px">保存</button>
+       </div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📱 供应商 WhatsApp</div>
+       <div style="background:#fffdf8;border-left:4px solid var(--copper);border-radius:8px;padding:10px">
+         <div style="font-weight:700;font-size:13px">📦 HD</div>
+         <input class="fk-input" style="width:100%;margin-top:6px;font-size:12px" value="3512345678">
+         <button class="fk-btn hl" style="margin-top:8px;font-size:12px">保存 ✓</button>
+       </div>
+       <div style="text-align:center;color:var(--ok);font-size:12px;margin-top:10px">✅ HD 的 WhatsApp 已更新</div>`,
     ],
     taps:[ {x:38,y:30}, {x:150,y:150}, {x:150,y:200}, {x:150,y:230} ],
     caps:['点开汉堡菜单','选供应商 WhatsApp','填 WhatsApp 号码','保存'],
@@ -233,9 +277,22 @@ const STEPS = [
       {zh:'停用的不在订货里出现,但保留记录', it:'I sospesi spariscono dagli ordini ma restano in archivio'},
     ],
     frames:[
-      `<div class="fk-title">📦 食材库</div><div style="display:flex;gap:6px;margin-bottom:8px"><button class="fk-btn ghost hl" style="flex:1">➕ 新增食材</button><button class="fk-btn ghost" style="flex:1">🔍 供应商目录</button></div><div class="fk-row">花生酱</div><div class="fk-row">寿司米</div>`,
-      `<div class="fk-title">➕ 新增食材</div><input class="fk-input hl" style="width:100%;margin-bottom:8px" value="意大利文 / 中文名"><input class="fk-input" style="width:100%;margin-bottom:8px" placeholder="规格 10x900G"><input class="fk-input" style="width:100%;margin-bottom:8px" placeholder="价格 €"><input class="fk-input" style="width:100%" placeholder="供应商"><button class="fk-btn" style="margin-top:10px">添加</button>`,
-      `<div class="fk-title">➕ 新增食材</div><input class="fk-input" style="width:100%;margin-bottom:8px" value="春卷 Involtino"><input class="fk-input" style="width:100%;margin-bottom:8px" value="10x900G"><button class="fk-btn hl" style="margin-top:10px">添加 ✓</button><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 已加入食材库</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📦 食材库</div>
+       <div style="display:flex;gap:6px;margin-bottom:8px"><div class="hl" style="flex:1;background:#fdf3f3;border:1px solid #e8dec5;border-radius:8px;padding:9px;text-align:center;font-size:12px;color:var(--copper-deep);font-weight:600">➕ 新增食材</div><div style="flex:1;background:#fdf3f3;border:1px solid #e8dec5;border-radius:8px;padding:9px;text-align:center;font-size:12px;color:var(--ink-soft)">🔍 供应商目录</div></div>
+       <div class="fk-row" style="font-size:12px">MAIONESE</div><div class="fk-row" style="font-size:12px">芒果汁水</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">➕ 新增食材</div>
+       <div style="font-size:10px;color:var(--ink-soft)">意大利文名称</div>
+       <div class="fk-input hl" style="background:#f5ecd9;font-size:12px;margin:3px 0 8px">Involtino primavera</div>
+       <div style="font-size:10px;color:var(--ink-soft)">中文名称</div>
+       <div class="fk-input" style="background:#f5ecd9;font-size:12px;margin:3px 0 8px">春卷</div>
+       <div style="font-size:10px;color:var(--ink-soft)">规格</div>
+       <div class="fk-input" style="background:#f5ecd9;font-size:12px;margin:3px 0 8px">10x900G</div>
+       <button class="fk-btn" style="font-size:12px">添加</button>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">➕ 新增食材</div>
+       <div class="fk-input" style="background:#f5ecd9;font-size:12px;margin-bottom:6px">春卷 / Involtino</div>
+       <div class="fk-input" style="background:#f5ecd9;font-size:12px;margin-bottom:6px">10x900G</div>
+       <button class="fk-btn hl" style="font-size:12px">添加 ✓</button>
+       <div style="text-align:center;color:var(--ok);font-size:12px;margin-top:10px">✅ 已加入食材库</div>`,
     ],
     taps:[ {x:75,y:50}, {x:150,y:60}, {x:150,y:210} ],
     caps:['点新增食材','填名称、规格、价格','添加完成'],
@@ -250,9 +307,18 @@ const STEPS = [
       {zh:'或用「批量导入」上传 Excel', it:'Oppure carica un Excel da "Importa in blocco"', tip:'菜单 → 食材维护 → 批量导入'},
     ],
     frames:[
-      `<div class="fk-title">📦 食材库</div><div style="display:flex;gap:6px;margin-bottom:8px"><button class="fk-btn ghost" style="flex:1">➕ 新增食材</button><button class="fk-btn ghost hl" style="flex:1">🔍 供应商目录</button></div>`,
-      `<div class="fk-title">🔍 HD 供应商目录</div><div class="fk-row hl"><input type="checkbox" checked> 花生酱 12x350g</div><div class="fk-row hl"><input type="checkbox" checked> 寿司米 20kg</div><div class="fk-row"><input type="checkbox"> 幸运饼干</div><button class="fk-btn" style="margin-top:8px">导入选中 (2)</button>`,
-      `<div class="fk-title">🔍 HD 供应商目录</div><div class="fk-row"><input type="checkbox" checked> 花生酱</div><div class="fk-row"><input type="checkbox" checked> 寿司米</div><button class="fk-btn hl" style="margin-top:8px">导入选中 (2) ✓</button><div style="text-align:center;color:var(--ok);font-size:13px;margin-top:10px">✅ 2 个食材已导入</div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">📦 食材库</div>
+       <div style="display:flex;gap:6px;margin-bottom:8px"><div style="flex:1;background:#fdf3f3;border:1px solid #e8dec5;border-radius:8px;padding:9px;text-align:center;font-size:12px;color:var(--ink-soft)">➕ 新增食材</div><div class="hl" style="flex:1;background:#fdf3f3;border:1px solid #e8dec5;border-radius:8px;padding:9px;text-align:center;font-size:12px;color:var(--copper-deep);font-weight:600">🔍 供应商目录</div></div>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">🔍 HD 供应商目录</div>
+       <div class="fk-row hl" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"> 花生酱 <span style="color:var(--ink-soft);font-size:10px;margin-left:auto">12x350g</span></div>
+       <div class="fk-row hl" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"> 寿司米 <span style="color:var(--ink-soft);font-size:10px;margin-left:auto">20kg</span></div>
+       <div class="fk-row" style="font-size:12px"><input type="checkbox" style="margin-right:6px"> 幸运饼干</div>
+       <button class="fk-btn" style="margin-top:8px;font-size:12px">导入选中 (2)</button>`,
+      `<div style="font-weight:800;font-size:14px;margin-bottom:8px">🔍 HD 供应商目录</div>
+       <div class="fk-row" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"> 花生酱</div>
+       <div class="fk-row" style="font-size:12px"><input type="checkbox" checked style="margin-right:6px"> 寿司米</div>
+       <button class="fk-btn hl" style="margin-top:8px;font-size:12px">导入选中 (2) ✓</button>
+       <div style="text-align:center;color:var(--ok);font-size:12px;margin-top:10px">✅ 2 个食材已导入</div>`,
     ],
     taps:[ {x:225,y:50}, {x:150,y:230}, {x:150,y:175} ],
     caps:['点供应商目录','勾选要用的食材','一键导入'],
