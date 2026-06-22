@@ -10,6 +10,8 @@ const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 // 启动时立即缓存的核心资源
 const CORE_ASSETS = [
+  '/',
+  '/index.html',
   '/cucina.html',
   '/cucina.css',
   '/manifest.json',
@@ -76,7 +78,16 @@ self.addEventListener('fetch', e => {
           }
           return resp;
         })
-        .catch(() => caches.match(req).then(c => c || caches.match('/cucina.html')))
+        .catch(() =>
+          // 网络失败：先找请求的页面本身，再退首页，最后退 cucina,层层兜底防白屏
+          caches.match(req).then(c =>
+            c || caches.match('/index.html').then(idx =>
+              idx || caches.match('/').then(root =>
+                root || caches.match('/cucina.html')
+              )
+            )
+          )
+        )
     );
     return;
   }
