@@ -26,9 +26,21 @@ self.addEventListener('install', e => {
   console.log(`[SW] 安装新版本: ${VERSION}`);
   e.waitUntil(
     caches.open(STATIC_CACHE)
-      .then(c => c.addAll(CORE_ASSETS).catch(err => {
-        console.warn('[SW] 部分核心资源缓存失败（不影响安装）:', err);
-      }))
+      .then(async c => {
+        // 逐个缓存:只存 fetch 成功(resp.ok)的资源,坏的/不全的直接跳过,绝不存残缺
+        await Promise.all(CORE_ASSETS.map(async url => {
+          try {
+            const resp = await fetch(url, { cache: 'no-cache' });
+            if (resp && resp.ok) {
+              await c.put(url, resp.clone());
+            } else {
+              console.warn('[SW] 跳过(响应非200):', url);
+            }
+          } catch (err) {
+            console.warn('[SW] 跳过(网络失败):', url);
+          }
+        }));
+      })
       .then(() => self.skipWaiting())
   );
 });
