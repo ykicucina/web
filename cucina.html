@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.122">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.123">
 </head>
 <body>
 
@@ -695,7 +695,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🧰 批量维护 Modal (v2.7.122) -->
+<!-- 🧰 批量维护 Modal (v2.7.123) -->
 <div class="modal-overlay" id="modal-batch-tools">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -844,6 +844,36 @@ function ridPickerGo() {
   </div>
 </div>
 
+<!-- 🔑 给员工设密码 Modal (v2.7.123) -->
+<div class="modal-overlay" id="modal-set-chef-pass">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 <span id="scp-title">重置员工密码</span></div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:14px;" id="scp-sub">为员工设置新密码,改好后请把密码告诉他。</p>
+    <div class="form-group">
+      <label class="form-label">新密码（至少 4 位）</label>
+      <div class="pass-wrap">
+        <input type="password" id="scp-new" class="form-control" placeholder="新密码" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button type="button" class="pass-eye" onclick="togglePass('scp-new',this)" tabindex="-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">再输一遍</label>
+      <div class="pass-wrap">
+        <input type="password" id="scp-confirm" class="form-control" placeholder="再输一遍确认" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button type="button" class="pass-eye" onclick="togglePass('scp-confirm',this)" tabindex="-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="scp-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;"></div>
+    <button class="btn btn-primary" id="scp-save" style="width:100%;margin-bottom:8px;" onclick="submitSetChefPass()">保存新密码</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeModal('modal-set-chef-pass')">取消</button>
+  </div>
+</div>
+
 <!-- 系统通知Modal -->
 <div class="modal-overlay" id="modal-system-notif">
   <div class="modal">
@@ -854,7 +884,7 @@ function ridPickerGo() {
   </div>
 </div>
 
-<!-- 🎉 首次欢迎引导 Modal (v2.7.122) -->
+<!-- 🎉 首次欢迎引导 Modal (v2.7.123) -->
 <div class="modal-overlay" id="modal-welcome">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1342,18 +1372,18 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.122"></script>
+<script src="/i18n.js?v=v2.7.123"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.122"></script>
+<script src="/sortable.min.js?v=v2.7.123"></script>
 
 <script>
 
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.122';
+const APP_VERSION = 'v2.7.123';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1486,7 +1516,7 @@ async function rebindPushSubscription() {
     if (Notification.permission !== 'granted') return;  // 没权限,跳过
     if (!SB_KEY) return;  // 没登录,跳过
     let sub = await getCurrentPushSubscription();
-    // v2.7.122: 浏览器没订阅但权限已授予 → 自动重新订阅
+    // v2.7.123: 浏览器没订阅但权限已授予 → 自动重新订阅
     // (解决"多账号切换后,某账号 disablePush 取消了整个浏览器的订阅,
     //  切回来时开关显示未开启且收不到通知"的问题)
     if (!sub) {
@@ -1587,14 +1617,14 @@ async function refreshPushSettingUI() {
   const wrap = document.getElementById('push-setting-wrap');
   const status = document.getElementById('push-setting-status');
   const btn = document.getElementById('push-setting-btn');
-  // v2.7.122: 汉堡里的推送 UI
+  // v2.7.123: 汉堡里的推送 UI
   const hamWrap = document.getElementById('ham-push-wrap');
   const hamStatus = document.getElementById('ham-push-status');
   const hamBtn = document.getElementById('ham-push-btn');
 
   const canSee = isAdmin || ['admin','buyer','supervisor'].includes(currentUserRole);
   if (hamWrap) hamWrap.style.display = canSee ? 'block' : 'none';
-  if (wrap) wrap.style.display = 'none';  // v2.7.122: 旧"我的"tab 的推送块已隐藏,汉堡接管
+  if (wrap) wrap.style.display = 'none';  // v2.7.123: 旧"我的"tab 的推送块已隐藏,汉堡接管
   if (!canSee) return;
 
   const supported = pushSupported();
@@ -1711,7 +1741,7 @@ let orders      = [];      // cucina_orders
 let _orderSearchQ = '';    // 订货搜索关键词
 let _orderCheckedFilter = 'all';  // 已选/未选过滤：'all' / 'selected' / 'unselected'
 let chefs       = {};      // {name: passHash}  — 哈希值，不存明文
-let positionsList = [];    // v2.7.122: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
+let positionsList = [];    // v2.7.123: 岗位列表(per-restaurant),如 ['大厨','帮厨',...]
 let currentUserRole = 'staff'; // staff / supervisor / buyer / warehouse / admin
 let currentUserPerms = {can_add_stock: false, can_stocktake: false};
 let currentTab  = 'inventory';
@@ -1749,7 +1779,7 @@ const t = k => (i18n[currentLang]||i18n.zh)[k] || k;
 // ════════════════════════════════════════
 // 加载失败时显示友好的重试界面（替代静默失败 / 空白员工列表）
 async function showLoadErrorScreen() {
-  // v2.7.122: 加载失败可能是坏缓存导致。第一次失败时自动清缓存+重载(客户无感),
+  // v2.7.123: 加载失败可能是坏缓存导致。第一次失败时自动清缓存+重载(客户无感),
   // 清完还失败才显示手动重试屏(那才是真网络问题)
   let alreadyRecovered = false;
   try { alreadyRecovered = sessionStorage.getItem('yki_auto_recovered') === '1'; } catch(e){}
@@ -2084,7 +2114,7 @@ async function loadAllData() {
     }
     // 应用开关到静态 DOM 元素（菜单项显隐等）
     applyFeatureFlagsToDOM();
-    // v2.7.122: 加载岗位列表
+    // v2.7.123: 加载岗位列表
     try {
       const posData = await posRes.json();
       if (posData.length && posData[0].value) {
@@ -2097,7 +2127,7 @@ async function loadAllData() {
   } catch(e) {
     console.error('读取设置失败:', e);
   }
-  // v2.7.122: 加载成功,清掉自动恢复标记(下次真出问题时还能再自动恢复一次)
+  // v2.7.123: 加载成功,清掉自动恢复标记(下次真出问题时还能再自动恢复一次)
   try { sessionStorage.removeItem('yki_auto_recovered'); } catch(e){}
   return true;
 }
@@ -2379,7 +2409,7 @@ async function deleteEditItem() {
 
 async function doLogout() {
   teardownRealtime();
-  // v2.7.122: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
+  // v2.7.123: 退出时不再 disablePush()(那会退订整个浏览器的推送,导致重新登录后
   // 通知开关变回"关闭")。推送订阅绑浏览器、不绑账户,只需清 IDB 断开当前用户关联,
   // 重新登录时 rebindPushSubscription() 会把订阅重新关联到新用户。
   // 清 IDB（防止 SW 用过期令牌）
@@ -2422,16 +2452,16 @@ function showApp() {
     admin: t('roleAdmin')||'管理员'
   };
   document.getElementById('profile-role').textContent = isAdmin ? (t('roleAdmin')||'管理员') : (roleLabel[currentUserRole]||t('roleStaff')||'员工');
-  // v2.7.122: 管理功能已移到汉堡菜单, "我的"tab 里的旧 admin-menu 始终隐藏
+  // v2.7.123: 管理功能已移到汉堡菜单, "我的"tab 里的旧 admin-menu 始终隐藏
   // (DOM 保留, 因为 i18n/角标等 JS 仍引用其中 id, 避免报错; 仅不再可见)
   const _oldAdminMenu = document.getElementById('admin-menu');
   if (_oldAdminMenu) _oldAdminMenu.style.display = 'none';
-  // v2.7.122: 汉堡菜单里的管理组 + 改管理员密码(复用 isAdmin)
+  // v2.7.123: 汉堡菜单里的管理组 + 改管理员密码(复用 isAdmin)
   const hamAdmin = document.getElementById('ham-admin-menu');
   if (hamAdmin) hamAdmin.style.display = isAdmin ? 'block' : 'none';
   const hamAdminPass = document.getElementById('ham-change-admin-pass');
   if (hamAdminPass) hamAdminPass.style.display = isAdmin ? 'flex' : 'none';
-  // v2.7.122: 管理员用的是"管理员密码",隐藏用不到的"修改密码"(员工登录时保留)
+  // v2.7.123: 管理员用的是"管理员密码",隐藏用不到的"修改密码"(员工登录时保留)
   const hamChangePass = document.getElementById('ham-change-pass');
   if (hamChangePass) hamChangePass.style.display = isAdmin ? 'none' : 'flex';
   // v2.7.80: 库存管理顶部 admin 操作按钮组(替代原"物料管理"菜单入口)
@@ -2484,12 +2514,12 @@ function showApp() {
     setTimeout(()=>openModal('modal-system-notif'), 800);
     window._systemNotification = null; // 只弹一次
   } else {
-    // v2.7.122: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
+    // v2.7.123: 首次欢迎引导（仅管理员 + 还没建任何员工时弹一次）
     maybeShowWelcome();
   }
 }
 
-// v2.7.122: 新店首次引导
+// v2.7.123: 新店首次引导
 // 判断"首次": 管理员登录 + 除了 admin 自己外没有别的员工 + 本浏览器没标记看过
 function maybeShowWelcome() {
   try {
@@ -2710,7 +2740,7 @@ function renderInvTable() {
 
   const tbody = document.getElementById('inv-tbody');
   if (!data.length) {
-    // v2.7.122: 区分"完全没食材"和"筛选无结果",给不同引导
+    // v2.7.123: 区分"完全没食材"和"筛选无结果",给不同引导
     const hasAnyItem = items && items.length > 0;
     const msg = hasAnyItem
       ? '没有符合条件的食材<br><span style="font-size:12px;">换个搜索词或清除筛选试试</span>'
@@ -3199,7 +3229,7 @@ function renderOrderList() {
     display = sorted;
   }
   if (!display.length) {
-    // v2.7.122: 区分几种空情况给不同引导
+    // v2.7.123: 区分几种空情况给不同引导
     let msg;
     if (_orderSearchQ) {
       msg = '没有匹配的食材<br><span style="font-size:12px;">换个搜索词试试</span>';
@@ -4690,7 +4720,7 @@ function renderOrderAlertPanel() {
           .map(o=>o.chef)
   );
 
-  // 未提交的员工(v2.7.122: 只保留真实存在的员工,排除岗位名等非员工)
+  // 未提交的员工(v2.7.123: 只保留真实存在的员工,排除岗位名等非员工)
   // chef 字段可能填的是岗位名(如"SPECIALE"),它不在 chefs 员工字典里,需排除
   const isRealStaff = (name) => {
     if (!name) return false;
@@ -4882,7 +4912,7 @@ function renderReceiveTab() {
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
       if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.122: 收集订货日期
+      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.123: 收集订货日期
       const key = i.item_code||i.name;
       if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
       supMap[sup].items[key].need += i.need;
@@ -4912,7 +4942,7 @@ function renderReceiveTab() {
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.122: 订货时间显示(取日期部分;多张订单显示最早~最晚)
+    // v2.7.123: 订货时间显示(取日期部分;多张订单显示最早~最晚)
     const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
     const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
     let orderTimeLabel = '';
@@ -5143,7 +5173,7 @@ function updateOrderAlerts() {
 
     const chefNames = [...new Set(supItems.map(i=>i.chef).filter(Boolean))];
     chefNames.forEach(chefName=>{
-      // v2.7.122: 跳过非真实员工(如岗位名)
+      // v2.7.123: 跳过非真实员工(如岗位名)
       const _isStaff = chefs[chefName] || Object.keys(chefs).some(n=>n.toLowerCase()===chefName.toLowerCase());
       if (!_isStaff) return;
       // 检查这个员工今天有没有提交订单
@@ -6514,7 +6544,7 @@ function updatePendingBadge() {
   const cnt = pending.length;
   const _pbt = document.getElementById('pending-badge-text');
   if (_pbt) _pbt.textContent = cnt>0 ? `${cnt} 条待处理订单` : '查看待处理订单';
-  // v2.7.122: 汉堡里审批订单的角标
+  // v2.7.123: 汉堡里审批订单的角标
   const _hpb = document.getElementById('ham-pending-badge');
   if (_hpb) _hpb.textContent = cnt>0 ? `(${cnt})` : '';
   // 底部导航角标
@@ -7313,7 +7343,7 @@ function changeLang(v) {
   se('filter-sent', t('statusSent')||'已发送');
   se('filter-done', t('done'));
   se('filter-consume', t('filterConsume')||'消耗记录');
-  // v2.7.122: 日期筛选下拉
+  // v2.7.123: 日期筛选下拉
   se('opt-date-all', t('dateAll')||'全部日期');
   se('opt-date-today', t('dateToday')||'今天');
   se('opt-date-yesterday', t('dateYesterday')||'昨天');
@@ -7321,7 +7351,7 @@ function changeLang(v) {
   // 订货页 已选/未选 过滤标签
   se('lbl-filter-selected', t('filterSelected')||'✓ 仅看已选');
   se('lbl-filter-unselected', t('filterUnselected')||'⚪ 仅看未选');
-  // v2.7.122: 汉堡菜单全部文本 i18n
+  // v2.7.123: 汉堡菜单全部文本 i18n
   se('ham-lbl-sortmethod', t('hamSortMethod'));
   se('ham-lbl-display', t('hamDisplay'));
   se('ham-sort-default', t('hamSortDefault'));
@@ -7346,12 +7376,12 @@ function changeLang(v) {
   se('ham-lbl-changepass', t('hamChangePass'));
   se('ham-lbl-changeadminpass', t('hamChangeAdminPass'));
   se('ham-lbl-logout', t('hamLogout'));
-  // v2.7.122: 搜索框 placeholder
+  // v2.7.123: 搜索框 placeholder
   const _invS = document.getElementById('inv-search');
   if (_invS) _invS.placeholder = t('searchFood')||'搜索食材...';
   const _ordS = document.getElementById('order-search');
   if (_ordS) _ordS.placeholder = '🔍 '+(t('searchFood')||'搜索食材...');
-  // v2.7.122: 食材库页全量 i18n
+  // v2.7.123: 食材库页全量 i18n
   se('inv-lbl-total', t('allFood'));
   se('inv-lbl-low', t('lowSafeStock'));
   se('inv-lbl-value', t('totalVal'));
@@ -7381,7 +7411,7 @@ function changeLang(v) {
   se('th-stock', t('colCurrentStock'));
   se('th-safe', t('colSafetyStock'));
   se('th-status', t('colStatus'));
-  // v2.7.122: 修改管理员密码弹窗
+  // v2.7.123: 修改管理员密码弹窗
   se('ap-title', t('apTitle'));
   se('ap-lbl-current', t('apCurrent'));
   se('ap-lbl-new', t('apNew'));
@@ -7427,7 +7457,7 @@ function changeLang(v) {
   se('nav-lbl-order', t('tabs')[1]);
   // 重新渲染
   switchTab(currentTab);
-  // v2.7.122: 切语言时刷新推送 UI(已开启/关闭等状态文字)
+  // v2.7.123: 切语言时刷新推送 UI(已开启/关闭等状态文字)
   if (typeof refreshPushSettingUI === 'function') refreshPushSettingUI();
   // 持久化语言偏好到 user_prefs（per-user，登录后才会真实发请求）
   saveUserLang(v);
@@ -7485,7 +7515,7 @@ function renderStaffPanel() {
   renderStaffByPosition();
 }
 
-// v2.7.122: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
+// v2.7.123: 员工管理统一表 —— 按岗位排,岗位下显示/创建员工,末尾"其他员工"
 function renderStaffByPosition() {
   const box = document.getElementById('staff-by-position');
   if (!box) return;
@@ -7560,7 +7590,7 @@ function renderStaffByPosition() {
   box.innerHTML = html;
 }
 
-// v2.7.122 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
+// v2.7.123 第二步: 按岗位列出 -> 每个岗位填员工名+密码直接创建
 // 该岗位当前是谁: 从 chefs 的 positions 反查(谁的 positions 含这个岗位)
 function renderPositionStaffView() {
   const box = document.getElementById('pos-staff-view');
@@ -7735,26 +7765,48 @@ function renderStaffList() {
 }
 
 // v2.7.79: admin 重置员工密码
+let _setChefPassTarget = null;  // 当前正在改密码的员工名
+
 async function adminChangeChefPass(name) {
-  const newPass = prompt(`为员工「${name}」设置新密码(至少 4 位):`);
-  if (newPass === null) return;  // 用户取消
-  const p = newPass.trim();
-  if (p.length < 4) {
-    toast('密码至少 4 位', 'err');
-    return;
-  }
-  if (!confirm(`确认把「${name}」的密码改为「${p}」?\n\n请把新密码告诉员工。`)) return;
+  _setChefPassTarget = name;
+  const titleEl = document.getElementById('scp-title');
+  const subEl = document.getElementById('scp-sub');
+  if (titleEl) titleEl.textContent = `重置「${name}」的密码`;
+  if (subEl) subEl.textContent = `为「${name}」设置新密码,改好后请把密码告诉他。`;
+  // 清空输入和错误
+  ['scp-new','scp-confirm'].forEach(id=>{ const el=document.getElementById(id); if(el){el.value='';el.type='password';} });
+  const err = document.getElementById('scp-err'); if(err){err.style.display='none';err.textContent='';}
+  openModal('modal-set-chef-pass');
+}
+
+async function submitSetChefPass() {
+  const name = _setChefPassTarget;
+  if (!name) { closeModal('modal-set-chef-pass'); return; }
+  const errEl = document.getElementById('scp-err');
+  const showErr = (msg) => { if(errEl){ errEl.textContent = msg; errEl.style.display='block'; } };
+  // 去掉首尾空格(防手机输入法自动加空格)
+  const p1 = (document.getElementById('scp-new').value || '').trim();
+  const p2 = (document.getElementById('scp-confirm').value || '').trim();
+  if (p1.length < 4) { showErr('密码至少 4 位'); return; }
+  if (p1 !== p2) { showErr('两次输入的密码不一致,请重新输入'); return; }
+
+  const saveBtn = document.getElementById('scp-save');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
   try {
     const r = await fetch(SB_URL + '/admin-set-chef-password', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chefName: name, newPassword: p })
+      body: JSON.stringify({ chefName: name, newPassword: p1 })
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-    toast(`✅ 已重置「${name}」的密码`);
+    closeModal('modal-set-chef-pass');
+    toast(`✅ 已把「${name}」的密码设为:${p1}`);
+    _setChefPassTarget = null;
   } catch (e) {
-    toast('❌ 失败: ' + (e.message || e), 'err');
+    showErr('保存失败: ' + (e.message || e));
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存新密码'; }
   }
 }
 
@@ -7856,7 +7908,7 @@ async function saveStaffRole(name) {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.122: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
+// v2.7.123: 岗位列表管理(增删)。backName = 返回时回到哪个员工的设置页(可空)
 function managePositions(backName) {
   const html = `
     <div style="padding:16px 0;">
@@ -7934,7 +7986,7 @@ async function savePositionsList() {
   } catch(e) { toast(t('save_fail'),'err'); }
 }
 
-// v2.7.122 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
+// v2.7.123 方案B: 按岗位分配食材 —— 把某岗位的所有食材的订货人(chef)一次性设为某员工
 function showAssignByPosition() {
   // 统计每个岗位下有多少食材
   const posCount = {};
@@ -8108,7 +8160,7 @@ function renderItemsPanel() {
 async function saveNewItem() {
   const italian = document.getElementById('ni-italian').value.trim();
   const nameZh = document.getElementById('ni-name').value.trim();
-  // v2.7.122: 中文名 或 意大利文 至少填一个(不再强制意文必填)
+  // v2.7.123: 中文名 或 意大利文 至少填一个(不再强制意文必填)
   if(!italian && !nameZh){ toast('请至少填写中文名或意大利文名称','err'); return; }
   // v2.7.81: 收集所有字段(对齐编辑表单)
   // 订货周期
@@ -8129,7 +8181,7 @@ async function saveNewItem() {
   const maxOrderRaw = document.getElementById('ni-max-order')?.value;
   const max_order = maxOrderRaw ? parseFloat(maxOrderRaw) : null;
 
-  // v2.7.122: 重名/重码检测,防止建重复食材
+  // v2.7.123: 重名/重码检测,防止建重复食材
   const _code = (document.getElementById('ni-code').value||'').trim();
   const _zh = nameZh, _it = italian;
   const dup = items.find(it => {
@@ -9058,7 +9110,7 @@ function showFeatureFlagsModal() {
   openModal('modal-feature-flags');
 }
 
-// v2.7.122: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
+// v2.7.123: 功能开关预设模式 —— 只改界面勾选,用户确认后再点保存
 function applyFlagPreset(preset) {
   // 各预设对应的开关组合(true=开)
   const presets = {
@@ -9149,12 +9201,12 @@ function _bsEsc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// v2.7.122: 批量维护入口(合并三个批量工具)
+// v2.7.123: 批量维护入口(合并三个批量工具)
 function showBatchToolsModal() {
   openModal('modal-batch-tools');
 }
 
-// v2.7.122: 管理员功能分组折叠
+// v2.7.123: 管理员功能分组折叠
 function toggleAdminGroup(id) {
   const box = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
