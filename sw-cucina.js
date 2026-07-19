@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   '/index.html',
   '/cucina.html',
   '/cucina.css',
+  '/app.js',          // v2.7.125: 业务逻辑从 cucina.html 拆出
   '/manifest.json',
   '/logo.png',
   '/icon.png',

@@ -13,6 +13,7 @@ const i18n = {
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
     loginSelect:'名字', loginPass:'密码',
     loginBtn:'进入系统', loginErr:'密码错误，请重试',
+    loginNetFail:'网络连接失败，请检查网络后重试',
     // 库存
     invTitle:'食材库', allFood:'全部食材', lowSafeStock:'低于安全库存',
     totalVal:'总库存价值', searchFood:'搜索食材...',
@@ -280,6 +281,7 @@ const i18n = {
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
     loginSelect:'Nome', loginPass:'Password',
     loginBtn:'Accedi', loginErr:'Password errata, riprova',
+    loginNetFail:'Connessione di rete fallita, controlla la rete e riprova',
     invTitle:'Magazzino', allFood:'Tutti gli alimenti', lowSafeStock:'Sotto scorta minima',
     totalVal:'Valore totale magazzino', searchFood:'Cerca alimento...',
     colFood:'Alimento', colStock:'Attuale', colSafe:'Min.',
@@ -538,6 +540,7 @@ const i18n = {
     loginTitle:'YKI Supply Hub', loginSub:'Cucina Management · Carpi',
     loginSelect:'নাম', loginPass:'পাসওয়ার্ড',
     loginBtn:'প্রবেশ করুন', loginErr:'পাসওয়ার্ড ভুল, আবার চেষ্টা করুন',
+    loginNetFail:'নেটওয়ার্ক সংযোগ ব্যর্থ, নেটওয়ার্ক পরীক্ষা করে আবার চেষ্টা করুন',
     invTitle:'ইনভেন্টরি', allFood:'সব খাবার', lowSafeStock:'নিরাপদ মজুদের নিচে',
     totalVal:'মোট মজুদ মূল্য', searchFood:'খাবার খুঁজুন...',
     colFood:'খাবার', colStock:'বর্তমান', colSafe:'ন্যূনতম',
