@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.125';
+const APP_VERSION = 'v2.7.126';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1047,6 +1047,7 @@ async function doLogout() {
   _orderSearchQ = '';
   _orderSortMode = 'default';
   _orderNote = '';
+  _draftRestored = false;  // v2.7.126: 下次登录可再次恢复草稿
   _weekdayFilter = '';
   _selectedOrderIds = new Set();
   window._pickEntries = null;
@@ -1104,6 +1105,7 @@ function showApp() {
   const buyerPanel = document.getElementById('buyer-send-panel');
   if (buyerPanel) buyerPanel.style.display = (isAdmin || currentUserRole==='buyer') ? 'block' : 'none';
   items.forEach(i=>{ i.checked = false; i.need = 0; });
+  _restoreOrderDraft();  // v2.7.126: 恢复上次未提交的勾选
   const nav = document.querySelector('.bottom-nav');
   if (nav) nav.style.display = 'flex';
   const footer = document.querySelector('.order-footer');
@@ -3063,6 +3065,7 @@ function stepQty(id, d) {
     card.className = `order-item-card ${item.checked?(ff('low_stock_highlight')&&fc>0?'selected-low':'selected'):''}`;
   }
   updateOrderFooter();
+  _saveOrderDraft();
 }
 
 // 问题1：重置所有订货量和消耗量
@@ -3070,6 +3073,7 @@ function resetOrder() {
   if (!confirm(t('confirm_reset_all'))) return;
   items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
   _orderNote = '';
+  _clearOrderDraft();
   refreshOrderNoteBadge();
   renderOrderList();
   toast(t('reset_ok'));
@@ -3096,11 +3100,75 @@ function stepConsume(id, d) {
     card.className = `order-item-card ${item.checked?(fc>0?'selected-low':'selected'):''}`;
   }
   updateOrderFooter();
+  _saveOrderDraft();
 }
 
 function setConsume(id, val) {
   const item = items.find(i=>i.id===id);
   if (item) item.consume = parseFloat(val)||0;
+  _saveOrderDraft();
+}
+
+// ════════════════════════════════════════
+// 📝 订货草稿(v2.7.126)
+// 勾选状态原来只存内存,退出/刷新即丢 → 自动存 localStorage,
+// 下次进入同一账号自动恢复;提交/重置后清除;24 小时过期(订货是每日场景)
+// ════════════════════════════════════════
+let _draftSaveTimer = null;
+let _draftRestored = false;   // 每次登录只恢复一次
+const DRAFT_TTL_MS = 24 * 3600 * 1000;
+
+function _draftKey() {
+  return 'yki_order_draft_' + REST_ID + '_' + (currentUser || 'anon');
+}
+
+function _saveOrderDraft() {
+  if (!currentUser) return;
+  // 防抖:连续勾选/输数量时 500ms 内只写一次
+  if (_draftSaveTimer) clearTimeout(_draftSaveTimer);
+  _draftSaveTimer = setTimeout(() => {
+    try {
+      const picks = items
+        .filter(i => i.checked || i.need > 0 || (i.consume && i.consume !== 0))
+        .map(i => ({ id: i.id, need: i.need || 0, consume: i.consume || 0, checked: !!i.checked, pickedAt: i.pickedAt || 0 }));
+      if (!picks.length && !_orderNote) { localStorage.removeItem(_draftKey()); return; }
+      localStorage.setItem(_draftKey(), JSON.stringify({ v: 1, savedAt: Date.now(), note: _orderNote || '', picks }));
+    } catch(e) { /* localStorage 不可用时静默跳过 */ }
+  }, 500);
+}
+
+function _clearOrderDraft() {
+  try { localStorage.removeItem(_draftKey()); } catch(e) {}
+}
+
+function _restoreOrderDraft() {
+  if (_draftRestored || !currentUser) return;
+  _draftRestored = true;
+  let draft = null;
+  try { draft = JSON.parse(localStorage.getItem(_draftKey()) || 'null'); } catch(e) {}
+  if (!draft || !Array.isArray(draft.picks)) return;
+  // 超过 24 小时的草稿视为昨日遗留,丢弃防误导
+  if (!draft.savedAt || Date.now() - draft.savedAt > DRAFT_TTL_MS) { _clearOrderDraft(); return; }
+
+  let restored = 0;
+  draft.picks.forEach(p => {
+    const item = items.find(i => i.id === p.id);
+    // 食材已删除或已停售 → 跳过
+    if (!item || item.discontinued) return;
+    item.need = p.need || 0;
+    item.consume = p.consume || 0;
+    item.checked = !!p.checked;
+    item.pickedAt = p.pickedAt || 0;
+    item.orderModified = item.need > 0;
+    restored++;
+  });
+  if (draft.note) { _orderNote = draft.note; refreshOrderNoteBadge(); }
+  if (restored > 0) {
+    updateOrderFooter();
+    toast('📝 已恢复上次未提交的 ' + restored + ' 种食材');
+  } else {
+    _clearOrderDraft();  // 全部失效,清掉
+  }
 }
 
 function toggleOrderItem(id, checked) {
@@ -3125,6 +3193,7 @@ function toggleOrderItem(id, checked) {
   const fc = calcForecast(item);
   const card = document.getElementById('ocard-'+id);
   if (card) card.className = `order-item-card ${checked?(ff('low_stock_highlight')&&fc>0?'selected-low':'selected'):''}`;
+  _saveOrderDraft();
 }
 
 function updateOrderQty(id, val) {
@@ -3145,6 +3214,7 @@ function updateOrderQty(id, val) {
     item.checked = item.need > 0;
   }
   updateOrderFooter();
+  _saveOrderDraft();
 }
 
 function updateOrderFooter() {
@@ -3278,6 +3348,7 @@ async function submitOrder() {
     }
     items.forEach(i=>{ i.checked=false; i.need=0; i.orderModified=false; i.consume=0; i.pickedAt=0; });
     _orderNote = '';
+    _clearOrderDraft();
     refreshOrderNoteBadge();
     const msg2 = sel.length>0&&toConsume.length>0 ? '✅ 订单已提交，消耗已记录' :
                  sel.length>0 ? '✅ 订单已提交' : '✅ 库存调整已记录';
@@ -8273,6 +8344,7 @@ function saveOrderNote() {
   const had = !!_orderNote;
   _orderNote = val;
   refreshOrderNoteBadge();
+  _saveOrderDraft();
   closeModal('modal-order-note');
   if (val) toast(t('orderNoteSaved'));
   else if (had) toast(t('orderNoteCleared'));
