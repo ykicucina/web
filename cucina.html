@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.126">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.127">
 </head>
 <body>
 
@@ -152,6 +152,7 @@ function ridPickerGo() {
       <div id="ham-lbl-sortmethod" style="font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:10px;">排序方式</div>
       <select id="side-sort-select" onchange="applyOrderSort(this.value);hideSideMenu()"
         style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;background:var(--surface);color:var(--text);">
+        <option value="category" id="ham-sort-category">按材料类型</option>
         <option value="default" id="ham-sort-default">默认（今日优先)</option>
         <option value="low" id="ham-sort-low">库存不足优先</option>
         <option value="today" id="ham-sort-today">今日订货</option>
@@ -1372,14 +1373,16 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.126"></script>
+<script src="/i18n.js?v=v2.7.127"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.126"></script>
+<script src="/sortable.min.js?v=v2.7.127"></script>
 
 <!-- v2.7.125: 业务逻辑拆分为 /app.js —— HTML 只留骨架,逻辑独立演进 -->
 <!-- v2.7.126: 订货草稿自动保存/恢复 -->
-<script src="/app.js?v=v2.7.126"></script>
+<!-- v2.7.127: 订货页新增「按材料类型」排序方式 -->
+<script src="/app.js?v=v2.7.127"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>

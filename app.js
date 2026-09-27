@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.126';
+const APP_VERSION = 'v2.7.127';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1045,7 +1045,7 @@ async function doLogout() {
   _sortDisplayMode = null;
   _orderCheckedFilter = 'all';
   _orderSearchQ = '';
-  _orderSortMode = 'default';
+  _orderSortMode = 'category';  // v2.7.127: 默认按材料类型排序
   _orderNote = '';
   _draftRestored = false;  // v2.7.126: 下次登录可再次恢复草稿
   _weekdayFilter = '';
@@ -1773,6 +1773,13 @@ function renderOrderList() {
       if (c !== 0) return c;
       return compareBaseName(a, b);
     });
+  } else if (_orderSortMode === 'category') {
+    // v2.7.127: 按材料类型排序（与库存页 inv-sort=category 逻辑一致）
+    sorted.sort((a,b)=>{
+      const c = (a.category||'').localeCompare(b.category||'');
+      if (c !== 0) return c;
+      return compareBaseName(a, b);
+    });
   } else {
     sorted.sort((a,b)=>{
       const aToday=isTodayCycle(a),bToday=isTodayCycle(b);
@@ -2002,7 +2009,7 @@ function applyOrderSort(v) {
   // 持久化排序模式偏好（per-user）
   saveUserSortMode(v);
 }
-let _orderSortMode = 'default';
+let _orderSortMode = 'category';  // v2.7.127: 默认排序方式 = 按材料类型（用户切换后云端保存偏好）
 let suppliers = []; // {name, wa_number}
 
 function filterOrderList(q) {
@@ -2518,7 +2525,7 @@ async function loadUserSortMode() {
     });
     if (!r.ok) return;
     const data = await r.json();
-    const valid = ['default','custom','today','low','chef','supplier'];
+    const valid = ['default','custom','today','low','chef','supplier','category'];
     if (data && data.value && valid.includes(data.value)) {
       _orderSortMode = data.value;
       // 同步 UI（如果排序下拉框已渲染）
@@ -6049,6 +6056,7 @@ function changeLang(v) {
   se('ham-sort-today', t('hamSortToday'));
   se('ham-sort-chef', t('hamSortChef'));
   se('ham-sort-supplier', t('hamSortSupplier'));
+  se('ham-sort-category', t('hamSortCategory'));
   se('ham-sort-custom', t('hamSortCustom'));
   se('ham-lbl-manage', t('hamManage'));
   se('ham-lbl-approve', t('hamApprove'));
@@ -9156,7 +9164,7 @@ function showSideMenu() {
   if (sortSection) sortSection.style.display = currentTab === 'order' ? 'block' : 'none';
   // 同步排序选择
   const sortSel = document.getElementById('side-sort-select');
-  if (sortSel) sortSel.value = _orderSortMode || 'default';
+  if (sortSel) sortSel.value = _orderSortMode || 'category';
   overlay.style.display = 'block';
   menu.style.display = 'block';
   setTimeout(()=>{ menu.style.transform = 'translateX(0)'; }, 10);
