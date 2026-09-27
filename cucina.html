@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.127">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.128">
 </head>
 <body>
 
@@ -331,6 +331,7 @@ function ridPickerGo() {
           <option value="" id="inv-opt-selchef">-- 选择订货员 --</option>
         </select>
         <button id="inv-btn-confirm" onclick="invBulkChangeChef()" style="font-size:12px;padding:6px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;font-weight:600;">确认修改</button>
+        <button id="inv-btn-bulkdel" onclick="invBulkDelete()" style="font-size:12px;padding:6px 14px;border:1px solid var(--danger);border-radius:8px;background:transparent;color:var(--danger);cursor:pointer;font-weight:600;">🗑 删除所选</button>
       </div>
     </div>
 
@@ -1368,21 +1369,23 @@ function ridPickerGo() {
     <div id="edit-item-form"></div>
     <button class="btn btn-primary" style="margin-top:16px" onclick="saveEditItem()">💾 保存</button>
     <button class="btn btn-danger" id="edit-toggle-btn" style="margin-top:8px" onclick="toggleDiscontinueItem()">🔴 停售此物料</button>
+    <button class="btn btn-ghost" id="edit-delete-btn" style="margin-top:8px;color:var(--danger);border:1.5px solid var(--danger);display:none;" onclick="deleteEditItem()">🗑 永久删除此物料</button>
     <button class="btn btn-ghost" style="margin-top:8px" onclick="closeModal('modal-edit-item')">取消</button>
   </div>
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.127"></script>
+<script src="/i18n.js?v=v2.7.128"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.127"></script>
+<script src="/sortable.min.js?v=v2.7.128"></script>
 
 <!-- v2.7.125: 业务逻辑拆分为 /app.js —— HTML 只留骨架,逻辑独立演进 -->
 <!-- v2.7.126: 订货草稿自动保存/恢复 -->
 <!-- v2.7.127: 订货页新增「按材料类型」排序方式 -->
-<script src="/app.js?v=v2.7.127"></script>
+<!-- v2.7.128: 导入按名称兜底去重；编辑弹窗+库存批量栏新增删除按钮 -->
+<script src="/app.js?v=v2.7.128"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>

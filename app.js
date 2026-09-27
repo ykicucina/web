@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.127';
+const APP_VERSION = 'v2.7.128';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1008,14 +1008,26 @@ async function toggleDiscontinueItem() {
   }
 }
 
-// 保留原 deleteEditItem（暂时不暴露 UI，预留给孤儿清理使用）
+// v2.7.128: 永久删除单个食材（编辑弹窗「永久删除此物料」按钮调用，仅管理员）
 async function deleteEditItem() {
   if (!isAdmin) return;
   const item = items.find(i=>i.id===editingItemId);
   if (!item) return;
   const name = displayName(item) || item.name || item.italian;
-  if (!confirm(`确定永久删除「${name}」？此操作不可撤销。`)) return;
+  if (!confirm(`确定永久删除「${name}」？此操作不可撤销。\n（如果只是想下架、保留历史订单记录，建议用「停售」）`)) return;
   try {
+    // v2.7.128: 与批量删除一致，先删 Storage 图片（失败不阻塞）
+    if (item.image_url) {
+      try {
+        const path = item.image_url.split('/cucina-images/')[1]?.split('?')[0];
+        if (path) {
+          await fetch(`${SB_URL}/storage/v1/object/cucina-images/${path}`, {
+            method: 'DELETE',
+            headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+          }).catch(()=>{});
+        }
+      } catch(e) { /* 忽略 */ }
+    }
     await sb('cucina_items?id=eq.'+editingItemId, {method:'DELETE'});
     items = items.filter(i=>i.id!==editingItemId);
     closeModal('modal-edit-item');
@@ -1462,6 +1474,49 @@ async function invBulkChangeChef() {
   toast(`✅ 已修改 ${count} 条物料的订货员为 ${chef}`);
 }
 
+// v2.7.128: 批量删除所选食材（管理员）。复用孤儿清理的删除逻辑：图片 + 数据库记录一起删
+async function invBulkDelete() {
+  if (!isAdmin) { toast('需要管理员权限','err'); return; }
+  if (!_invSelected.size) { toast(t('select_items_first'),'err'); return; }
+  const toDelete = items.filter(i => _invSelected.has(i.id));
+  if (!toDelete.length) { toast(t('select_items_first'),'err'); return; }
+  if (!confirm(`确定永久删除选中的 ${toDelete.length} 个食材？\n\n会同时删除它们的图片，此操作不可恢复。\n（如果只是想下架、保留历史订单记录，建议用「停售」）`)) return;
+
+  let deleted = 0, errored = 0;
+  for (const item of toDelete) {
+    try {
+      // 1. 删除 Storage 中的图片（如果有，失败不阻塞主流程）
+      if (item.image_url) {
+        try {
+          const path = item.image_url.split('/cucina-images/')[1]?.split('?')[0];
+          if (path) {
+            await fetch(`${SB_URL}/storage/v1/object/cucina-images/${path}`, {
+              method: 'DELETE',
+              headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+            }).catch(()=>{});
+          }
+        } catch(e) { /* 忽略 */ }
+      }
+      // 2. 删除数据库记录
+      const res = await fetch(`${SB_URL}/rest/v1/cucina_items?id=eq.${item.id}`, {
+        method: 'DELETE',
+        headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+      });
+      if (res.ok) {
+        deleted++;
+        const idx = items.findIndex(i => i.id === item.id);
+        if (idx >= 0) items.splice(idx, 1);
+      } else {
+        errored++;
+      }
+    } catch(e) { errored++; }
+  }
+  _invSelected.clear();
+  renderInvTable();
+  if (currentTab === 'order' && typeof renderOrderList === 'function') renderOrderList();
+  toast(`🗑 已删除 ${deleted} 条${errored ? `，失败 ${errored} 条` : ''}`);
+}
+
 function filterInventory() {
   invSearch = document.getElementById('inv-search').value.toLowerCase();
   renderInvTable();
@@ -1580,6 +1635,9 @@ function showItemDetail(id) {
     }
     toggleBtn.style.display = isAdmin ? 'flex' : 'none';
   }
+  // v2.7.128: 永久删除按钮（仅管理员可见）
+  const delBtn = document.getElementById('edit-delete-btn');
+  if (delBtn) delBtn.style.display = isAdmin ? 'flex' : 'none';
 }
 
 async function saveEditItem() {
@@ -8993,14 +9051,16 @@ async function saveImport() {
 
   // 🔑 UPSERT 改造：先加载所有现有 items，建立 item_code → 旧记录 的索引
   let existingMap = new Map();
+  let existingNameMap = new Map();  // v2.7.128: 名称兜底索引，货物号缺失时防重复
   let dbCount = 0;
   try {
-    const allRes = await sb('cucina_items?restaurant_id=eq.'+REST_ID+'&select=id,item_code,image_url&limit=2000');
+    const allRes = await sb('cucina_items?restaurant_id=eq.'+REST_ID+'&select=id,item_code,image_url,name,italian&limit=2000');
     const allData = await allRes.json();
     dbCount = allData.length;
     allData.forEach(e => {
       const code = (e.item_code||'').trim();
       if (code) existingMap.set(code, e);
+      existingNameMap.set(((e.name||'')+'|'+(e.italian||'')).toLowerCase().trim(), e);
     });
     console.log(`[UPSERT] 数据库现有 ${dbCount} 条，按 item_code 索引 ${existingMap.size} 条`);
   } catch(e) {
@@ -9019,7 +9079,8 @@ async function saveImport() {
   });
 
   // 🔑 UPSERT 逻辑：按 item_code 匹配，存在则 PATCH（保留 image_url），不存在则 POST
-  let count=0, updated=0, inserted=0, errored=0;
+  let count=0, updated=0, inserted=0, errored=0, skipped=0;
+  const _importSeenKeys = new Set();  // v2.7.128: 同一文件内的重复行去重
   for(const item of pendingImport){
     const itemData = Object.assign({}, item);
     delete itemData._wa;
@@ -9032,7 +9093,11 @@ async function saveImport() {
     itemData.discontinued = false;
 
     const code = (itemData.item_code||'').trim();
-    const existing = code ? existingMap.get(code) : null;
+    // v2.7.128: 优先按货物号匹配；匹配不到再按「中文名|意文名」兜底，避免同名食材重复导入
+    const nameKey = ((itemData.name||'')+'|'+(itemData.italian||'')).toLowerCase().trim();
+    let existing = code ? existingMap.get(code) : null;
+    if (!existing) existing = existingNameMap.get(nameKey) || null;
+    const dedupKey = code ? ('c#'+code) : ('n#'+nameKey);
 
     try {
       if (existing) {
@@ -9043,6 +9108,9 @@ async function saveImport() {
           body:JSON.stringify(itemData)
         });
         updated++;
+      } else if (_importSeenKeys.has(dedupKey)) {
+        // v2.7.128: 本文件前面的行已经新增过同一条 → 跳过，避免表内重复行产生重复食材
+        skipped++;
       } else {
         // INSERT 新记录
         await fetch(SB_URL+'/rest/v1/cucina_items',{
@@ -9051,6 +9119,7 @@ async function saveImport() {
           body:JSON.stringify(itemData)
         });
         inserted++;
+        _importSeenKeys.add(dedupKey);
       }
       count++;
     } catch(e){ console.error('item error:', e); errored++; }
@@ -9086,6 +9155,7 @@ async function saveImport() {
   // 自动创建新员工账号（Excel里有但chefs里没有的）
   const chefNames = [...new Set(pendingImport.map(i=>i.chef).filter(Boolean))];
   const newChefs = chefNames.filter(n=>!chefs[n]);
+  const skipTxt = skipped>0 ? `，跳过重复 ${skipped} 条` : '';
   if (newChefs.length > 0) {
     if(txtEl) txtEl.textContent = `正在创建新员工账号（${newChefs.length}个）...`;
     for (const name of newChefs) {
@@ -9098,9 +9168,9 @@ async function saveImport() {
         chefs[name] = {role:'staff', can_add_stock:false, can_stocktake:false, can_receive:false, positions:[]};
       } catch(e){ console.error('创建员工失败:', name, e); }
     }
-    toast(`✅ 完成：更新 ${updated} 条，新增 ${inserted} 条 · 新建 ${newChefs.length} 个员工账号（图片已保留）`);
+    toast(`✅ 完成：更新 ${updated} 条，新增 ${inserted} 条${skipTxt} · 新建 ${newChefs.length} 个员工账号（图片已保留）`);
   } else {
-    toast(`✅ 完成：更新 ${updated} 条，新增 ${inserted} 条 · 图片等手动设置已保留 ✨`);
+    toast(`✅ 完成：更新 ${updated} 条，新增 ${inserted} 条${skipTxt} · 图片等手动设置已保留 ✨`);
   }
 
   // 关闭modal，重置状态
