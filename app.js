@@ -1378,7 +1378,7 @@ function renderInvTable() {
       : (isAdmin
           ? '还没有食材<br><span style="font-size:12px;">可在「批量维护」导入,或从「浏览供应商目录」添加</span>'
           : '还没有食材<br><span style="font-size:12px;">请联系管理员添加食材</span>');
-    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:40px 20px;color:var(--text3);line-height:1.7;"><div style="font-size:36px;margin-bottom:8px;">📦</div>${msg}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px 20px;color:var(--text3);line-height:1.7;"><div style="font-size:36px;margin-bottom:8px;">📦</div>${msg}</td></tr>`;
     return;
   }
 
@@ -1400,6 +1400,11 @@ function renderInvTable() {
         ${isAdmin?`<input type="checkbox" ${checked?'checked':''} data-id="${item.id}"
           style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;"
           onchange="toggleInvSelect(${item.id},this.checked)">`:''}
+      </td>
+      <td style="padding-right:2px;">
+        <div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:linear-gradient(145deg,#eef2f7,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);">
+          ${item.image_url?`<img src="${escapeAttr(item.image_url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentNode.innerHTML='📦'">`:'📦'}
+        </div>
       </td>
       <td class="item-name-cell">
         ${item.item_code?`<div style="font-size:10px;color:var(--text3);margin-bottom:1px;">${escapeHtml(item.item_code)}${item.discontinued?' · <span style="color:var(--danger);font-weight:600;">🔴已停售</span>':''}</div>`:`${item.discontinued?'<div style="font-size:10px;color:var(--danger);font-weight:600;margin-bottom:1px;">🔴已停售</div>':''}`}
