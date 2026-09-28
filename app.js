@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.128';
+const APP_VERSION = 'v2.7.129';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -5972,36 +5972,309 @@ function renderReportInventory() {
     </div>`).join('');
 }
 
-function renderReportConsume() {
-  const el = document.getElementById('report-consume');
-  // Top ordered items
-  const freq = {};
-  orders.forEach(o=>{
-    (o.items||[]).forEach(i=>{
-      freq[i.name] = (freq[i.name]||{name:i.name,count:0,total:0});
-      freq[i.name].count++;
-      freq[i.name].total += parseFloat(i.need)||0;
-    });
-  });
-  const sorted = Object.values(freq).sort((a,b)=>b.total-a.total).slice(0,10);
-  const maxT = sorted[0]?.total||1;
+// ════════════════════════════════════════
+// v2.7.129: 消耗分析重构 —— 月份/时间段筛选 + TopN + A/B 时间段对比
+// 数据源：内存中的全部订单（loadAllData 全量加载），客户端聚合，无后端改动
+// ════════════════════════════════════════
+let _consumeCmp = {
+  itemMode: 'all',          // 'all' | 'pick'
+  picked: new Set(),        // itemMode='pick' 时选中的货物名（对应订单 items[].name）
+};
 
-  el.innerHTML = `
-    <div class="chart-wrap">
-      <div class="chart-title">申购频率（前10）</div>
-      <div style="margin-top:12px">
-        ${sorted.map(s=>`
-          <div style="margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-              <span>${escapeHtml(s.name)}</span>
-              <span style="color:var(--text2);font-family:'DM Mono',monospace">×${s.count} · 共${s.total.toFixed(1)}</span>
-            </div>
-            <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
-              <div style="width:${(s.total/maxT*100).toFixed(1)}%;height:100%;background:var(--primary);border-radius:4px"></div>
-            </div>
-          </div>`).join('')}
+function _orderDate(o) { return o.date || (o.created_at||'').slice(0,10); }
+
+function _monthStr(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+
+// "按月/时间段"控件 HTML（prefix 区分三组实例：cr / cmp-a / cmp-b）
+function _rangeCtrlHtml(prefix, defMonth) {
+  return `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <select id="${prefix}-mode" class="form-control" style="width:92px;padding:8px;font-size:13px;flex-shrink:0;" onchange="_rangeModeToggle('${prefix}')">
+        <option value="month">按月份</option>
+        <option value="custom">时间段</option>
+      </select>
+      <input type="month" id="${prefix}-month" class="form-control" style="flex:1;min-width:0;padding:8px;font-size:13px;" value="${defMonth}">
+      <div id="${prefix}-custom" style="display:none;flex:1;gap:4px;align-items:center;min-width:0;">
+        <input type="date" id="${prefix}-start" class="form-control" style="flex:1;min-width:0;padding:8px;font-size:12px;">
+        <span style="color:var(--text3);flex-shrink:0;">~</span>
+        <input type="date" id="${prefix}-end" class="form-control" style="flex:1;min-width:0;padding:8px;font-size:12px;">
       </div>
     </div>`;
+}
+function _rangeModeToggle(prefix) {
+  const mode = document.getElementById(prefix+'-mode').value;
+  document.getElementById(prefix+'-month').style.display  = mode==='month'  ? '' : 'none';
+  document.getElementById(prefix+'-custom').style.display = mode==='custom' ? 'flex' : 'none';
+}
+// 读取一组时间控件 → {start,end,label}；不合法返回 null（已 toast）
+function _readRange(prefix) {
+  const mode = document.getElementById(prefix+'-mode').value;
+  if (mode === 'month') {
+    const m = document.getElementById(prefix+'-month').value;
+    if (!m) { toast('请选择月份','err'); return null; }
+    const [y, mm] = m.split('-');
+    // 字符串比较 'YYYY-MM-31' 覆盖所有月份天数
+    return { start: m+'-01', end: m+'-31', label: `${y}年${parseInt(mm)}月` };
+  }
+  const s = document.getElementById(prefix+'-start').value;
+  const e = document.getElementById(prefix+'-end').value;
+  if (!s || !e) { toast('请选择开始和结束日期','err'); return null; }
+  if (s > e) { toast('开始日期不能晚于结束日期','err'); return null; }
+  return { start:s, end:e, label: `${s} ~ ${e}` };
+}
+
+function _topNSelectHtml(id, val) {
+  const opts = [[10,'前10'],[50,'前50'],[100,'前100'],[0,'全部']];
+  return `<select id="${id}" class="form-control" style="width:88px;padding:8px;font-size:13px;flex-shrink:0;">` +
+    opts.map(([v,l])=>`<option value="${v}" ${v===val?'selected':''}>${l}</option>`).join('') + '</select>';
+}
+
+// 聚合 [start,end] 内订单的货物消耗（nameFilter 为 null 表示全部货物）
+function _aggConsume(start, end, nameFilter) {
+  const freq = {};
+  orders.forEach(o => {
+    const d = _orderDate(o);
+    if (!d || d < start || d > end) return;
+    (o.items||[]).forEach(i => {
+      const n = i.name || '';
+      if (!n) return;
+      if (nameFilter && !nameFilter.has(n)) return;
+      if (!freq[n]) freq[n] = { name:n, count:0, total:0 };
+      freq[n].count++;
+      freq[n].total += parseFloat(i.need)||0;
+    });
+  });
+  return freq;
+}
+
+function renderReportConsume() {
+  const el = document.getElementById('report-consume');
+  // 只建一次骨架，保留用户已选的筛选条件（切 tab 回来不丢）
+  if (!el.dataset.built) {
+    const now = new Date();
+    const nowM  = _monthStr(now);
+    const lastM = _monthStr(new Date(now.getFullYear(), now.getMonth()-1, 1));
+    el.innerHTML = `
+      <!-- 普通分析 -->
+      <div class="chart-wrap">
+        <div class="chart-title">📊 消耗排名</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          ${_rangeCtrlHtml('cr', nowM)}
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap;">排名数量</span>
+            ${_topNSelectHtml('cr-topn', 10)}
+            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runConsumeQuery()">查询</button>
+          </div>
+        </div>
+        <div id="cr-result" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- 消耗对比 -->
+      <div class="chart-wrap">
+        <div class="chart-title">⚖️ 消耗对比（两个时间段）</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          <div style="font-size:12px;color:var(--text2);font-weight:600;">时间段 A（基准）</div>
+          ${_rangeCtrlHtml('cmp-a', lastM)}
+          <div style="font-size:12px;color:var(--text2);font-weight:600;">时间段 B（对比）</div>
+          ${_rangeCtrlHtml('cmp-b', nowM)}
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap;">货物</span>
+            <button id="cmp-items-btn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="openCmpItemPicker()">全部货物</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap;">排名</span>
+            ${_topNSelectHtml('cmp-topn', 10)}
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap;">排序</span>
+            <select id="cmp-sort" class="form-control" style="flex:1;min-width:104px;padding:8px;font-size:13px;">
+              <option value="delta_desc">增加最多</option>
+              <option value="delta_asc">减少最多</option>
+              <option value="pct_desc">变化率 ↑</option>
+              <option value="pct_asc">变化率 ↓</option>
+              <option value="b_desc">B 消耗量</option>
+              <option value="a_desc">A 消耗量</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="runConsumeCompare()">开始对比</button>
+        </div>
+        <div id="cmp-result" style="margin-top:14px;"></div>
+      </div>`;
+    el.dataset.built = '1';
+  }
+  runConsumeQuery();
+}
+
+// ── 普通分析：时间段 + TopN ──
+function runConsumeQuery() {
+  const range = _readRange('cr'); if (!range) return;
+  const topN = parseInt(document.getElementById('cr-topn').value)||0;
+  const freq = _aggConsume(range.start, range.end, null);
+  const all = Object.values(freq).sort((a,b)=>b.total-a.total);
+  const shown = topN>0 ? all.slice(0,topN) : all;
+  const maxT = shown[0] ? shown[0].total : 1;
+  const totalQty = all.reduce((s,x)=>s+x.total,0);
+  const res = document.getElementById('cr-result');
+  if (!shown.length) {
+    res.innerHTML = `<div class="empty-state" style="padding:24px;"><p>${range.label} 没有消耗记录</p></div>`;
+    return;
+  }
+  res.innerHTML = `
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">${range.label} · 共 ${all.length} 种 · 总量 ${totalQty.toFixed(1)}${topN>0&&all.length>topN?` · 显示前 ${topN}`:''}</div>
+    ${shown.map((s,idx)=>`
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span>${idx+1}. ${escapeHtml(s.name)}</span>
+          <span style="color:var(--text2);font-family:'DM Mono',monospace">×${s.count} · 共${s.total.toFixed(1)}</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${(s.total/maxT*100).toFixed(1)}%;height:100%;background:var(--primary);border-radius:4px"></div>
+        </div>
+      </div>`).join('')}`;
+}
+
+// ── 消耗对比：A vs B ──
+function _fmtCmpPct(r) {
+  if (r.pct === Infinity) return '<span style="color:var(--ok);font-weight:600;">新增</span>';
+  if (r.a === 0 && r.b === 0) return '<span style="color:var(--text3);">—</span>';
+  const cls = r.pct>0 ? 'var(--ok)' : r.pct<0 ? 'var(--danger)' : 'var(--text3)';
+  const arrow = r.pct>0 ? '↑' : r.pct<0 ? '↓' : '';
+  return `<span style="color:${cls};">${arrow}${Math.abs(r.pct).toFixed(1)}%</span>`;
+}
+function _fmtCmpDelta(r) {
+  const cls = r.delta>0 ? 'var(--ok)' : r.delta<0 ? 'var(--danger)' : 'var(--text3)';
+  const arrow = r.delta>0 ? '↑ ' : r.delta<0 ? '↓ ' : '';
+  const txt = r.delta>0 ? '+'+r.delta.toFixed(1) : r.delta.toFixed(1);
+  return `<span style="color:${cls};font-weight:600;">${arrow}${txt}</span>`;
+}
+
+function runConsumeCompare() {
+  const ra = _readRange('cmp-a'); if (!ra) return;
+  const rb = _readRange('cmp-b'); if (!rb) return;
+  const topN = parseInt(document.getElementById('cmp-topn').value)||0;
+  const sort = document.getElementById('cmp-sort').value;
+  const nameFilter = _consumeCmp.itemMode==='pick' ? _consumeCmp.picked : null;
+  if (nameFilter && !nameFilter.size) { toast('请先选择要对比的货物','err'); return; }
+
+  const fa = _aggConsume(ra.start, ra.end, nameFilter);
+  const fb = _aggConsume(rb.start, rb.end, nameFilter);
+  const names = new Set([...Object.keys(fa), ...Object.keys(fb)]);
+  let rows = [...names].map(n => {
+    const a = fa[n] ? fa[n].total : 0;
+    const b = fb[n] ? fb[n].total : 0;
+    const delta = b - a;
+    const pct = a !== 0 ? delta/a*100 : (b > 0 ? Infinity : 0);
+    return { name:n, a, b, delta, pct };
+  });
+  const sortFns = {
+    delta_desc: (x,y)=>y.delta-x.delta,
+    delta_asc:  (x,y)=>x.delta-y.delta,
+    pct_desc:   (x,y)=>y.pct-x.pct,
+    pct_asc:    (x,y)=>x.pct-y.pct,
+    b_desc:     (x,y)=>y.b-x.b,
+    a_desc:     (x,y)=>y.a-x.a
+  };
+  rows.sort(sortFns[sort] || sortFns.delta_desc);
+  const shown = topN>0 ? rows.slice(0,topN) : rows;
+  const res = document.getElementById('cmp-result');
+  if (!shown.length) {
+    res.innerHTML = `<div class="empty-state" style="padding:24px;"><p>两个时间段内没有匹配的数据</p></div>`;
+    return;
+  }
+
+  const sumA = rows.reduce((s,r)=>s+r.a,0), sumB = rows.reduce((s,r)=>s+r.b,0);
+  const sumD = sumB - sumA;
+  const sumPctTxt = sumA!==0 ? `（${sumD>=0?'+':''}${(sumD/sumA*100).toFixed(1)}%）` : (sumB>0 ? '（新增）' : '');
+
+  res.innerHTML = `
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.7;">
+      A: ${ra.label} 共 <strong>${sumA.toFixed(1)}</strong> · B: ${rb.label} 共 <strong>${sumB.toFixed(1)}</strong><br>
+      总变化 <strong style="color:${sumD>0?'var(--ok)':sumD<0?'var(--danger)':'var(--text3)'}">${sumD>0?'+':''}${sumD.toFixed(1)}${sumPctTxt}</strong>
+      ${topN>0&&rows.length>topN?` · 显示前 ${topN}/${rows.length} 种`:` · 共 ${rows.length} 种`}
+    </div>
+    <table class="warn-table" style="margin-bottom:6px;">
+      <thead><tr>
+        <th>货物</th><th style="text-align:right">A</th><th style="text-align:right">B</th><th style="text-align:right">变化</th><th style="text-align:right">比例</th>
+      </tr></thead>
+      <tbody>
+        ${shown.map(r=>`<tr>
+          <td style="word-break:break-word;">${escapeHtml(r.name)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace">${r.a.toFixed(1)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace">${r.b.toFixed(1)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace">${_fmtCmpDelta(r)}</td>
+          <td style="text-align:right;font-size:12px;">${_fmtCmpPct(r)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    ${_cmpChartHtml(shown.slice(0,10), ra, rb)}`;
+}
+
+// 对比柱状图（最多画前 10 种，A 灰 / B 金）
+function _cmpChartHtml(rows, ra, rb) {
+  if (!rows.length) return '';
+  const maxV = Math.max(...rows.map(r=>Math.max(r.a,r.b)), 1);
+  return `
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;">📊 对比图（前 ${rows.length} 种）</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+        <span style="display:inline-block;width:10px;height:10px;background:#cbd5e1;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>A ${ra.label}
+        <span style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:2px;margin:0 4px 0 12px;vertical-align:-1px;"></span>B ${rb.label}
+      </div>
+      ${rows.map(r=>`
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <div style="flex:1;background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;"><div style="width:${(r.a/maxV*100).toFixed(1)}%;height:100%;background:#cbd5e1;"></div></div>
+            <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;width:36px;text-align:right;">${r.a.toFixed(0)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="flex:1;background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;"><div style="width:${(r.b/maxV*100).toFixed(1)}%;height:100%;background:var(--primary);"></div></div>
+            <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;width:36px;text-align:right;">${r.b.toFixed(0)}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── 对比货物多选 ──
+function _allItemNameObjs() {
+  const map = new Map();
+  items.forEach(i=>{ if (i.name && !map.has(i.name)) map.set(i.name, i.italian||''); });
+  return [...map.entries()].map(([name,italian])=>({name,italian})).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function openCmpItemPicker() {
+  const s = document.getElementById('cmp-item-search');
+  if (s) s.value = '';
+  renderCmpItemList();
+  openModal('modal-compare-items');
+}
+function renderCmpItemList() {
+  const q = (document.getElementById('cmp-item-search').value||'').toLowerCase().trim();
+  const all = _allItemNameObjs();
+  const list = q ? all.filter(o=>o.name.toLowerCase().includes(q)||o.italian.toLowerCase().includes(q)) : all;
+  document.getElementById('cmp-item-list').innerHTML = list.map(o=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <input type="checkbox" ${_consumeCmp.picked.has(o.name)?'checked':''} onchange="_cmpToggleItem('${escJsArg(o.name)}',this.checked)" style="width:18px;height:18px;accent-color:var(--primary);flex-shrink:0;">
+      <span style="font-size:13px;">${escapeHtml(o.name)}${o.italian?` <span style="color:var(--text3);font-size:11px;">${escapeHtml(o.italian)}</span>`:''}</span>
+    </label>`).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">没有匹配的货物</div>';
+  document.getElementById('cmp-item-count').textContent = `已选 ${_consumeCmp.picked.size} 种`;
+}
+function _cmpToggleItem(name, checked) {
+  if (checked) _consumeCmp.picked.add(name);
+  else _consumeCmp.picked.delete(name);
+  _consumeCmp.itemMode = _consumeCmp.picked.size ? 'pick' : 'all';
+  document.getElementById('cmp-item-count').textContent = `已选 ${_consumeCmp.picked.size} 种`;
+}
+function cmpItemSelectAll() {
+  _allItemNameObjs().forEach(o=>_consumeCmp.picked.add(o.name));
+  _consumeCmp.itemMode = 'pick';
+  renderCmpItemList();
+}
+function cmpItemClear() {
+  _consumeCmp.picked.clear();
+  _consumeCmp.itemMode = 'all';
+  renderCmpItemList();
+}
+function updateCmpItemBtn() {
+  const btn = document.getElementById('cmp-items-btn');
+  if (btn) btn.textContent = _consumeCmp.picked.size ? `已选 ${_consumeCmp.picked.size} 种货物` : '全部货物';
 }
 
 // ════════════════════════════════════════
