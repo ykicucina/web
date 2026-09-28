@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.129';
+const APP_VERSION = 'v2.7.130';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -6190,30 +6190,29 @@ function runConsumeCompare() {
       总变化 <strong style="color:${sumD>0?'var(--ok)':sumD<0?'var(--danger)':'var(--text3)'}">${sumD>0?'+':''}${sumD.toFixed(1)}${sumPctTxt}</strong>
       ${topN>0&&rows.length>topN?` · 显示前 ${topN}/${rows.length} 种`:` · 共 ${rows.length} 种`}
     </div>
-    <table class="warn-table" style="margin-bottom:6px;">
+    <table class="warn-table" style="margin-bottom:6px;table-layout:fixed;width:100%;">
       <thead><tr>
-        <th>货物</th><th style="text-align:right">A</th><th style="text-align:right">B</th><th style="text-align:right">变化</th><th style="text-align:right">比例</th>
+        <th style="padding:8px 4px;">货物</th><th style="width:52px;text-align:right;padding:8px 2px;">A</th><th style="width:52px;text-align:right;padding:8px 2px;">B</th><th style="width:78px;text-align:right;padding:8px 4px;">变化</th>
       </tr></thead>
       <tbody>
         ${shown.map(r=>`<tr>
-          <td style="word-break:break-word;">${escapeHtml(r.name)}</td>
-          <td style="text-align:right;font-family:'DM Mono',monospace">${r.a.toFixed(1)}</td>
-          <td style="text-align:right;font-family:'DM Mono',monospace">${r.b.toFixed(1)}</td>
-          <td style="text-align:right;font-family:'DM Mono',monospace">${_fmtCmpDelta(r)}</td>
-          <td style="text-align:right;font-size:12px;">${_fmtCmpPct(r)}</td>
+          <td style="word-break:break-word;font-size:12px;padding:8px 4px;">${escapeHtml(r.name)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;padding:8px 2px;">${r.a.toFixed(1)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;padding:8px 2px;">${r.b.toFixed(1)}</td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;padding:8px 4px;">${_fmtCmpDelta(r)}<div style="font-size:10px;font-weight:400;margin-top:1px;">${_fmtCmpPct(r)}</div></td>
         </tr>`).join('')}
       </tbody>
     </table>
-    ${_cmpChartHtml(shown.slice(0,10), ra, rb)}`;
+    ${_cmpChartHtml(shown, ra, rb)}`;
 }
 
-// 对比柱状图（最多画前 10 种，A 灰 / B 金）
+// 对比柱状图（跟随排名选项：选前 N 就画 N 种，A 灰 / B 金）
 function _cmpChartHtml(rows, ra, rb) {
   if (!rows.length) return '';
   const maxV = Math.max(...rows.map(r=>Math.max(r.a,r.b)), 1);
   return `
     <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px;">
-      <div style="font-size:12px;font-weight:600;margin-bottom:6px;">📊 对比图（前 ${rows.length} 种）</div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;">📊 对比图（${rows.length} 种）</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
         <span style="display:inline-block;width:10px;height:10px;background:#cbd5e1;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>A ${ra.label}
         <span style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:2px;margin:0 4px 0 12px;vertical-align:-1px;"></span>B ${rb.label}

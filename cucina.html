@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.129">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.130">
 </head>
 <body>
 
@@ -1395,18 +1395,19 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.129"></script>
+<script src="/i18n.js?v=v2.7.130"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.129"></script>
+<script src="/sortable.min.js?v=v2.7.130"></script>
 
 <!-- v2.7.125: 业务逻辑拆分为 /app.js —— HTML 只留骨架,逻辑独立演进 -->
 <!-- v2.7.126: 订货草稿自动保存/恢复 -->
 <!-- v2.7.127: 订货页新增「按材料类型」排序方式 -->
 <!-- v2.7.128: 导入按名称兜底去重；编辑弹窗+库存批量栏新增删除按钮；库存表显示食材图片 -->
 <!-- v2.7.129: 消耗分析重构：月份/时间段筛选、前10/50/100/全部、A/B时间段对比+货物多选+排序+对比图 -->
-<script src="/app.js?v=v2.7.129"></script>
+<!-- v2.7.130: 对比表手机端布局优化（去比例列并入变化列）；对比图跟随排名选项 -->
+<script src="/app.js?v=v2.7.130"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
