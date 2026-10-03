@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.130';
+const APP_VERSION = 'v2.7.131';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1552,7 +1552,7 @@ function showItemDetail(id) {
     <div class="form-group"><label class="form-label">规格</label><input class="form-control" id="ei-spec" value="${escapeAttr(item.spec)}"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">价格 (€)</label><input class="form-control" id="ei-price" type="number" step="0.01" value="${item.price}"></div>
-      <div class="form-group"><label class="form-label">供应商</label><input class="form-control" id="ei-supplier" value="${item.supplier}"></div>
+      <div class="form-group"><label class="form-label">供应商</label><input class="form-control" id="ei-supplier" list="ei-sup-list" autocomplete="off" value="${escapeAttr(item.supplier)}"><datalist id="ei-sup-list">${[...new Set([...suppliers.map(s=>s.name),...items.map(i=>i.supplier)].filter(s=>s&&s.trim()))].sort().map(s=>`<option value="${escapeAttr(s)}">`).join('')}</datalist></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">当前库存</label><input class="form-control" id="ei-stock" type="number" step="0.1" value="${item.stock}"></div>
@@ -5082,17 +5082,22 @@ function showSubmitConfirm(orderItems, today) {
   openModal('modal-submit-confirm');
 }
 
+function fillNewSupNameList() {
+  const dl = document.getElementById('new-sup-names');
+  if (!dl) return;
+  const supNames = [...new Set([
+    ...suppliers.map(s=>s.name),
+    ...items.map(i=>i.supplier)
+  ].filter(s=>s&&s.trim()))].sort();
+  dl.innerHTML = supNames.map(s=>`<option value="${escapeAttr(s)}">`).join('');
+}
+
 async function showSupplierModal() {
   openModal('modal-suppliers');
   // 先显示当前缓存
   renderSupplierList();
-  // 下拉显示items里所有供应商，包括已有的（可以更新号码）
-  const sel = document.getElementById('new-sup-name');
-  if (sel) {
-    const supNames = [...new Set(items.map(i=>i.supplier).filter(s=>s&&s.trim()))].sort();
-    sel.innerHTML = '<option value="">-- 选择供应商 --</option>' +
-      supNames.map(s=>`<option value="${s}">${s}</option>`).join('');
-  }
+  // 提示列表合并「食材里的供应商」+「已建档的供应商」,可直接输入新名字新建
+  fillNewSupNameList();
   // 异步刷新最新 suppliers（包括 wa_lang 等字段），刷完重渲
   try {
     const r = await fetch(SB_URL + '/rest/v1/cucina_suppliers?restaurant_id=eq.' + REST_ID + '&select=*&order=name', {
@@ -5104,6 +5109,7 @@ async function showSupplierModal() {
       if (Array.isArray(fresh)) {
         suppliers = fresh;
         renderSupplierList();
+        fillNewSupNameList();
         console.log('[SUPPLIERS] refreshed:', suppliers.length);
       }
     }
@@ -5113,7 +5119,7 @@ async function showSupplierModal() {
 function renderSupplierList() {
   const el = document.getElementById('supplier-list-ui');
   if (!el) return;
-  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:20px 0;text-align:center;line-height:1.6;">还没有供应商<br><span style="font-size:12px;">在下方选择供应商 + 填 WhatsApp 号码,点「添加」</span></p>'; return; }
+  if (!suppliers.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:20px 0;text-align:center;line-height:1.6;">还没有供应商<br><span style="font-size:12px;">在下方输入供应商名（可直接新建）+ 填 WhatsApp 号码,点「添加」</span></p>'; return; }
   const buyerNames = Object.entries(chefs).filter(([n,v])=>(v.role||'staff')==='buyer').map(([n])=>n);
   const allStaff = Object.keys(chefs);
   el.innerHTML = suppliers.map(s=>{

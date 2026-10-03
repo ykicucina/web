@@ -763,7 +763,7 @@ const i18n = {
     fill_name_pwd: 'নাম ও পাসওয়ার্ড লিখুন',
     fill_italian: 'ইতালীয় নাম লিখুন',
     enter_new_pwd: 'নতুন পাসওয়ার্ড লিখুন (কমপক্ষে ৪ অক্ষর):',
-    select_supplier_name: 'সরবরাহকারীর নাম নির্বাচন করুন',
+    select_supplier_name: 'সরবরাহকারীর নাম লিখুন বা নির্বাচন করুন',
     select_old_supplier: 'পূর্ববর্তী সরবরাহকারী নির্বাচন করুন',
     select_image_file: 'একটি ছবি নির্বাচন করুন',
     no_custom_sort_yet: 'কোনো কাস্টম সাজানো নেই, ক্লিক করুন',
