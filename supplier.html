@@ -450,6 +450,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
       <div class="catalog-search">
         <input id="catalog-search-input" type="text" placeholder="搜索产品名…" oninput="renderCatalog()">
         <button class="btn btn-ghost btn-sm" onclick="openImportDialog()" data-i18n="import_excel">📥 导入</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCatalog()" data-i18n="export_excel">📤 导出</button>
         <button class="btn btn-ghost btn-sm" onclick="openBatchImageModal()" data-i18n="batch_image">📷 图片</button>
         <button class="btn btn-ghost btn-sm" id="catalog-clear-all-btn" onclick="confirmClearCatalog()" style="color:#dc2626;" data-i18n="clear_all">🗑️ 清空</button>
       </div>
@@ -802,6 +803,7 @@ const I18N = {
     edit_profile: '编辑公司信息',
     display_name: '完整名称',
     import_excel: '📥 导入',
+    export_excel: '📤 导出',
     clear_all: '🗑️ 清空',
     import_excel_title: '📥 批量导入产品',
     import_excel_sub: '支持 Excel (.xlsx) 或 CSV 文件',
@@ -1464,7 +1466,7 @@ function renderCatalog() {
       const nameStr = [p.name, p.italian].filter(Boolean).join(' / ');
       const isOwner = CURRENT_USER && CURRENT_USER.role === 'owner';
       const imgHtml = p.image_url
-        ? `<img src="${escapeHtml(p.image_url)}" loading="lazy" style="width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f5f5;" onerror="this.style.display='none'">`
+        ? `<img src="${escapeHtml(p.image_url)}" loading="lazy" style="width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f5f5;" onerror="this.style.displayy='none'">`
         : `<div style="width:42px;height:42px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--text3);">📦</div>`;
       html += `<div class="catalog-item" ${isOwner ? `onclick="openCatalogEdit(${p.id})"` : ''} style="gap:10px;">
         ${imgHtml}
@@ -1915,6 +1917,788 @@ async function doImport() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// === Excel Export ===
+// 导出当前目录(尊重搜索框筛选);列名与导入格式对应,导出的文件可直接再导入
+function exportCatalog() {
+  if (typeof XLSX === 'undefined') {
+    toast('Excel 库未加载,请刷新页面', 'err');
+    return;
+  }
+  const q = (document.getElementById('catalog-search-input').value || '').toLowerCase().trim();
+  const rows = CATALOG.filter(p => {
+    if (!q) return true;
+    return (p.name || '').toLowerCase().includes(q)
+      || (p.italian || '').toLowerCase().includes(q)
+      || (p.category || '').toLowerCase().includes(q);
+  });
+  if (!rows.length) {
+    toast('没有数据可导出', 'err');
+    return;
+  }
+  // 按分类+名称排序,与页面展示一致
+  rows.sort((a, b) => {
+    const ca = a.category || '其他', cb = b.category || '其他';
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+  const data = [
+    ['中文名', '意大利文', '规格', '单位', '价格', '分类', '货号'],
+    ...rows.map(p => [
+      p.name || '',
+      p.italian || '',
+      p.spec || '',
+      p.unit || '',
+      p.price != null ? Number(p.price) : '',
+      p.category || '',
+      p.item_code || '',
+    ]),
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 24 }, { wch: 30 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws, '产品目录');
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fname = (CURRENT_SUPPLIER ? CURRENT_SUPPLIER.name + '-' : '') +
+    '产品目录-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  toast('✓ 已导出 ' + rows.length + ' 件产品', 'ok');
+}
+
+// 清空全部目录(危险操作,需要两次确认)
+async function confirmClearCatalog() {
+  if (CURRENT_USER && CURRENT_USER.role !== 'owner') {
+    toast('只有管理员可以清空目录', 'err');
+    return;
+  }
+  const total = (CATALOG || []).length;
+  if (!total) {
+    toast('目录已经是空的', 'ok');
+    return;
+  }
+  if (!confirm(`⚠️ 危险操作!\n\n这将永久删除当前供应商的全部 ${total} 件产品。\n\n餐厅那边已经导入过的食材不受影响。\n\n确定继续吗?`)) return;
+  const verify = prompt(`再次确认:请输入"CLEAR"(全大写)继续`);
+  if (verify !== 'CLEAR') {
+    toast('已取消', 'ok');
+    return;
+  }
+  try {
+    const d = await api('/supplier/catalog/clear-all', { method: 'POST', body: JSON.stringify({}) });
+    toast(`✓ 已清空 ${d.deleted || 0} 件产品`, 'ok');
+    await loadCatalog();
+  } catch (e) {
+    toast('清空失败:' + e.message, 'err');
+  }
+}
+
+// ============================================================
+// Me / Profile
+// ============================================================
+async function loadProfile() {
+  try {
+    const d = await api('/supplier/profile');
+    CURRENT_PROFILE = d.profile;
+    renderMe();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+function renderMe() {
+  if (!CURRENT_PROFILE) return;
+  document.getElementById('me-company-name').textContent = CURRENT_PROFILE.name;
+  document.getElementById('me-company-display').textContent = CURRENT_PROFILE.display_name || '';
+  document.getElementById('me-contact-view').textContent = CURRENT_PROFILE.contact || '—';
+  document.getElementById('me-notes-view').textContent = CURRENT_PROFILE.notes || '—';
+  document.getElementById('me-user-name').textContent = CURRENT_USER.displayName || CURRENT_USER.username;
+  document.getElementById('me-user-role').textContent = CURRENT_USER.role === 'owner' ? t('role_owner') : t('role_staff');
+  // 仅 owner 能改公司信息
+  document.getElementById('me-edit-btn').style.display = CURRENT_USER.role === 'owner' ? '' : 'none';
+
+  // 目录设置(仅 owner 可见,默认 true)
+  const isOwner = CURRENT_USER.role === 'owner';
+  const settingsCard = document.getElementById('me-catalog-settings');
+  if (settingsCard) {
+    settingsCard.style.display = isOwner ? '' : 'none';
+    if (isOwner) {
+      const cbPublic = document.getElementById('me-cs-public');
+      const cbPrice = document.getElementById('me-cs-price');
+      cbPublic.checked = CURRENT_PROFILE.catalog_public !== false;
+      cbPrice.checked = CURRENT_PROFILE.catalog_show_price !== false;
+      // 公开关了的话,价格开关无意义
+      document.getElementById('me-cs-price-row').style.opacity = cbPublic.checked ? '1' : '0.4';
+      cbPrice.disabled = !cbPublic.checked;
+    }
+  }
+}
+
+async function onMeCatalogPublicChange() {
+  const cb = document.getElementById('me-cs-public');
+  const newVal = cb.checked;
+  if (!confirm(newVal
+    ? '公开目录后,所有餐厅都能在 cucina 里浏览/导入我们的产品。继续吗?'
+    : '设为私有后,餐厅将不能再浏览或导入新产品(已经导入的不影响)。继续吗?')) {
+    cb.checked = !newVal;
+    return;
+  }
+  try {
+    await api('/supplier/profile/catalog-public', {
+      method: 'POST',
+      body: JSON.stringify({ value: newVal }),
+    });
+    CURRENT_PROFILE.catalog_public = newVal;
+    toast('✓ 已' + (newVal ? '公开' : '设为私有'), 'ok');
+    renderMe();
+  } catch (e) {
+    cb.checked = !newVal;
+    toast('操作失败:' + e.message, 'err');
+  }
+}
+
+async function onMeCatalogPriceChange() {
+  const cb = document.getElementById('me-cs-price');
+  const newVal = cb.checked;
+  if (!confirm(newVal
+    ? '显示价格后,餐厅在浏览目录时能看到具体价格。继续吗?'
+    : '隐藏价格后,餐厅看不到具体价格(显示 "—")。已经导入的食材价格不动。继续吗?')) {
+    cb.checked = !newVal;
+    return;
+  }
+  try {
+    await api('/supplier/profile/catalog-show-price', {
+      method: 'POST',
+      body: JSON.stringify({ value: newVal }),
+    });
+    CURRENT_PROFILE.catalog_show_price = newVal;
+    toast('✓ 已' + (newVal ? '显示价格' : '隐藏价格'), 'ok');
+  } catch (e) {
+    cb.checked = !newVal;
+    toast('操作失败:' + e.message, 'err');
+  }
+}
+
+function openProfileEdit() {
+  document.getElementById('pe-display').value = CURRENT_PROFILE?.display_name || '';
+  document.getElementById('pe-contact').value = CURRENT_PROFILE?.contact || '';
+  document.getElementById('pe-notes').value = CURRENT_PROFILE?.notes || '';
+  openModal('modal-profile-edit');
+}
+
+async function saveProfile() {
+  const payload = {
+    display_name: document.getElementById('pe-display').value,
+    contact: document.getElementById('pe-contact').value,
+    notes: document.getElementById('pe-notes').value,
+  };
+  try {
+    await api('/supplier/profile/update', { method: 'POST', body: JSON.stringify(payload) });
+    toast(t('saved'), 'ok');
+    closeModal('modal-profile-edit');
+    await loadProfile();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+(function init() {
+  detectViewport();  // 立即识别桌面/移动
+  applyI18n();
+  document.getElementById('login-version').textContent = APP_VERSION;
+
+  // v1.4.1: 回填上次的供应商代号(跟 cucina 一致)
+  try {
+    const lastSup = localStorage.getItem(LAST_SUPPLIER_KEY) || '';
+    if (lastSup) {
+      const supEl = document.getElementById('login-supplier');
+      supEl.value = lastSup;
+      // 焦点直接到用户名框,省一步操作
+      setTimeout(() => {
+        const userEl = document.getElementById('login-username');
+        if (userEl && document.getElementById('login-screen').style.display !== 'none') {
+          userEl.focus();
+        }
+      }, 100);
+    }
+  } catch(e) {}
+
+  // v1.2.0: 检测 URL 里的 token 参数(平台超管协助登录)
+  // 不写 localStorage,2 小时后浏览器关闭即清(impersonate token 本身 2h 过期)
+  const urlParams = new URLSearchParams(location.search);
+  const impToken = urlParams.get('token');
+  if (impToken) {
+    // 清掉 URL 里的 token 参数(避免泄露 / 刷新重登)
+    try { history.replaceState({}, '', location.pathname); } catch (e) {}
+    TOKEN = impToken;
+    // 拉一次 profile 拿到供应商+用户信息
+    fetch(API_URL + '/supplier/profile', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(d => {
+        CURRENT_PROFILE = d.profile;
+        CURRENT_SUPPLIER = { id: d.profile.id, name: d.profile.name, display_name: d.profile.display_name };
+        // 解 JWT 拿用户名(impersonate token 自带)
+        try {
+          const payloadB64 = TOKEN.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(decodeURIComponent(atob(payloadB64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+          CURRENT_USER = {
+            username: payload.username,
+            display_name: payload.displayName || payload.username,
+            role: payload.role || 'owner',
+          };
+        } catch (e) {
+          CURRENT_USER = { username: '协助登录', display_name: '协助登录', role: 'owner' };
+        }
+        // 不写 localStorage,只放 session(关浏览器即清)
+        try {
+          sessionStorage.setItem('yki_sup_user', JSON.stringify(CURRENT_USER));
+          sessionStorage.setItem('yki_sup_supplier', JSON.stringify(CURRENT_SUPPLIER));
+        } catch (e) {}
+        showMain();
+        // 提示是协助登录模式
+        toast('🔧 平台协助登录模式(2 小时有效)', 'ok');
+      })
+      .catch(() => {
+        TOKEN = '';
+        alert('协助登录失败或 token 已过期,请回 yki-admin 重新生成');
+      });
+    return;
+  }
+
+  // 尝试用缓存的 token 自动登录
+  const savedToken = localStorage.getItem(TOKEN_KEY);
+  if (savedToken) {
+    const savedUser = sessionStorage.getItem('yki_sup_user');
+    const savedSupplier = sessionStorage.getItem('yki_sup_supplier');
+    if (savedUser && savedSupplier) {
+      try {
+        TOKEN = savedToken;
+        CURRENT_USER = JSON.parse(savedUser);
+        CURRENT_SUPPLIER = JSON.parse(savedSupplier);
+        showMain();
+        return;
+      } catch (e) {}
+    }
+    // sessionStorage 没了,但 token 还在:试着拉一次 profile 验证
+    TOKEN = savedToken;
+    fetch(API_URL + '/supplier/profile', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => {
+        CURRENT_PROFILE = d.profile;
+        // 从 profile 推断 supplier 信息;user 信息需要重新登录
+        // 简化:让用户重新登录
+        TOKEN = '';
+      })
+      .catch(() => { TOKEN = ''; localStorage.removeItem(TOKEN_KEY); });
+  }
+})();
+
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
+='none'">`
+        : `<div style="width:42px;height:42px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--text3);">📦</div>`;
+      html += `<div class="catalog-item" ${isOwner ? `onclick="openCatalogEdit(${p.id})"` : ''} style="gap:10px;">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
+          <div class="name">${escapeHtml(nameStr || '—')} ${!p.available ? '<span style="color:var(--danger);font-size:11px;">(缺货)</span>' : ''}</div>
+          <div class="sub">${p.spec ? escapeHtml(p.spec) : ''} ${p.unit ? '· ' + escapeHtml(p.unit) : ''} ${p.item_code ? '· #' + escapeHtml(p.item_code) : ''}</div>
+        </div>
+        ${p.price != null ? '<div class="price">€' + Number(p.price).toFixed(2) + '</div>' : ''}
+      </div>`;
+    }
+    html += '</div>';
+  }
+  listEl.innerHTML = html;
+}
+
+function openCatalogEdit(id) {
+  const p = id ? CATALOG.find(x => x.id === id) : null;
+  document.getElementById('ce-id').value = id || '';
+  document.getElementById('ce-title').textContent = p ? t('edit_product') : t('add_product');
+  document.getElementById('ce-name').value = p?.name || '';
+  document.getElementById('ce-italian').value = p?.italian || '';
+  document.getElementById('ce-spec').value = p?.spec || '';
+  document.getElementById('ce-unit').value = p?.unit || '';
+  document.getElementById('ce-price').value = p?.price != null ? p.price : '';
+  document.getElementById('ce-category').value = p?.category || '';
+  document.getElementById('ce-item-code').value = p?.item_code || '';
+  document.getElementById('ce-image-url').value = p?.image_url || '';
+  document.getElementById('ce-available').checked = p ? !!p.available : true;
+  document.getElementById('ce-delete-btn').style.display = p ? '' : 'none';
+  // 渲染图片预览
+  renderCatalogEditImgPreview(p?.image_url || '');
+  // 新增模式下:上传按钮要先保存条目才能用
+  const fileInput = document.getElementById('ce-img-input');
+  fileInput.value = '';
+  if (!id) {
+    fileInput.disabled = true;
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 ' + (CURRENT_LANG === 'zh' ? '先保存后上传图' : 'Salva prima');
+  } else {
+    fileInput.disabled = false;
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 <span data-i18n="upload_image">' + t('upload_image') + '</span>';
+  }
+  openModal('modal-catalog-edit');
+}
+
+function renderCatalogEditImgPreview(url) {
+  const box = document.getElementById('ce-img-preview');
+  const delBtn = document.getElementById('ce-img-del-btn');
+  if (url) {
+    box.innerHTML = `<img src="${escapeHtml(url)}" style="max-width:140px;max-height:140px;object-fit:contain;border-radius:8px;background:#f5f5f5;" onerror="this.parentNode.innerHTML='<span style=\\'color:var(--text3);font-size:12px;\\'>图片加载失败</span>'">`;
+    delBtn.style.display = '';
+    document.getElementById('ce-img-btn-text').innerHTML = '🔄 ' + (CURRENT_LANG === 'zh' ? '更换图片' : 'Sostituisci');
+  } else {
+    box.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg2);border-radius:6px;text-align:center;">${CURRENT_LANG === 'zh' ? '暂无图片' : 'Nessuna immagine'}</div>`;
+    delBtn.style.display = 'none';
+    document.getElementById('ce-img-btn-text').innerHTML = '📷 ' + (CURRENT_LANG === 'zh' ? '上传图片' : 'Carica');
+  }
+}
+
+async function saveCatalogItem() {
+  const id = document.getElementById('ce-id').value;
+  const name = document.getElementById('ce-name').value.trim();
+  const italian = document.getElementById('ce-italian').value.trim();
+  if (!name && !italian) {
+    toast('请填写产品名(中文或意大利文至少一个)', 'err');
+    return;
+  }
+  const payload = {
+    name, italian,
+    spec: document.getElementById('ce-spec').value.trim(),
+    unit: document.getElementById('ce-unit').value.trim(),
+    price: document.getElementById('ce-price').value ? parseFloat(document.getElementById('ce-price').value) : null,
+    category: document.getElementById('ce-category').value.trim(),
+    item_code: document.getElementById('ce-item-code').value.trim(),
+    image_url: document.getElementById('ce-image-url').value.trim(),
+    available: document.getElementById('ce-available').checked,
+  };
+  if (id) payload.id = parseInt(id);
+  const btn = document.getElementById('ce-save-btn');
+  btn.disabled = true;
+  try {
+    await api('/supplier/catalog/upsert', { method: 'POST', body: JSON.stringify(payload) });
+    toast(t('saved'), 'ok');
+    closeModal('modal-catalog-edit');
+    await loadCatalog();
+  } catch (e) {
+    toast(t('save_failed') + ': ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteCatalogItem() {
+  const id = document.getElementById('ce-id').value;
+  if (!id) return;
+  if (!confirm(t('confirm_delete'))) return;
+  try {
+    await api('/supplier/catalog/delete', { method: 'POST', body: JSON.stringify({ id: parseInt(id) }) });
+    toast(t('deleted'), 'ok');
+    closeModal('modal-catalog-edit');
+    await loadCatalog();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ════════════════════════════════════════
+// 图片压缩 + 上传(参考 cucina.html)
+// ════════════════════════════════════════
+function supportsWebP() {
+  try {
+    const c = document.createElement('canvas');
+    c.width = 1; c.height = 1;
+    return c.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  } catch(e) { return false; }
+}
+
+function compressImage(file, maxSize = IMG_MAX_SIZE, quality = IMG_QUALITY) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else       { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const useWebP = supportsWebP();
+        const mime = useWebP ? 'image/webp' : 'image/jpeg';
+        const ext  = useWebP ? 'webp' : 'jpg';
+        canvas.toBlob(
+          blob => {
+            if (!blob || blob.size === 0) {
+              if (useWebP) {
+                canvas.toBlob(
+                  b2 => b2 ? resolve({blob: b2, ext: 'jpg', mime: 'image/jpeg'}) : reject(new Error('压缩失败')),
+                  'image/jpeg', quality
+                );
+              } else reject(new Error('压缩失败'));
+              return;
+            }
+            resolve({blob, ext, mime});
+          },
+          mime, quality
+        );
+      };
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('读取文件失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 上传单张图片到指定目录条目(底层,供单条 + 批量复用)
+async function uploadImageForCatalog(catalogId, file) {
+  if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
+  if (file.size > 20 * 1024 * 1024) throw new Error('原图过大(>20MB)');
+
+  const result = await compressImage(file, IMG_MAX_SIZE, IMG_QUALITY);
+  const compressed = result.blob;
+
+  // 调 Worker 端点(POST + 二进制 body + query 带 id 和 ext)
+  const upUrl = `${API_URL}/supplier/catalog/upload-image?id=${catalogId}&ext=${result.ext}`;
+  const resp = await fetch(upUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + TOKEN,
+      'Content-Type': result.mime,
+    },
+    body: compressed,
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(data.error || `上传失败 (${resp.status})`);
+
+  // 同步更新本地缓存
+  const p = CATALOG.find(x => x.id === catalogId);
+  if (p) p.image_url = data.image_url;
+
+  return { image_url: data.image_url, sizeKB: (compressed.size / 1024).toFixed(0), ext: result.ext };
+}
+
+// 编辑表单里点"上传图片"按钮
+async function uploadCatalogImage(fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  const id = parseInt(document.getElementById('ce-id').value || 0);
+  if (!id) {
+    toast(CURRENT_LANG === 'zh' ? '请先保存这个产品' : 'Salva il prodotto prima', 'err');
+    fileInput.value = '';
+    return;
+  }
+
+  const btnText = document.getElementById('ce-img-btn-text');
+  const oldText = btnText.innerHTML;
+  btnText.innerHTML = '⏳ ' + (CURRENT_LANG === 'zh' ? '上传中...' : 'Caricamento...');
+  fileInput.disabled = true;
+
+  try {
+    const { image_url, sizeKB, ext } = await uploadImageForCatalog(id, file);
+    document.getElementById('ce-image-url').value = image_url;
+    renderCatalogEditImgPreview(image_url);
+    toast(`✅ ${CURRENT_LANG === 'zh' ? '上传成功' : 'Caricato'} (${sizeKB}KB ${ext.toUpperCase()})`, 'ok');
+  } catch (e) {
+    btnText.innerHTML = oldText;
+    toast(e.message, 'err');
+  } finally {
+    fileInput.disabled = false;
+    fileInput.value = '';
+  }
+}
+
+// 编辑表单里点"删图"
+async function deleteCatalogImage() {
+  const id = parseInt(document.getElementById('ce-id').value || 0);
+  if (!id) return;
+  if (!confirm(CURRENT_LANG === 'zh' ? '确定删除这张图片?' : 'Cancellare l\'immagine?')) return;
+  try {
+    await api('/supplier/catalog/delete-image', { method: 'POST', body: JSON.stringify({ id }) });
+    document.getElementById('ce-image-url').value = '';
+    renderCatalogEditImgPreview('');
+    const p = CATALOG.find(x => x.id === id);
+    if (p) p.image_url = '';
+    toast(t('deleted'), 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ════════════════════════════════════════
+// 批量上传图片(按文件名匹配 → 产品)
+// ════════════════════════════════════════
+let _batchImgMatched = [];     // [{file, item}]
+let _batchImgUnmatched = [];   // [filename]
+
+function matchFileToCatalog(fileName) {
+  const base = fileName.replace(/\.[^/.]+$/, '').trim();
+  if (!base) return null;
+  const baseLower = base.toLowerCase();
+  // 1. 货号精确
+  let m = CATALOG.find(p => (p.item_code || '').trim() === base);
+  if (m) return m;
+  m = CATALOG.find(p => (p.item_code || '').trim().toLowerCase() === baseLower);
+  if (m) return m;
+  // 2. 中文名精确
+  m = CATALOG.find(p => (p.name || '').trim() === base);
+  if (m) return m;
+  // 3. 意大利文名精确(忽略大小写)
+  m = CATALOG.find(p => (p.italian || '').trim() === base);
+  if (m) return m;
+  m = CATALOG.find(p => (p.italian || '').trim().toLowerCase() === baseLower);
+  if (m) return m;
+  return null;
+}
+
+function openBatchImageModal() {
+  _batchImgMatched = [];
+  _batchImgUnmatched = [];
+  document.getElementById('batch-img-step1').style.display = 'block';
+  document.getElementById('batch-img-step2').style.display = 'none';
+  document.getElementById('batch-img-summary').innerHTML = '';
+  document.getElementById('batch-img-unmatched-wrap').style.display = 'none';
+  document.getElementById('batch-img-progress-wrap').style.display = 'none';
+  document.getElementById('batch-img-upload-btn').style.display = 'none';
+  document.getElementById('batch-img-input').value = '';
+  openModal('modal-batch-image');
+}
+
+function handleBatchImages(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  _batchImgMatched = [];
+  _batchImgUnmatched = [];
+  files.forEach(file => {
+    const item = matchFileToCatalog(file.name);
+    if (item) _batchImgMatched.push({ file, item });
+    else _batchImgUnmatched.push(file.name);
+  });
+  const zh = CURRENT_LANG === 'zh';
+  document.getElementById('batch-img-summary').innerHTML = `
+    📊 ${zh ? '文件分析结果' : 'Analisi file'}:<br>
+    • ${zh ? '总文件数' : 'Totale'}: <strong>${files.length}</strong><br>
+    • ${zh ? '已匹配' : 'Abbinati'}: <strong style="color:#16a34a;">${_batchImgMatched.length}</strong><br>
+    • ${zh ? '未匹配' : 'Non abbinati'}: <strong style="color:${_batchImgUnmatched.length > 0 ? '#dc2626' : 'var(--text3)'};">${_batchImgUnmatched.length}</strong>
+  `;
+  if (_batchImgUnmatched.length > 0) {
+    document.getElementById('batch-img-unmatched-wrap').style.display = 'block';
+    document.getElementById('batch-img-unmatched-list').innerHTML =
+      _batchImgUnmatched.map(n => '• ' + escapeHtml(n)).join('<br>');
+  } else {
+    document.getElementById('batch-img-unmatched-wrap').style.display = 'none';
+  }
+  document.getElementById('batch-img-step1').style.display = 'none';
+  document.getElementById('batch-img-step2').style.display = 'block';
+  document.getElementById('batch-img-upload-btn').style.display = _batchImgMatched.length > 0 ? 'block' : 'none';
+  document.getElementById('batch-img-upload-btn').textContent =
+    `✓ ${zh ? '开始上传' : 'Carica'} ${_batchImgMatched.length} ${zh ? '张' : 'foto'}`;
+  if (_batchImgMatched.length === 0) {
+    toast(zh ? '没有可上传的图片(文件名都没匹配上)' : 'Nessun file abbinato', 'err');
+  }
+}
+
+async function performBatchImageUpload() {
+  if (_batchImgMatched.length === 0) return;
+  const zh = CURRENT_LANG === 'zh';
+  const total = _batchImgMatched.length;
+  const uploadBtn = document.getElementById('batch-img-upload-btn');
+  const progressWrap = document.getElementById('batch-img-progress-wrap');
+  const progressBar = document.getElementById('batch-img-progress-bar');
+  const progressTxt = document.getElementById('batch-img-progress-txt');
+  const progressPct = document.getElementById('batch-img-progress-pct');
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = zh ? '上传中...' : 'Caricamento...';
+  progressWrap.style.display = 'block';
+
+  let success = 0, failed = 0;
+  const failedList = [];
+
+  for (let i = 0; i < _batchImgMatched.length; i++) {
+    const { file, item } = _batchImgMatched[i];
+    const itemLabel = item.name || item.italian || item.item_code || '#' + item.id;
+    progressTxt.textContent = `${i + 1}/${total} · ${itemLabel}`;
+    try {
+      await uploadImageForCatalog(item.id, file);
+      success++;
+    } catch (e) {
+      console.error(`❌ ${file.name}:`, e);
+      failed++;
+      failedList.push(`${file.name}: ${e.message}`);
+    }
+    const pct = Math.round((i + 1) / total * 100);
+    progressBar.style.width = pct + '%';
+    progressPct.textContent = pct + '%';
+  }
+
+  uploadBtn.disabled = false;
+  uploadBtn.style.display = 'none';
+  progressTxt.textContent = `✅ ${zh ? '完成' : 'Fatto'}:${zh ? '成功' : 'OK'} ${success},${zh ? '失败' : 'errori'} ${failed}`;
+
+  if (failed > 0) {
+    console.log('失败列表:\n' + failedList.join('\n'));
+    toast(`${zh ? '完成' : 'Fatto'}:${success} ${zh ? '成功' : 'OK'}, ${failed} ${zh ? '失败' : 'errori'} (${zh ? '详情见控制台' : 'log console'})`, failed > success ? 'err' : '');
+  } else {
+    toast(`✅ ${zh ? '全部上传成功' : 'Tutti caricati'} (${success})`, 'ok');
+  }
+
+  // 刷列表(用本地已更新的 CATALOG.image_url)
+  renderCatalog();
+  setTimeout(() => closeModal('modal-batch-image'), 2500);
+}
+
+// === Excel Import ===
+let _importParsedRows = [];
+
+function openImportDialog() {
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('import-do-btn').disabled = true;
+  _importParsedRows = [];
+  openModal('modal-import');
+}
+
+function onImportFileSelected() {
+  const f = document.getElementById('import-file').files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      // 标准化字段名(小写 + 去空格)
+      const allowedKeys = ['name', 'italian', 'spec', 'unit', 'price', 'category', 'item_code'];
+      const normalized = rows.map(r => {
+        const out = {};
+        for (const [k, v] of Object.entries(r)) {
+          const norm = String(k).toLowerCase().replace(/[\s_]+/g, '').replace(/-/g, '');
+          // 匹配各种可能的列名
+          if (norm === 'name' || norm === '中文名' || norm === 'nome') out.name = v;
+          else if (norm === 'italian' || norm === 'italiano' || norm === '意大利文') out.italian = v;
+          else if (norm === 'spec' || norm === '规格' || norm === 'formato') out.spec = v;
+          else if (norm === 'unit' || norm === '单位' || norm === 'unità' || norm === 'unita') out.unit = v;
+          else if (norm === 'price' || norm === '价格' || norm === '单价' || norm === 'prezzo') out.price = v;
+          else if (norm === 'category' || norm === '分类' || norm === 'categoria') out.category = v;
+          else if (norm === 'itemcode' || norm === '货号' || norm === 'codice') out.item_code = v;
+        }
+        return out;
+      }).filter(r => r.name || r.italian);
+
+      if (!normalized.length) {
+        toast(t('import_no_rows'), 'err');
+        return;
+      }
+      _importParsedRows = normalized;
+      // 预览前 5 条
+      const previewEl = document.getElementById('import-preview-table');
+      let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--surface2);">';
+      for (const k of allowedKeys) html += '<th style="padding:4px 6px;text-align:left;border-bottom:1px solid var(--border);">' + k + '</th>';
+      html += '</tr></thead><tbody>';
+      for (const r of normalized.slice(0, 5)) {
+        html += '<tr>';
+        for (const k of allowedKeys) html += '<td style="padding:4px 6px;border-bottom:1px solid var(--border);">' + escapeHtml(r[k] || '') + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      previewEl.innerHTML = html;
+      document.getElementById('import-preview-title').textContent = t('import_preview').replace('{n}', normalized.length);
+      document.getElementById('import-preview').style.display = '';
+      document.getElementById('import-do-btn').disabled = false;
+    } catch (e) {
+      toast('解析失败: ' + e.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+async function doImport() {
+  if (!_importParsedRows.length) return;
+  const strategy = document.getElementById('import-strategy').value;
+  const btn = document.getElementById('import-do-btn');
+  btn.disabled = true;
+  try {
+    const d = await api('/supplier/catalog/import', {
+      method: 'POST',
+      body: JSON.stringify({ rows: _importParsedRows, strategy }),
+    });
+    toast(
+      t('import_done')
+        .replace('{ins}', d.inserted || 0)
+        .replace('{upd}', d.updated || 0)
+        .replace('{skp}', d.skipped || 0),
+      'ok'
+    );
+    closeModal('modal-import');
+    await loadCatalog();
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// === Excel Export ===
+// 导出当前目录(尊重搜索框筛选);列名与导入格式对应,导出的文件可直接再导入
+function exportCatalog() {
+  if (typeof XLSX === 'undefined') {
+    toast('Excel 库未加载,请刷新页面', 'err');
+    return;
+  }
+  const q = (document.getElementById('catalog-search-input').value || '').toLowerCase().trim();
+  const rows = CATALOG.filter(p => {
+    if (!q) return true;
+    return (p.name || '').toLowerCase().includes(q)
+      || (p.italian || '').toLowerCase().includes(q)
+      || (p.category || '').toLowerCase().includes(q);
+  });
+  if (!rows.length) {
+    toast('没有数据可导出', 'err');
+    return;
+  }
+  // 按分类+名称排序,与页面展示一致
+  rows.sort((a, b) => {
+    const ca = a.category || '其他', cb = b.category || '其他';
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+  const data = [
+    ['中文名', '意大利文', '规格', '单位', '价格', '分类', '货号'],
+    ...rows.map(p => [
+      p.name || '',
+      p.italian || '',
+      p.spec || '',
+      p.unit || '',
+      p.price != null ? Number(p.price) : '',
+      p.category || '',
+      p.item_code || '',
+    ]),
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 24 }, { wch: 30 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws, '产品目录');
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fname = (CURRENT_SUPPLIER ? CURRENT_SUPPLIER.name + '-' : '') +
+    '产品目录-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  toast('✓ 已导出 ' + rows.length + ' 件产品', 'ok');
 }
 
 // 清空全部目录(危险操作,需要两次确认)
