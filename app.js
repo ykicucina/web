@@ -9470,8 +9470,18 @@ async function saveImport() {
 // ════════════════════════════════════════
 // UTILS
 // ════════════════════════════════════════
-function openModal(id)  { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+// 弹窗层级管理:后打开的弹窗永远在最上层(基础200,手动指定的高层级如2000会保留并抬升计数器)
+let _modalZCounter = 200;
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  _modalZCounter++;
+  const manual = parseInt(el.style.zIndex) || 0;
+  el.style.zIndex = Math.max(manual, _modalZCounter);
+  _modalZCounter = Math.max(_modalZCounter, parseInt(el.style.zIndex));
+  el.classList.add('show');
+}
+function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('show'); }
 
 function togglePass(inputId, btn) {
   const inp = document.getElementById(inputId);
