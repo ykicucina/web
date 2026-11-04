@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.135';
+const APP_VERSION = 'v2.7.136';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -3667,29 +3667,34 @@ function renderReceiveTab() {
     return;
   }
 
-  // 按供应商合并
+  // v2.7.136: 按「供应商+订货日期」分组——不同一天的订货分开收货
+  const fmtDay = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
   const supMap = {};
   pending.forEach(o=>{
+    const day = fmtDay(o.date) || '未知日期';
     (o.items||[]).forEach(i=>{
       const sup = i.supplier||'未知';
-      if (!supMap[sup]) supMap[sup] = {items:{}, orderIds:new Set(), date: o.date, dates:new Set()};
-      if (o.date) supMap[sup].dates.add(o.date);  // v2.7.123: 收集订货日期
-      const key = i.item_code||i.name;
-      if (!supMap[sup].items[key]) supMap[sup].items[key] = {...i, need:0};
-      supMap[sup].items[key].need += i.need;
-      supMap[sup].orderIds.add(String(o.id));
+      const key = sup + '||' + day;
+      if (!supMap[key]) supMap[key] = {sup, day, items:{}, orderIds:new Set()};
+      const ikey = i.item_code||i.name;
+      if (!supMap[key].items[ikey]) supMap[key].items[ikey] = {...i, need:0};
+      supMap[key].items[ikey].need += i.need;
+      supMap[key].orderIds.add(String(o.id));
     });
   });
 
   // 按收货员过滤
   const isFullAccess = isAdmin || currentUserRole==='supervisor' || currentUserRole==='buyer';
-  const filteredSups = Object.entries(supMap).filter(([supName])=>{
+  const filteredSups = Object.entries(supMap).filter(([k,v])=>{
     if (isFullAccess) return true;
-    const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
+    const sup = suppliers.find(s=>s.name.toLowerCase()===v.sup.toLowerCase());
     return sup?.receiver === currentUser;
   });
+  // 排序: 订货日期升序(先订先收),同一天按供应商名
+  filteredSups.sort((a,b)=> a[1].day===b[1].day ? a[1].sup.localeCompare(b[1].sup) : (a[1].day < b[1].day ? -1 : 1));
 
-  updateReceiveBadge(filteredSups.length);
+  // 角标保持原语义: 待收货的供应商数(不是卡片数)
+  updateReceiveBadge(new Set(filteredSups.map(([k,v])=>v.sup)).size);
 
   if (!filteredSups.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3);">
@@ -3699,22 +3704,17 @@ function renderReceiveTab() {
     return;
   }
 
-  el.innerHTML = filteredSups.map(([supName, data])=>{
+  el.innerHTML = filteredSups.map(([key, data])=>{
+    const supName = data.sup;
     const sup = suppliers.find(s=>s.name.toLowerCase()===supName.toLowerCase());
     const orderIds = [...data.orderIds].join(',');
     const itemList = Object.values(data.items);
-    // v2.7.123: 订货时间显示(取日期部分;多张订单显示最早~最晚)
-    const fmtDate = d => { if(!d) return ''; const s=String(d); return s.length>=10 ? s.slice(0,10) : s; };
-    const dateArr = [...(data.dates||[])].map(fmtDate).filter(Boolean).sort();
-    let orderTimeLabel = '';
-    if (dateArr.length === 1) orderTimeLabel = dateArr[0];
-    else if (dateArr.length > 1) orderTimeLabel = dateArr[0] + ' ~ ' + dateArr[dateArr.length-1];
     return `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div>
           <div style="font-weight:700;font-size:15px;">📦 ${escapeHtml(supName)}</div>
-          ${orderTimeLabel?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">🕒 订货时间：${orderTimeLabel}</div>`:''}
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">🕒 订货日期：${escapeHtml(data.day)}</div>
           ${sup?.receiver?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t('recvReceiver')}：${escapeHtml(sup.receiver)}</div>`:''}
         </div>
         <button onclick="showReceiveConfirmBySup('${escJsArg(supName)}','${orderIds}')"
