@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.133';
+const APP_VERSION = 'v2.7.134';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2023,7 +2023,8 @@ function renderOrderList() {
         const useCompact = !showConsume && showOrder;
 
         if (useCompact) {
-          // 方案: 上区(图+标题+复选框) | 下区(上次订左 + 订货数量右)
+          // 方案: 上区(图+标题+复选框) | 库存信息(可选) | 下区(上次订左 + 订货数量右)
+          // v2.7.134: 紧凑布局也要渲染 stockHtml(此前被丢弃,导致安全库存不显示)
           const bottomRow = lastHtml
             ? `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
                  <div style="align-self: end;">${lastHtml}</div>
@@ -2036,6 +2037,7 @@ function renderOrderList() {
               ${infoBlock}
               ${checkBlock}
             </div>
+            ${stockHtml}
             ${bottomRow}`;
         }
 
