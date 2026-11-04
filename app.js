@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.138';
+const APP_VERSION = 'v2.7.139';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -9250,7 +9250,9 @@ async function exportInventoryExcel() {
         '订货周期':     cycleStr,
         '型号':         item.model_no  || '',
         '按星期安全库存': sbdStr,
-        '数据库ID':     item.id
+        '数据库ID':     item.id,
+        // v2.7.139: 停售状态也进备份(放在最后一列,导入按固定索引读取,不影响旧格式)
+        '停售':         item.discontinued ? '是' : '否'
       };
     });
 
@@ -9261,7 +9263,7 @@ async function exportInventoryExcel() {
     ws['!cols'] = [
       {wch:12},{wch:20},{wch:20},{wch:14},{wch:10},
       {wch:16},{wch:14},{wch:12},{wch:12},{wch:12},
-      {wch:12},{wch:12},{wch:14},{wch:12},{wch:24},{wch:10}
+      {wch:12},{wch:12},{wch:14},{wch:12},{wch:24},{wch:10},{wch:8}
     ];
 
     // 表头加粗（让第一行看起来像标题）
@@ -9283,7 +9285,7 @@ async function exportInventoryExcel() {
       ['数据条数',     items.length],
       ['当前 App 版本', APP_VERSION],
       ['', ''],
-      ['📌 说明', '本文件可作为完整库存备份，前 13 列与"导入 CSV/Excel"格式兼容。如需还原数据，重新导入即可。']
+      ['📌 说明', '本文件可作为完整库存备份（含停售状态、按星期安全库存、型号），改动后重新导入即可还原。']
     ];
     const wsMeta = XLSX.utils.aoa_to_sheet(meta);
     wsMeta['!cols'] = [{wch:18},{wch:60}];
@@ -9317,10 +9319,14 @@ async function handleImport(input) {
     const wb=XLSX.read(data,{type:'array'});
     const sheet=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+    // v2.7.139: 识别"备份导出"格式(表头含"数据库ID")
+    // 备份格式: 13=型号 14=按星期安全库存JSON 15=数据库ID 16=停售
+    // 普通格式: 13=WhatsApp号码(原样保留),无型号/停售列
+    const _importIsBackup = (rows[0]||[]).some(h=>String(h||'').trim()==='数据库ID');
     pendingImport=[];
     for(let i=1;i<rows.length;i++){
       const r=rows[i]; if(!r||!r.length)continue;
-      // A=货物号 B=意文 C=中文 D=规格 E=价格 F=供应商 G=使用单位 H=当前库存 I=安全库存 J=最大订货量 K=材料类型 L=订货员 M=订货周期 N=WA
+      // A=货物号 B=意文 C=中文 D=规格 E=价格 F=供应商 G=使用单位 H=当前库存 I=安全库存 J=最大订货量 K=材料类型 L=订货员 M=订货周期 N=WA(普通格式)
       const priceVal=r[4];
       const price=typeof priceVal==='number'?priceVal.toFixed(2):parseFloat((priceVal||'').toString().replace(',','.'))||0;
       const deptRaw=r[6]||'';
@@ -9335,7 +9341,16 @@ async function handleImport(input) {
         if(!cycle.length) cycle=['星期日'];
       }
       const maxOrder = r[9]!==undefined&&r[9]!==''?parseFloat(r[9])||null:null;
-      pendingImport.push({
+      // 备份格式: 型号归位 + 按星期安全库存JSON还原 + 停售列;普通格式: N列=WA
+      let _wa='', sbd={}, discRaw='';
+      if (_importIsBackup) {
+        const sbdRaw = r[14]!==undefined?String(r[14]).trim():'';
+        if (sbdRaw) { try { const o=JSON.parse(sbdRaw); if(o&&typeof o==='object') sbd=o; } catch(e){} }
+        discRaw = r[16]!==undefined?String(r[16]).trim():'';
+      } else {
+        _wa = r[13]?String(r[13]).trim():'';
+      }
+      const rec={
         restaurant_id:REST_ID,
         source_file:_importFileName,
         item_code:r[0]!==undefined?String(r[0]).trim():'',
@@ -9346,13 +9361,18 @@ async function handleImport(input) {
         departments:depts,
         stock:String(parseFloat(r[7])||0),
         safety:String(parseFloat(r[8])||1),
-        safety_by_day:{},
+        safety_by_day:sbd,
         max_order: maxOrder,
         category:r[10]?String(r[10]).trim():'其他',
         chef:r[11]?String(r[11]).trim():'',
         cycle:cycle,
-        _wa: r[13]?String(r[13]).trim():''   // N列：WhatsApp号码（临时字段，不存入items）
-      });
+        _wa,
+        // null=文件未提供停售列(导入时按原逻辑激活);true/false=按文件值恢复
+        _discontinued: discRaw===''?null:['是','停售','yes','true','1','y'].includes(discRaw.toLowerCase())
+      };
+      // 型号只在备份格式下回填(普通格式不带此字段,避免PATCH时清空已有型号)
+      if (_importIsBackup) rec.model_no = r[13]!==undefined?String(r[13]).trim():'';
+      pendingImport.push(rec);
     }
     if(pendingImport.length>0) console.log('第一行数据:', JSON.stringify(pendingImport[0]));
     document.getElementById('import-preview-msg').textContent=`📄 ${_importFileName} · 已解析 ${pendingImport.length} 条物料，点击保存`;
@@ -9413,9 +9433,14 @@ async function saveImport() {
     // 永远不让 XLSX 覆盖 image_url（XLSX 也不应该有这字段，但保险删一下）
     delete itemData.image_url;
 
-    // XLSX 出现的食材自动激活（取消停售状态）
-    // 理由：XLSX 是最新货单，包含的食材都是"在卖的"
-    itemData.discontinued = false;
+    // 停售状态(v2.7.139): 备份文件带停售列时按值恢复;未提供时保持原逻辑"导入即激活"
+    if (item._discontinued === true || item._discontinued === false) {
+      itemData.discontinued = item._discontinued;
+    } else {
+      // 理由：普通货单是最新货单，包含的食材都是"在卖的"
+      itemData.discontinued = false;
+    }
+    delete itemData._discontinued;
 
     const code = (itemData.item_code||'').trim();
     // v2.7.128: 优先按货物号匹配；匹配不到再按「中文名|意文名」兜底，避免同名食材重复导入
