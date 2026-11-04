@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.134';
+const APP_VERSION = 'v2.7.135';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2023,21 +2023,21 @@ function renderOrderList() {
         const useCompact = !showConsume && showOrder;
 
         if (useCompact) {
-          // 方案: 上区(图+标题+复选框) | 库存信息(可选) | 下区(上次订左 + 订货数量右)
+          // 方案: 上区(图+标题+复选框) | 下区(左:库存信息+上次订 上下叠放, 右:订货数量)
           // v2.7.134: 紧凑布局也要渲染 stockHtml(此前被丢弃,导致安全库存不显示)
+          // v2.7.135: 库存信息并入底部左栏,与上次订叠放,消除空白更紧凑
           const bottomRow = lastHtml
             ? `<div class="oic-bottom" style="grid-template-columns: 1fr auto;">
-                 <div style="align-self: end;">${lastHtml}</div>
+                 <div style="align-self: end;">${stockHtml}${lastHtml}</div>
                  ${orderBlock}
                </div>`
-            : `<div class="oic-bottom full">${orderBlock}</div>`;
+            : `<div class="oic-bottom full">${stockHtml}${orderBlock}</div>`;
           return `
             <div class="oic-top">
               ${thumbBlock}
               ${infoBlock}
               ${checkBlock}
             </div>
-            ${stockHtml}
             ${bottomRow}`;
         }
 
