@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.136';
+const APP_VERSION = 'v2.7.137';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -213,6 +213,42 @@ async function enablePush() {
 
   toast(t('push_enabled'));
   return true;
+}
+
+// v2.7.137: 推送开启引导——未授权过的用户登录后自动弹出顶部引导条
+// 所有角色(含staff)都会显示;点"暂不"后不再打扰。浏览器限制:授权必须用户亲手点"允许"
+async function maybeShowPushGuide() {
+  try {
+    if (!pushSupported()) return;
+    if (localStorage.getItem('push_guide_dismissed') === '1') return;
+    if (Notification.permission !== 'default') return;  // 已授权/已拒绝都不弹
+    if (document.getElementById('push-guide-bar')) return;
+    const sub = await getCurrentPushSubscription();
+    if (sub) return;  // 已有订阅不弹
+
+    const bar = document.createElement('div');
+    bar.id = 'push-guide-bar';
+    bar.style.cssText = 'position:fixed;top:8px;left:12px;right:12px;z-index:150;background:var(--surface,#fff);border:1px solid var(--primary,#c9a961);border-radius:12px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.18);';
+    bar.innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px;">🔔 ${t('pushGuideTitle')}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;">${t('pushGuideDesc')}</div>
+      <div style="display:flex;gap:8px;">
+        <button id="push-guide-yes" class="btn btn-primary" style="flex:1;padding:8px;font-size:13px;">${t('pushGuideEnable')}</button>
+        <button id="push-guide-no" class="btn btn-ghost" style="padding:8px 14px;font-size:13px;">${t('pushGuideLater')}</button>
+      </div>`;
+    document.body.appendChild(bar);
+    document.getElementById('push-guide-yes').onclick = async () => {
+      const bt = document.getElementById('push-guide-yes');
+      bt.disabled = true;
+      await enablePush();  // 无论结果都收起;若用户未授权,下次登录还会再引导
+      bar.remove();
+      refreshPushSettingUI();
+    };
+    document.getElementById('push-guide-no').onclick = () => {
+      localStorage.setItem('push_guide_dismissed', '1');
+      bar.remove();
+    };
+  } catch (e) { console.warn('[PushGuide]', e); }
 }
 
 // ── 关闭推送（取消订阅）──
@@ -750,6 +786,8 @@ async function loadAllData() {
   }
   // v2.7.123: 加载成功,清掉自动恢复标记(下次真出问题时还能再自动恢复一次)
   try { sessionStorage.removeItem('yki_auto_recovered'); } catch(e){}
+  // v2.7.137: 登录后自动引导开启推送(未授权过的用户才显示)
+  maybeShowPushGuide();
   return true;
 }
 
