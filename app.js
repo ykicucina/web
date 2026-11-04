@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.132';
+const APP_VERSION = 'v2.7.133';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -2010,7 +2010,8 @@ function renderOrderList() {
             </div>
           </div>`:'';
 
-        const stockHtml = ff('consume_track')&&(ff('show_stock')||ff('show_safety'))?`
+        // v2.7.133: 库存信息显示与消耗按钮解耦——只由 show_stock/show_safety 控制,不再要求 consume_track
+        const stockHtml = (ff('show_stock')||ff('show_safety'))?`
           <div class="oic-stock">
             ${ff('show_stock')?`${t('colStock')}: <span class="${isLow?'low':''}">${item.stock}</span>`:''}
             ${ff('show_stock')&&ff('show_safety')?' · ':''}

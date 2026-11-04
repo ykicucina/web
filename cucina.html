@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- xlsx 改为按需动态加载，见 ensureXlsxLoaded() -->
-<link rel="stylesheet" href="/cucina.css?v=v2.7.132">
+<link rel="stylesheet" href="/cucina.css?v=v2.7.133">
 </head>
 <body>
 
@@ -1394,11 +1394,11 @@ function ridPickerGo() {
 </div>
 
 <!-- v2.7.87+: 拆分的 i18n 字典(同步加载, 必须在主 JS 之前) -->
-<script src="/i18n.js?v=v2.7.132"></script>
+<script src="/i18n.js?v=v2.7.133"></script>
 
 
 <!-- v2.7.88: 拆分的 SortableJS(同步加载) -->
-<script src="/sortable.min.js?v=v2.7.132"></script>
+<script src="/sortable.min.js?v=v2.7.133"></script>
 
 <!-- v2.7.125: 业务逻辑拆分为 /app.js —— HTML 只留骨架,逻辑独立演进 -->
 <!-- v2.7.126: 订货草稿自动保存/恢复 -->
@@ -1408,7 +1408,8 @@ function ridPickerGo() {
 <!-- v2.7.130: 对比表手机端布局优化（去比例列并入变化列）；对比图跟随排名选项 -->
 <!-- v2.7.131: 供应商可手动输入新建（datalist 联想）；食材编辑供应商字段加联想 -->
 <!-- v2.7.132: 弹窗层级自动递增（修复重置密码弹窗被员工面板遮挡等叠加问题） -->
-<script src="/app.js?v=v2.7.132"></script>
+<!-- v2.7.133: 订货卡片库存/安全库存显示与消耗按钮开关解耦（修复只开显示安全库存却不显示） -->
+<script src="/app.js?v=v2.7.133"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
