@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.137';
+const APP_VERSION = 'v2.7.138';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -278,7 +278,8 @@ async function refreshPushSettingUI() {
   const hamStatus = document.getElementById('ham-push-status');
   const hamBtn = document.getElementById('ham-push-btn');
 
-  const canSee = isAdmin || ['admin','buyer','supervisor'].includes(currentUserRole);
+  // v2.7.138: 推送入口对所有登录角色开放(staff也接收每日18点订货提醒,应能自行管理开关)
+  const canSee = !!currentUser;
   if (hamWrap) hamWrap.style.display = canSee ? 'block' : 'none';
   if (wrap) wrap.style.display = 'none';  // v2.7.123: 旧"我的"tab 的推送块已隐藏,汉堡接管
   if (!canSee) return;
