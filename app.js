@@ -3,7 +3,7 @@
 // ════════════════════════════════════════
 // 🎯 APP 版本号（唯一数据源，每次发版只改这一处！）
 // ════════════════════════════════════════
-const APP_VERSION = 'v2.7.139';
+const APP_VERSION = 'v2.7.140';
 
 // ════════════════════════════════════════
 // 🎛️ 功能开关（Feature Flags）
@@ -1276,7 +1276,9 @@ function getTodayKey() {
 }
 function getSafety(item) {
   const sbd = item.safety_by_day;
-  if (sbd && typeof sbd === 'object') {
+  // v2.7.140: 只有按星期安全库存实际开启（至少一天大于0）时才覆盖默认值。
+  // 关闭开关的旧数据可能保存为七天全0，此时必须回退到默认安全库存。
+  if (sbd && typeof sbd === 'object' && Object.values(sbd).some(v => parseFloat(v) > 0)) {
     const key = getTodayKey();
     const v = parseFloat(sbd[key]);
     if (!isNaN(v)) return v;
@@ -1704,7 +1706,7 @@ async function saveEditItem() {
                        "5":parseFloat(document.getElementById('ei-sbd-5').value)||0,
                        "6":parseFloat(document.getElementById('ei-sbd-6').value)||0,
                        "7":parseFloat(document.getElementById('ei-sbd-7').value)||0}
-                    : {"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0},
+                    : null,
     chef:      document.getElementById('ei-chef').value,
     position:  document.getElementById('ei-position') ? document.getElementById('ei-position').value : ((items.find(i=>i.id===editingItemId)||{}).position||''),
     cycle:     ['一','二','三','四','五','六','日'].map((d,i)=>'星期'+d).filter((_,i)=>document.getElementById('ei-cycle-'+(i+1))&&document.getElementById('ei-cycle-'+(i+1)).checked),
